@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: JakobMelchard/.github/.github/actions/setup-typst@main
+      - uses: JakobMelchard/.github/actions/setup-typst@main
         with:
           version: ${{ inputs.typst_version }}
       
