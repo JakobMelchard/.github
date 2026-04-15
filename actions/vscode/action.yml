@@ -8,9 +8,6 @@ inputs:
   publish:
     description: Whether to publish to the marketplace
     default: "false"
-  vsce-pat:
-    description: VS Code marketplace PAT (required when publish is true)
-    default: ""
 
 runs:
   using: composite
@@ -39,5 +36,3 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: vsce publish --no-dependencies
-      env:
-        VSCE_PAT: ${{ inputs.vsce-pat }}
