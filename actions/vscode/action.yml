@@ -1,0 +1,43 @@
+name: VS Code Extension — Build & Publish
+description: Package a VS Code extension with vsce, optionally publish to the marketplace.
+
+inputs:
+  working-directory:
+    description: Directory containing package.json
+    default: .
+  publish:
+    description: Whether to publish to the marketplace
+    default: "false"
+  vsce-pat:
+    description: VS Code marketplace PAT (required when publish is true)
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+
+    - name: Install vsce
+      shell: bash
+      run: npm install -g @vscode/vsce
+
+    - name: Package extension
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: vsce package --no-dependencies
+
+    - name: Upload vsix artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.working-directory == '.' && 'vsix' || format('{0}-vsix', inputs.working-directory) }}
+        path: ${{ inputs.working-directory }}/*.vsix
+
+    - name: Publish to marketplace
+      if: inputs.publish == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: vsce publish --no-dependencies
+      env:
+        VSCE_PAT: ${{ inputs.vsce-pat }}
