@@ -1,0 +1,44 @@
+name: "Wrangler Deploy"
+description: "Install Wrangler and deploy a Cloudflare Worker or Pages project"
+
+inputs:
+  command:
+    description: "wrangler command: deploy or pages deploy"
+    default: "deploy"
+  working-directory:
+    description: "Directory containing wrangler.toml"
+    default: "."
+  wrangler-version:
+    description: "Wrangler version"
+    default: "latest"
+  cloudflare-api-token:
+    description: "Cloudflare API token"
+    required: true
+  cloudflare-account-id:
+    description: "Cloudflare Account ID"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Wrangler
+      shell: bash
+      run: npm install -g "wrangler@${{ inputs.wrangler-version }}"
+
+    - name: Deploy Worker
+      if: inputs.command == 'deploy'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+      run: wrangler deploy
+
+    - name: Deploy Pages
+      if: inputs.command == 'pages deploy'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ inputs.cloudflare-api-token }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ inputs.cloudflare-account-id }}
+      run: wrangler pages deploy

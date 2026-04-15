@@ -1,0 +1,44 @@
+name: "OpenTofu Plan / Apply"
+description: "Install OpenTofu, run init, then plan or apply"
+
+inputs:
+  command:
+    description: "tofu command: plan or apply"
+    default: "plan"
+  working-directory:
+    description: "Directory containing .tf files"
+    default: "opentofu"
+  tofu-version:
+    description: "OpenTofu version to install"
+    default: "latest"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install OpenTofu
+      shell: bash
+      run: |
+        curl -fsSL https://get.opentofu.org/install-opentofu.sh | \
+          bash -s -- --install-method standalone --opentofu-version "${{ inputs.tofu-version }}"
+
+    - name: tofu init
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: tofu init -input=false
+
+    - name: tofu validate
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: tofu validate
+
+    - name: tofu plan
+      if: inputs.command == 'plan'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: tofu plan -input=false -out=tfplan
+
+    - name: tofu apply
+      if: inputs.command == 'apply'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: tofu apply -input=false -auto-approve
