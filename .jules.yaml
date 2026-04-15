@@ -1,0 +1,14 @@
+version: 1
+
+allowed_tools:
+  - read_file
+  - write_file
+  - run_command
+
+rules:
+  - No docstrings or comment blocks in source files.
+  - Keep PRs focused: one bug fix or one feature per PR.
+
+preferred_workflow:
+  - Append an observation to AGENTS.md ## Log section.
+  - Keep PRs focused: one bug fix or one feature per PR.
