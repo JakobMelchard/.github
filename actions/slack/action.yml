@@ -1,0 +1,40 @@
+name: "Slack Notify"
+description: "Post a message to a Slack incoming webhook"
+
+inputs:
+  webhook-url:
+    description: "Slack incoming webhook URL"
+    required: true
+  message:
+    description: "Message text (supports mrkdwn)"
+    required: true
+  color:
+    description: "Attachment color: good | warning | danger | hex"
+    default: "good"
+  title:
+    description: "Optional attachment title"
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Post to Slack
+      shell: bash
+      run: |
+        PAYLOAD=$(jq -n \
+          --arg msg "${{ inputs.message }}" \
+          --arg color "${{ inputs.color }}" \
+          --arg title "${{ inputs.title }}" \
+          '{
+            attachments: [{
+              color: $color,
+              title: (if $title != "" then $title else null end),
+              text: $msg,
+              footer: "GitHub Actions",
+              ts: now | floor
+            }]
+          }')
+        curl -fsS -X POST \
+          -H "Content-Type: application/json" \
+          -d "$PAYLOAD" \
+          "${{ inputs.webhook-url }}"

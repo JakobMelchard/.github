@@ -1,0 +1,57 @@
+name: "Linear Issue Sync"
+description: "Transition a Linear issue state on PR/push events"
+
+inputs:
+  linear-api-key:
+    description: "Linear API key"
+    required: true
+  issue-id:
+    description: "Linear issue ID (e.g. LIL-42). Auto-detected from branch name if omitted."
+    default: ""
+  state:
+    description: "Target state: 'In Progress' | 'In Review' | 'Done' | 'Cancelled'"
+    required: true
+  team-key:
+    description: "Linear team key"
+    default: "LIL"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve issue ID from branch
+      id: resolve
+      shell: bash
+      run: |
+        ISSUE="${{ inputs.issue-id }}"
+        if [[ -z "$ISSUE" ]]; then
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          ISSUE=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+        fi
+        echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
+
+    - name: Fetch state ID
+      id: state
+      shell: bash
+      run: |
+        RESP=$(curl -fsS https://api.linear.app/graphql \
+          -H "Authorization: ${{ inputs.linear-api-key }}" \
+          -H "Content-Type: application/json" \
+          -d "$(jq -n \
+            --arg team "${{ inputs.team-key }}" \
+            '{"query": "query($team:String!){teams(filter:{key:{eq:$team}}){nodes{states{nodes{id name}}}}}", "variables": {"team": $team}}')")
+        STATE_ID=$(echo "$RESP" | jq -r \
+          --arg s "${{ inputs.state }}" \
+          '.data.teams.nodes[0].states.nodes[] | select(.name == $s) | .id')
+        echo "id=$STATE_ID" >> "$GITHUB_OUTPUT"
+
+    - name: Transition issue
+      if: steps.resolve.outputs.issue != '' && steps.state.outputs.id != ''
+      shell: bash
+      run: |
+        curl -fsS https://api.linear.app/graphql \
+          -H "Authorization: ${{ inputs.linear-api-key }}" \
+          -H "Content-Type: application/json" \
+          -d "$(jq -n \
+            --arg id "${{ steps.resolve.outputs.issue }}" \
+            --arg state "${{ steps.state.outputs.id }}" \
+            '{"query": "mutation($id:String!,$state:String!){issueUpdate(id:$id,input:{stateId:$state}){success}}", "variables": {"id": $id, "state": $state}}')"
