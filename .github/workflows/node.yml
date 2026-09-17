@@ -1,7 +1,10 @@
 name: node
 
-# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit.
+# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit,
+# core, lift.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
+#
+# Repos with no committed lockfile must pass install-cmd: npm install.
 
 on:
   workflow_call:
@@ -26,13 +29,47 @@ on:
       test-cmd:
         type: string
         default: ""
+      e2e-cmd:
+        description: Runs after test-cmd, with a browser available when browsers is true.
+        type: string
+        default: ""
+      browsers:
+        description: Install and cache Playwright Chromium for e2e.
+        type: boolean
+        default: false
       runs-on:
         type: string
         default: ubuntu-latest
+      private-deps:
+        description: >
+          Authenticate git so private JakobMelchard repos referenced as
+          dependencies (github:owner/repo#ref, git+https://…) resolve.
+        type: boolean
+        default: false
+      private-repos:
+        description: >
+          Comma/newline-separated repos the minted app token may read,
+          e.g. "observe". Only used with app credentials.
+        type: string
+        default: ""
+    secrets:
+      app-client-id:
+        description: GitHub App client ID (preferred over a PAT — no expiry to babysit).
+        required: false
+      app-private-key:
+        description: GitHub App private key. Presence of this selects the app path.
+        required: false
+      token:
+        description: PAT fallback, used when no app private key is supplied.
+        required: false
 
 jobs:
   ci:
     runs-on: ${{ inputs.runs-on }}
+    env:
+      # `secrets` is not available in a step-level `if`. Evaluate the
+      # comparison here so only the boolean — never the key — is in env.
+      HAS_APP: ${{ secrets.app-private-key != '' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -43,9 +80,54 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
+      - name: mint app token
+        id: app
+        if: inputs.private-deps && env.HAS_APP == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.app-client-id }}
+          private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ inputs.private-repos }}
+          permission-contents: read
+
+      # npm expands the `github:owner/repo` shorthand to git+ssh, so the ssh
+      # and scp-like forms need the token as much as https does. git cannot
+      # process a `git+` scheme on its own, so mapping those too turns a hard
+      # failure into a working fetch if a tool ever passes one through.
+      #
+      # --add on every mapping: insteadOf is multi-valued, and a plain
+      # `git config` replaces the existing value rather than appending, which
+      # would leave only the last form authenticated.
+      - name: configure private dependency access
+        if: inputs.private-deps
+        env:
+          TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
+        run: |
+          auth="https://x-access-token:${TOKEN}@github.com/"
+          for from in \
+            "https://github.com/" \
+            "ssh://git@github.com/" \
+            "git@github.com:" \
+            "git+https://github.com/" \
+            "git+ssh://git@github.com/"; do
+            git config --global --add url."$auth".insteadOf "$from"
+          done
+
       - name: install
         if: inputs.install-cmd != ''
         run: ${{ inputs.install-cmd }}
+
+      - name: cache browsers
+        if: inputs.browsers
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('**/package-lock.json', '**/package.json') }}
+
+      - name: install browsers
+        if: inputs.browsers
+        run: npx playwright-core install --with-deps chromium
 
       - name: check
         if: inputs.check-cmd != ''
@@ -58,3 +140,7 @@ jobs:
       - name: test
         if: inputs.test-cmd != ''
         run: ${{ inputs.test-cmd }}
+
+      - name: e2e
+        if: inputs.e2e-cmd != ''
+        run: ${{ inputs.e2e-cmd }}
