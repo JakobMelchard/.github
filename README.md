@@ -86,7 +86,10 @@ scoped to the listed repos that is revoked when the job ends.
    - Where can it be installed: *Only on this account*
 2. After creating it: note the **Client ID**, then **Generate a private key**
    (downloads a `.pem`).
-3. **Install App** → Only select repositories → `observe`.
+3. **Install App** → Only select repositories → every repo that will be read
+   as a dependency (`observe` today). A token can only be minted for repos in
+   the installation, so add each new private dependency here as well —
+   `private-repos` naming a repo the App is not installed on fails to mint.
 4. Add two secrets (Settings → Secrets and variables → Actions):
    - `APP_CLIENT_ID` — the Client ID
    - `APP_PRIVATE_KEY` — the full contents of the `.pem`, `BEGIN`/`END` lines included
@@ -166,18 +169,21 @@ browser-driven suite in `e2e-cmd` so it runs after `test-cmd`:
       browsers: true
 ```
 
-`lift` depends on private `core` as `github:JakobMelchard/core#v0.1.0`. npm
-expands that shorthand to `git+ssh`, so `private-deps: true` rewrites the ssh
-and https forms alike — same app/PAT credentials as `go.yml` and `python.yml`:
+For a private JakobMelchard package as a dependency, set `private-deps` and
+name the repos in `private-repos` — same app/PAT credentials as `go.yml` and
+`python.yml`. npm expands the `github:owner/repo` shorthand to `git+ssh`, so
+this authenticates the ssh and scp-like forms as well as https:
 
 ```yaml
     with:
       private-deps: true
-      private-repos: core
+      private-repos: observe     # must be in the App installation, see above
     secrets:
       app-client-id: ${{ secrets.APP_CLIENT_ID }}
       app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
 ```
+
+`lift` does not need any of this: it depends on `core`, which is public.
 
 ## Composite actions
 

@@ -49,7 +49,7 @@ on:
       private-repos:
         description: >
           Comma/newline-separated repos the minted app token may read,
-          e.g. "core". Only used with app credentials.
+          e.g. "observe". Only used with app credentials.
         type: string
         default: ""
     secrets:
@@ -91,17 +91,28 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # npm expands the `github:owner/repo` shorthand to git+ssh, and a bare
-      # git+https:// dependency needs the token too — rewrite all three forms.
+      # npm expands the `github:owner/repo` shorthand to git+ssh, so the ssh
+      # and scp-like forms need the token as much as https does. git cannot
+      # process a `git+` scheme on its own, so mapping those too turns a hard
+      # failure into a working fetch if a tool ever passes one through.
+      #
+      # --add on every mapping: insteadOf is multi-valued, and a plain
+      # `git config` replaces the existing value rather than appending, which
+      # would leave only the last form authenticated.
       - name: configure private dependency access
         if: inputs.private-deps
         env:
           TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
         run: |
           auth="https://x-access-token:${TOKEN}@github.com/"
-          git config --global url."$auth".insteadOf "https://github.com/"
-          git config --global url."$auth".insteadOf "ssh://git@github.com/"
-          git config --global url."$auth".insteadOf "git@github.com:"
+          for from in \
+            "https://github.com/" \
+            "ssh://git@github.com/" \
+            "git@github.com:" \
+            "git+https://github.com/" \
+            "git+ssh://git@github.com/"; do
+            git config --global --add url."$auth".insteadOf "$from"
+          done
 
       - name: install
         if: inputs.install-cmd != ''
