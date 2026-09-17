@@ -1,8 +1,13 @@
 # .github
 
 Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos.
-Reusable workflows, composite actions, and the common git hook set live here —
-there is no separate `core` repo.
+Reusable workflows, composite actions, and the common git hook set live here.
+
+The boundary against `core`: **this repo is how code is built and checked,
+`core` is code that ships inside the app.** Workflows, composite actions,
+hooks and scaffolding templates belong here; `core` keeps `src/`, `SPEC.md`,
+the store contract test, and the semver tags consumers pin. `core` must not
+grow a second reusable CI workflow or a second hook set.
 
 Actions are pinned by commit SHA with the version in a trailing comment.
 Bump deliberately; `lint.yml` gates every change to this repo — actionlint,
@@ -138,6 +143,35 @@ jobs:
     with:
       check-cmd: make check
       lint-cmd: make lint
+```
+
+`install-cmd` defaults to `npm ci`. Repos with no committed lockfile (`lift`)
+must pass `npm install` instead.
+
+Set `browsers: true` to install and cache Playwright Chromium, and put the
+browser-driven suite in `e2e-cmd` so it runs after `test-cmd`:
+
+```yaml
+    with:
+      install-cmd: npm install
+      lint-cmd: ""
+      check-cmd: npx tsc
+      test-cmd: npm test
+      e2e-cmd: npm run e2e
+      browsers: true
+```
+
+`lift` depends on private `core` as `github:JakobMelchard/core#v0.1.0`. npm
+expands that shorthand to `git+ssh`, so `private-deps: true` rewrites the ssh
+and https forms alike — same app/PAT credentials as `go.yml` and `python.yml`:
+
+```yaml
+    with:
+      private-deps: true
+      private-repos: core
+    secrets:
+      app-client-id: ${{ secrets.APP_CLIENT_ID }}
+      app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
 ```
 
 ## Composite actions
