@@ -11,6 +11,12 @@ on:
       terraform-version:
         type: string
         default: "~> 1.6"
+      validate:
+        description: >
+          Run `terraform validate`. Set false only for a config that is known
+          not to validate yet, and say why at the call site.
+        type: boolean
+        default: true
       runs-on:
         type: string
         default: ubuntu-latest
@@ -30,4 +36,5 @@ jobs:
 
       - run: terraform fmt -check -recursive
       - run: terraform init -backend=false
-      - run: terraform validate
+      - if: inputs.validate
+        run: terraform validate
