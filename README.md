@@ -102,6 +102,9 @@ on staged file type and skips any tool that is not installed:
 | `*.js` | `eslint --quiet` — blocks |
 | `*.tf` | `terraform fmt` + re-stage |
 
+Repo-specific checks go in `.githooks/pre-commit.local` / `.githooks/pre-push.local`
+(executable). The shared hook runs them last, so the shared part stays updatable.
+
 `pre-push` is a cheap build gate: `go vet` + `go build` when `go.mod` exists,
 `terraform fmt -check` when `terraform/` exists. Tests belong in CI.
 

@@ -84,4 +84,11 @@ if [ -n "$TF" ] && have terraform; then
   echo "$TF" | tr '\n' '\0' | xargs -0 git add
 fi
 
+# ── repo-specific extension ──────────────────────────────────────────
+# Anything this repo needs beyond the shared checks goes in
+# .githooks/pre-commit.local — keeps the shared hook updatable.
+if [ -x ".githooks/pre-commit.local" ]; then
+  .githooks/pre-commit.local || fail "pre-commit.local failed"
+fi
+
 exit 0

@@ -5,6 +5,7 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 have() { command -v "$1" >/dev/null 2>&1; }
+fail() { echo "pre-push: $*" >&2; exit 1; }
 
 if [ -f go.mod ] && have go; then
   go vet ./... || { echo "pre-push: go vet failed" >&2; exit 1; }
@@ -14,6 +15,13 @@ fi
 if [ -d terraform ] && have terraform; then
   terraform -chdir=terraform fmt -check -recursive \
     || { echo "pre-push: terraform fmt -check failed" >&2; exit 1; }
+fi
+
+# ── repo-specific extension ──────────────────────────────────────────
+# Anything this repo needs beyond the shared checks goes in
+# .githooks/pre-push.local — keeps the shared hook updatable.
+if [ -x ".githooks/pre-push.local" ]; then
+  .githooks/pre-push.local || fail "pre-push.local failed"
 fi
 
 exit 0

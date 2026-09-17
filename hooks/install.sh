@@ -25,6 +25,19 @@ else
   cp "$tmp"/pre-commit "$tmp"/pre-push .githooks/
 fi
 
+# mark the copies as vendored so nobody edits them in place
+for h in pre-commit pre-push; do
+  tmpf=$(mktemp)
+  {
+    head -1 ".githooks/$h"
+    echo "# VENDORED from JakobMelchard/.github/hooks/$h — do not edit."
+    echo "# Refresh: curl -fsSL https://raw.githubusercontent.com/$REPO/$REF/hooks/install.sh | bash"
+    echo "# Repo-specific checks belong in .githooks/$h.local (executable)."
+    tail -n +2 ".githooks/$h"
+  } > "$tmpf"
+  mv "$tmpf" ".githooks/$h"
+done
+
 chmod +x .githooks/pre-commit .githooks/pre-push
 git config core.hooksPath .githooks
 echo "hooks installed -> .githooks/ (core.hooksPath set)"
