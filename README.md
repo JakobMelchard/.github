@@ -54,7 +54,32 @@ jobs:
 ```
 
 `github.token` is scoped to the calling repo only — a cross-repo private module
-needs a PAT or app token passed as `secrets.token`.
+needs a PAT or app token passed as `secrets.token`. Map it explicitly rather
+than using `secrets: inherit`, so only that one secret crosses the boundary:
+
+```yaml
+    secrets:
+      token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
+```
+
+### The `PRIVATE_DEPS_TOKEN` org secret
+
+Two repos need it: `workouts` (imports private `gsheet`) and `transcriber`
+(imports private `observe`).
+
+1. Create a **fine-grained PAT** — Settings → Developer settings → Personal
+   access tokens → Fine-grained tokens:
+   - Resource owner: **JakobMelchard**
+   - Repository access: **Only select repositories** → `gsheet`, `observe`
+   - Permissions: **Contents → Read-only** (Metadata read-only is added automatically)
+2. Add it as an **organization secret** — org Settings → Secrets and variables
+   → Actions → New organization secret:
+   - Name: `PRIVATE_DEPS_TOKEN`
+   - Repository access: **Selected repositories** → `workouts`, `transcriber`
+
+Fine-grained PATs expire; the workflows fail closed when it does. A GitHub App
+installation token avoids expiry if that becomes annoying. Making `gsheet` and
+`observe` public removes the need for a secret entirely.
 
 ### Python
 
