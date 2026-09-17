@@ -1,0 +1,85 @@
+name: python
+
+# Reusable Python CI. Callers: transcriber, monitor, observe, CKAD-prep.
+#
+# package-manager:
+#   uv    -> uv sync (observe, transcriber, CKAD-prep)
+#   pip   -> python -m venv .venv && .venv/bin/pip install -e ".[dev]"
+#   none  -> stdlib only, no install step (monitor)
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        type: string
+        default: "3.12"
+      working-directory:
+        type: string
+        default: "."
+      package-manager:
+        description: uv | pip | none
+        type: string
+        default: uv
+      install-cmd:
+        description: Overrides the package-manager default when set.
+        type: string
+        default: ""
+      lint-cmd:
+        type: string
+        default: "ruff check ."
+      test-cmd:
+        type: string
+        default: "pytest"
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        if: inputs.package-manager == 'uv'
+        with:
+          enable-cache: true
+
+      - name: install
+        run: |
+          if [ -n '${{ inputs.install-cmd }}' ]; then
+            ${{ inputs.install-cmd }}
+          else
+            case '${{ inputs.package-manager }}' in
+              uv)   uv sync --all-extras ;;
+              pip)  python -m venv .venv && .venv/bin/pip install -e '.[dev]' ;;
+              none) echo 'stdlib only — no install' ;;
+              *)    echo "unknown package-manager: ${{ inputs.package-manager }}" >&2; exit 1 ;;
+            esac
+          fi
+
+      # uv/pip put entrypoints somewhere non-global; run them through the env.
+      - name: lint
+        if: inputs.lint-cmd != ''
+        run: |
+          case '${{ inputs.package-manager }}' in
+            uv)   uv run ${{ inputs.lint-cmd }} ;;
+            pip)  .venv/bin/${{ inputs.lint-cmd }} ;;
+            none) ${{ inputs.lint-cmd }} ;;
+          esac
+
+      - name: test
+        if: inputs.test-cmd != ''
+        run: |
+          case '${{ inputs.package-manager }}' in
+            uv)   uv run ${{ inputs.test-cmd }} ;;
+            pip)  .venv/bin/${{ inputs.test-cmd }} ;;
+            none) ${{ inputs.test-cmd }} ;;
+          esac

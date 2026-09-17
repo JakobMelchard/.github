@@ -1,0 +1,77 @@
+name: go
+
+# Reusable Go CI. Callers: gsheet, health, health-editor, workouts.
+#
+#   jobs:
+#     ci:
+#       uses: JakobMelchard/.github/.github/workflows/go.yml@main
+#       secrets: inherit          # only if the repo needs private modules
+
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: Go toolchain version.
+        type: string
+        default: "1.25"
+      working-directory:
+        type: string
+        default: "."
+      vet-cmd:
+        description: Empty string skips the step.
+        type: string
+        default: "go vet ./..."
+      test-cmd:
+        type: string
+        default: "go test ./..."
+      build-cmd:
+        type: string
+        default: "go build ./..."
+      runs-on:
+        type: string
+        default: ubuntu-latest
+      private-modules:
+        description: >
+          Rewrite github.com -> x-access-token auth so private JakobMelchard
+          modules resolve. Requires secrets: inherit.
+        type: boolean
+        default: false
+    secrets:
+      token:
+        description: PAT with read access to the private module repos. Falls back to GITHUB_TOKEN.
+        required: false
+
+jobs:
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ inputs.go-version }}
+          cache-dependency-path: ${{ inputs.working-directory }}/go.sum
+
+      # GOPRIVATE alone is not enough on a runner — git needs credentials too.
+      - name: configure private module access
+        if: inputs.private-modules
+        env:
+          TOKEN: ${{ secrets.token || github.token }}
+        run: |
+          go env -w GOPRIVATE='github.com/${{ github.repository_owner }}/*'
+          git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+
+      - name: vet
+        if: inputs.vet-cmd != ''
+        run: ${{ inputs.vet-cmd }}
+
+      - name: test
+        if: inputs.test-cmd != ''
+        run: ${{ inputs.test-cmd }}
+
+      - name: build
+        if: inputs.build-cmd != ''
+        run: ${{ inputs.build-cmd }}

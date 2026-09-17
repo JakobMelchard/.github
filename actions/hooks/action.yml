@@ -1,0 +1,27 @@
+name: hooks
+description: >
+  Install the shared git hooks from JakobMelchard/.github into the current
+  checkout and point core.hooksPath at them.
+
+inputs:
+  ref:
+    description: Ref of JakobMelchard/.github to take hooks from.
+    required: false
+    default: main
+
+runs:
+  using: composite
+  steps:
+    - name: fetch shared hooks
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        tmp=$(mktemp -d)
+        gh api "repos/JakobMelchard/.github/tarball/${{ inputs.ref }}" > "$tmp/h.tgz"
+        tar -xzf "$tmp/h.tgz" -C "$tmp" --strip-components=1
+        mkdir -p .githooks
+        cp "$tmp"/hooks/* .githooks/
+        chmod +x .githooks/*
+        git config core.hooksPath .githooks
+        echo "installed: $(ls .githooks | tr '\n' ' ')"

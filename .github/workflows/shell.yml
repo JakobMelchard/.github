@@ -1,0 +1,69 @@
+name: shell
+
+# Reusable shell CI. Callers: bin, monitor, infra.
+# bin/ scripts are extensionless with shebangs, so globbing on *.sh is not enough —
+# detect by shebang instead.
+
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: Space-separated roots to scan.
+        type: string
+        default: "."
+      severity:
+        description: shellcheck minimum severity (error|warning|info|style).
+        type: string
+        default: warning
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: collect shell scripts
+        id: collect
+        run: |
+          : > /tmp/scripts.txt
+          for root in ${{ inputs.paths }}; do
+            while IFS= read -r f; do
+              case "$(head -c 2 "$f")" in
+                '#!') head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)' && echo "$f" >> /tmp/scripts.txt ;;
+              esac
+            done < <(find "$root" -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.venv/*')
+          done
+          sort -u /tmp/scripts.txt -o /tmp/scripts.txt
+          echo "count=$(wc -l < /tmp/scripts.txt)" >> "$GITHUB_OUTPUT"
+          echo "found $(wc -l < /tmp/scripts.txt) scripts:"
+          cat /tmp/scripts.txt
+        shell: bash
+
+      - name: syntax check
+        if: steps.collect.outputs.count != '0'
+        run: |
+          rc=0
+          while IFS= read -r f; do
+            case "$(head -1 "$f")" in
+              *zsh) zsh -n "$f" || rc=1 ;;
+              *)    bash -n "$f" || rc=1 ;;
+            esac
+          done < /tmp/scripts.txt
+          exit $rc
+        shell: bash
+
+      - name: shellcheck
+        if: steps.collect.outputs.count != '0'
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          # zsh is out of shellcheck's scope; skip those.
+          rc=0
+          while IFS= read -r f; do
+            head -1 "$f" | grep -q zsh && continue
+            shellcheck --severity=${{ inputs.severity }} "$f" || rc=1
+          done < /tmp/scripts.txt
+          exit $rc
+        shell: bash

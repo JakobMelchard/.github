@@ -1,1 +1,126 @@
+# .github
 
+Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos.
+Reusable workflows, composite actions, and the common git hook set live here —
+there is no separate `core` repo.
+
+Actions are pinned by commit SHA with the version in a trailing comment.
+Bump deliberately; `lint.yml` gates every change to this repo.
+
+## Reusable workflows
+
+Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
+
+| Workflow | For | Key inputs |
+|----------|-----|------------|
+| `release.yml` | any repo using release-please | — |
+| `go.yml` | `gsheet` `health` `health-editor` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
+| `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
+| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `weiterbildungszeit` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` |
+| `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
+| `terraform.yml` | `infra` | `working-directory` `terraform-version` |
+
+Every `*-cmd` input skips its step when set to `""`.
+
+### Go
+
+```yaml
+name: ci
+on: { pull_request: {}, push: { branches: [main] } }
+jobs:
+  ci:
+    uses: JakobMelchard/.github/.github/workflows/go.yml@main
+    with:
+      test-cmd: make test
+      build-cmd: make build
+```
+
+`workouts` depends on the private `github.com/JakobMelchard/gsheet` module.
+`GOPRIVATE` alone does not authenticate a runner, so set `private-modules` and
+pass a token with read access to the module repo:
+
+```yaml
+jobs:
+  ci:
+    uses: JakobMelchard/.github/.github/workflows/go.yml@main
+    with:
+      private-modules: true
+    secrets: inherit
+```
+
+`github.token` is scoped to the calling repo only — a cross-repo private module
+needs a PAT or app token passed as `secrets.token`.
+
+### Python
+
+```yaml
+jobs:
+  ci:
+    uses: JakobMelchard/.github/.github/workflows/python.yml@main
+    with:
+      python-version: "3.11"
+      package-manager: pip          # transcriber: venv + pip install -e ".[dev]"
+      lint-cmd: ruff check src tests
+      test-cmd: python -m pytest
+```
+
+`monitor` is stdlib-only — use `package-manager: none`.
+
+### Node
+
+```yaml
+jobs:
+  ci:
+    uses: JakobMelchard/.github/.github/workflows/node.yml@main
+    with:
+      check-cmd: make check
+      lint-cmd: make lint
+```
+
+## Composite actions
+
+```yaml
+- uses: JakobMelchard/.github/actions/gitleaks@main
+  with:
+    config: .gitleaks.toml     # optional
+
+- uses: JakobMelchard/.github/actions/hooks@main
+```
+
+## Git hooks
+
+One hook set replaces the per-repo `.githooks/` copies. `pre-commit` dispatches
+on staged file type and skips any tool that is not installed:
+
+| Staged | Action |
+|--------|--------|
+| any | `gitleaks` on the staged diff — **blocks** |
+| `*.go` | `gofmt -w` + re-stage |
+| `*.py` | `py_compile` — blocks; `ruff check` — blocks |
+| shebang `bash`/`sh`/`zsh` | `bash -n` / `zsh -n` — blocks; `shellcheck` — blocks |
+| `*.js` `*.css` `*.html` `*.md` `*.yml` … | `prettier --write` + re-stage (needs `package.json`) |
+| `*.js` | `eslint --quiet` — blocks |
+| `*.tf` | `terraform fmt` + re-stage |
+
+`pre-push` is a cheap build gate: `go vet` + `go build` when `go.mod` exists,
+`terraform fmt -check` when `terraform/` exists. Tests belong in CI.
+
+Install:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/JakobMelchard/.github/main/hooks/install.sh | bash
+```
+
+Hooks target **bash 3.2** — macOS ships 3.2 and never updated it. No `mapfile`,
+no `declare -A`. `lint.yml` rejects both.
+
+Bypass with `git commit --no-verify`.
+
+## Layout
+
+```
+.github/workflows/    reusable workflows + this repo's own lint.yml
+actions/              composite actions (gitleaks, hooks)
+hooks/                shared pre-commit / pre-push / install.sh
+profile/              org profile README
+```

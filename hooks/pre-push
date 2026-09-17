@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Shared pre-push. Source: JakobMelchard/.github/hooks/
+# Cheap build-level gate only — the full test suite belongs in CI.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+have() { command -v "$1" >/dev/null 2>&1; }
+
+if [ -f go.mod ] && have go; then
+  go vet ./... || { echo "pre-push: go vet failed" >&2; exit 1; }
+  go build ./... || { echo "pre-push: go build failed" >&2; exit 1; }
+fi
+
+if [ -d terraform ] && have terraform; then
+  terraform -chdir=terraform fmt -check -recursive \
+    || { echo "pre-push: terraform fmt -check failed" >&2; exit 1; }
+fi
+
+exit 0

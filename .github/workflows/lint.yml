@@ -1,0 +1,43 @@
+name: lint
+
+# This repo's own CI: the reusable workflows here run in every other repo,
+# so a syntax error is an org-wide outage.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  actionlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: actionlint
+        run: |
+          bash <(curl -fsSL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
+
+  hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Hooks run on macOS (bash 3.2) as well as here — keep them portable.
+      - name: syntax
+        run: for f in hooks/*; do bash -n "$f" || exit 1; done
+
+      - name: shellcheck
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          shellcheck --severity=warning hooks/pre-commit hooks/pre-push hooks/install.sh
+
+      - name: reject bash 4+ builtins
+        run: |
+          if grep -nE '^\s*(mapfile|readarray)\b|declare -A' hooks/*; then
+            echo "bash 4+ construct found — macOS ships bash 3.2" >&2
+            exit 1
+          fi
+          echo "portable"

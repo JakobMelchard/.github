@@ -1,0 +1,60 @@
+name: node
+
+# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit.
+# Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        default: "22"
+      working-directory:
+        type: string
+        default: "."
+      install-cmd:
+        description: Empty string skips install (static sites with no deps).
+        type: string
+        default: "npm ci"
+      check-cmd:
+        description: Formatting check, e.g. "make check" or "npx prettier --check .".
+        type: string
+        default: ""
+      lint-cmd:
+        type: string
+        default: "npx eslint ."
+      test-cmd:
+        type: string
+        default: ""
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: install
+        if: inputs.install-cmd != ''
+        run: ${{ inputs.install-cmd }}
+
+      - name: check
+        if: inputs.check-cmd != ''
+        run: ${{ inputs.check-cmd }}
+
+      - name: lint
+        if: inputs.lint-cmd != ''
+        run: ${{ inputs.lint-cmd }}
+
+      - name: test
+        if: inputs.test-cmd != ''
+        run: ${{ inputs.test-cmd }}

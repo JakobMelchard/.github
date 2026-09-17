@@ -1,0 +1,30 @@
+name: gitleaks
+description: Scan the checkout for committed secrets.
+
+inputs:
+  args:
+    description: Extra gitleaks arguments.
+    required: false
+    default: ""
+  config:
+    description: Path to a .gitleaks.toml, relative to the workspace.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: install gitleaks
+      shell: bash
+      run: |
+        VERSION=8.28.0
+        curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+          | tar -xz -C /tmp gitleaks
+        sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+
+    - name: scan
+      shell: bash
+      run: |
+        args=""
+        [ -n '${{ inputs.config }}' ] && args="--config ${{ inputs.config }}"
+        gitleaks dir . --no-banner --redact $args ${{ inputs.args }}

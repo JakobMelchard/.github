@@ -1,0 +1,33 @@
+name: terraform
+
+# Reusable Terraform/OpenTofu CI. Caller: infra (terraform/ and terraform/cloudflare/).
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        default: terraform
+      terraform-version:
+        type: string
+        default: "~> 1.6"
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false
+      - run: terraform validate
