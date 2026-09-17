@@ -1,7 +1,35 @@
-name: Release
+name: release
+
+# Shared release-please. Callers that need to publish assets read the outputs:
+#
+#   jobs:
+#     release:
+#       uses: JakobMelchard/.github/.github/workflows/release.yml@main
+#       with: { release-type: go }
+#     publish:
+#       needs: release
+#       if: needs.release.outputs.release_created == 'true'
 
 on:
   workflow_call:
+    inputs:
+      release-type:
+        description: release-please release type (go, node, simple, …). Empty = infer from config files.
+        type: string
+        default: ""
+      config-file:
+        type: string
+        default: release-please-config.json
+      manifest-file:
+        type: string
+        default: .release-please-manifest.json
+    outputs:
+      release_created:
+        value: ${{ jobs.release-please.outputs.release_created }}
+      tag_name:
+        value: ${{ jobs.release-please.outputs.tag_name }}
+      version:
+        value: ${{ jobs.release-please.outputs.version }}
 
 permissions:
   contents: write
@@ -10,7 +38,15 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
     steps:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: ${{ inputs.release-type }}
+          config-file: ${{ inputs.config-file }}
+          manifest-file: ${{ inputs.manifest-file }}
