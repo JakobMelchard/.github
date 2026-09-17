@@ -87,10 +87,15 @@ scoped to the listed repos that is revoked when the job ends.
 2. After creating it: note the **Client ID**, then **Generate a private key**
    (downloads a `.pem`).
 3. **Install App** → Only select repositories → `observe`.
-4. Add two org secrets (Settings → Secrets and variables → Actions), scoped to
-   `transcriber`:
+4. Add two secrets (Settings → Secrets and variables → Actions):
    - `APP_CLIENT_ID` — the Client ID
    - `APP_PRIVATE_KEY` — the full contents of the `.pem`, `BEGIN`/`END` lines included
+
+   **These must be repository secrets, not org secrets.** `JakobMelchard` is
+   on the free plan, where an org secret can only be granted to public repos;
+   every consumer here is private. Add them on each consuming repo — `lift`
+   today — and repeat the pair when a second consumer appears. Org secrets
+   become an option on Team.
 
 ```yaml
     with:
