@@ -26,7 +26,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `release.yml` | any repo using release-please | — |
 | `go.yml` | `gsheet` `health` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
-| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `weiterbildungszeit` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` |
+| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `weiterbildungszeit` `core` `lift` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` `private-deps` |
 | `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
 
