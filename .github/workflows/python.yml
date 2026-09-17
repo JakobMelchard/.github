@@ -33,6 +33,16 @@ on:
       runs-on:
         type: string
         default: ubuntu-latest
+      private-deps:
+        description: >
+          Authenticate git so private JakobMelchard repos referenced as
+          dependencies (git+https://…) resolve. Requires secrets: inherit.
+        type: boolean
+        default: false
+    secrets:
+      token:
+        description: PAT or app token with read access to the private dependency repos.
+        required: false
 
 jobs:
   ci:
@@ -55,6 +65,13 @@ jobs:
       # Commands go through env vars, not direct interpolation: an empty
       # `${{ }}` inside an if/case block produces an empty body, which is a
       # bash syntax error.
+      # pip/uv shell out to git over https; a token must be wired into git config.
+      - name: configure private dependency access
+        if: inputs.private-deps
+        env:
+          TOKEN: ${{ secrets.token || github.token }}
+        run: git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+
       - name: install
         env:
           INSTALL_CMD: ${{ inputs.install-cmd }}

@@ -66,6 +66,10 @@ jobs:
 
 `monitor` is stdlib-only — use `package-manager: none`.
 
+`transcriber` depends on `observe` via `git+https://github.com/JakobMelchard/observe.git`,
+which is private. Set `private-deps: true` and `secrets: inherit`, and provide a
+`token` secret — same constraint as `private-modules` in `go.yml`.
+
 ### Node
 
 ```yaml
