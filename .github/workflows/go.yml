@@ -53,6 +53,9 @@ jobs:
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: ${{ inputs.go-version }}
+          # A repo without go.sum at that path makes setup-go fail on an
+          # unresolvable cache path — turn caching off in that case.
+          cache: ${{ hashFiles(format('{0}/go.sum', inputs.working-directory)) != '' }}
           cache-dependency-path: ${{ inputs.working-directory }}/go.sum
 
       # GOPRIVATE alone is not enough on a runner — git needs credentials too.

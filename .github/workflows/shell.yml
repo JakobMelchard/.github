@@ -45,6 +45,8 @@ jobs:
       - name: syntax check
         if: steps.collect.outputs.count != '0'
         run: |
+          # ubuntu-latest has no zsh
+          command -v zsh >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq zsh; }
           rc=0
           while IFS= read -r f; do
             case "$(head -1 "$f")" in

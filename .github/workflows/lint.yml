@@ -41,3 +41,35 @@ jobs:
             exit 1
           fi
           echo "portable"
+
+  # Integration smoke: actually call each reusable workflow with its emptiest
+  # viable inputs. A previous bug — an empty `${{ inputs.install-cmd }}` left an
+  # empty if-body and broke every caller — passed actionlint but died at runtime.
+  smoke-python:
+    uses: ./.github/workflows/python.yml
+    with:
+      package-manager: none
+      install-cmd: ""
+      lint-cmd: ""
+      test-cmd: ""
+
+  smoke-node:
+    uses: ./.github/workflows/node.yml
+    with:
+      install-cmd: ""
+      lint-cmd: ""
+      check-cmd: ""
+      test-cmd: ""
+
+  smoke-go:
+    uses: ./.github/workflows/go.yml
+    with:
+      vet-cmd: ""
+      test-cmd: ""
+      build-cmd: ""
+
+  smoke-shell:
+    uses: ./.github/workflows/shell.yml
+    with:
+      paths: hooks
+      severity: warning
