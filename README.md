@@ -5,7 +5,12 @@ Reusable workflows, composite actions, and the common git hook set live here —
 there is no separate `core` repo.
 
 Actions are pinned by commit SHA with the version in a trailing comment.
-Bump deliberately; `lint.yml` gates every change to this repo.
+Bump deliberately; `lint.yml` gates every change to this repo — actionlint,
+shellcheck over the hooks, a bash-3.2 portability check, and a smoke call of
+every reusable workflow with empty inputs.
+
+Callers currently reference `@main`, so fixes propagate immediately. `v1` is
+tagged as a stable alternative if you would rather pin and bump deliberately.
 
 ## Reusable workflows
 
