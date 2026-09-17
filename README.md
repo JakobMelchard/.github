@@ -12,7 +12,10 @@ grow a second reusable CI workflow or a second hook set.
 Actions are pinned by commit SHA with the version in a trailing comment.
 Bump deliberately; `lint.yml` gates every change to this repo — actionlint,
 shellcheck over the hooks, a bash-3.2 portability check, and a smoke call of
-every reusable workflow with empty inputs.
+`go.yml` `python.yml` `node.yml` `shell.yml` with empty inputs. `release.yml`
+is not smoked — release-please holds `contents: write` and would open real
+release PRs on every run — and neither is `terraform.yml`, which needs a
+Terraform config directory to act on.
 
 Callers currently reference `@main`, so fixes propagate immediately. `v1` is
 tagged as a stable alternative if you would rather pin and bump deliberately.
@@ -30,7 +33,9 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
 
-Every `*-cmd` input skips its step when set to `""`.
+Every `*-cmd` input skips its step when set to `""` — except `python.yml`'s
+`install-cmd`, which overrides the `package-manager` default rather than
+skipping. Install nothing there with `package-manager: none`.
 
 ### Go
 

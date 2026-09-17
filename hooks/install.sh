@@ -12,9 +12,13 @@ REPO="JakobMelchard/.github"
 cd "$(git rev-parse --show-toplevel)"
 mkdir -p .githooks
 
-if [ -d "$(dirname "${BASH_SOURCE[0]}")/../hooks" ]; then
+# :- matters: piped from curl there is no BASH_SOURCE, and `set -u` would
+# abort the substitution — it happened to pick the right branch anyway, but
+# printed "BASH_SOURCE[0]: unbound variable" on the documented install path.
+self="${BASH_SOURCE[0]:-}"
+if [ -n "$self" ] && [ -d "$(dirname "$self")/../hooks" ]; then
   # running from a clone of .github itself
-  src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  src="$(cd "$(dirname "$self")" && pwd)"
   cp "$src"/pre-commit "$src"/pre-push .githooks/
 else
   tmp=$(mktemp -d)
