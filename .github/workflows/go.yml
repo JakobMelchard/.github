@@ -1,6 +1,6 @@
 name: go
 
-# Reusable Go CI. Callers: gsheet, health, health-editor, workouts.
+# Reusable Go CI. Callers: gsheet, health, workouts.
 #
 #   jobs:
 #     ci:

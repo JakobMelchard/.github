@@ -19,7 +19,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | Workflow | For | Key inputs |
 |----------|-----|------------|
 | `release.yml` | any repo using release-please | — |
-| `go.yml` | `gsheet` `health` `health-editor` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
+| `go.yml` | `gsheet` `health` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
 | `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `weiterbildungszeit` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` |
 | `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
