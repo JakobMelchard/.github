@@ -32,18 +32,34 @@ on:
         default: ubuntu-latest
       private-modules:
         description: >
-          Rewrite github.com -> x-access-token auth so private JakobMelchard
-          modules resolve. Requires secrets: inherit.
+          Authenticate git so private JakobMelchard modules resolve.
+          Supply either app credentials or a PAT (see secrets).
         type: boolean
         default: false
+      private-repos:
+        description: >
+          Comma/newline-separated repos the minted app token may read,
+          e.g. "gsheet". Only used with app credentials.
+        type: string
+        default: ""
     secrets:
+      app-client-id:
+        description: GitHub App client ID (preferred over a PAT — no expiry to babysit).
+        required: false
+      app-private-key:
+        description: GitHub App private key. Presence of this selects the app path.
+        required: false
       token:
-        description: PAT with read access to the private module repos. Falls back to GITHUB_TOKEN.
+        description: PAT fallback, used when no app private key is supplied.
         required: false
 
 jobs:
   ci:
     runs-on: ${{ inputs.runs-on }}
+    env:
+      # `secrets` is not available in a step-level `if`. Evaluate the
+      # comparison here so only the boolean — never the key — is in env.
+      HAS_APP: ${{ secrets.app-private-key != '' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -58,11 +74,22 @@ jobs:
           cache: ${{ hashFiles(format('{0}/go.sum', inputs.working-directory)) != '' }}
           cache-dependency-path: ${{ inputs.working-directory }}/go.sum
 
+      - name: mint app token
+        id: app
+        if: inputs.private-modules && env.HAS_APP == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.app-client-id }}
+          private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ inputs.private-repos }}
+          permission-contents: read
+
       # GOPRIVATE alone is not enough on a runner — git needs credentials too.
       - name: configure private module access
         if: inputs.private-modules
         env:
-          TOKEN: ${{ secrets.token || github.token }}
+          TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
         run: |
           go env -w GOPRIVATE='github.com/${{ github.repository_owner }}/*'
           git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"

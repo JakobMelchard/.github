@@ -62,24 +62,50 @@ than using `secrets: inherit`, so only that one secret crosses the boundary:
       token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
 ```
 
-### The `PRIVATE_DEPS_TOKEN` org secret
+### Private dependencies: GitHub App (preferred) or PAT
 
-Two repos need it: `workouts` (imports private `gsheet`) and `transcriber`
-(imports private `observe`).
+Two repos need cross-repo read access: `workouts` (imports private `gsheet`)
+and `transcriber` (imports private `observe`). The shared workflows support
+both credential types and prefer the app when its private key is present.
 
-1. Create a **fine-grained PAT** — Settings → Developer settings → Personal
-   access tokens → Fine-grained tokens:
-   - Resource owner: **JakobMelchard**
-   - Repository access: **Only select repositories** → `gsheet`, `observe`
-   - Permissions: **Contents → Read-only** (Metadata read-only is added automatically)
-2. Add it as an **organization secret** — org Settings → Secrets and variables
-   → Actions → New organization secret:
-   - Name: `PRIVATE_DEPS_TOKEN`
-   - Repository access: **Selected repositories** → `workouts`, `transcriber`
+**GitHub App — recommended.** No expiry to babysit, and each run mints a token
+scoped to the listed repos that is revoked when the job ends.
 
-Fine-grained PATs expire; the workflows fail closed when it does. A GitHub App
-installation token avoids expiry if that becomes annoying. Making `gsheet` and
-`observe` public removes the need for a secret entirely.
+1. Org Settings → Developer settings → GitHub Apps → **New GitHub App**
+   - Name: anything (e.g. `melchbot`)
+   - Homepage URL: any valid URL; **uncheck Webhook → Active**
+   - Repository permissions: **Contents → Read-only** (Metadata follows automatically)
+   - Where can it be installed: *Only on this account*
+2. After creating it: note the **Client ID**, then **Generate a private key**
+   (downloads a `.pem`).
+3. **Install App** → Only select repositories → `gsheet`, `observe`.
+4. Add two org secrets (Settings → Secrets and variables → Actions), both
+   scoped to `workouts` and `transcriber`:
+   - `APP_CLIENT_ID` — the Client ID
+   - `APP_PRIVATE_KEY` — the full contents of the `.pem`, `BEGIN`/`END` lines included
+
+```yaml
+    with:
+      private-modules: true
+      private-repos: gsheet        # what the minted token may read
+    secrets:
+      app-client-id: ${{ secrets.APP_CLIENT_ID }}
+      app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
+```
+
+**PAT — simpler, expires.** Fine-grained PAT, resource owner `JakobMelchard`,
+repository access limited to `gsheet` and `observe`, permission Contents:
+Read-only. Store as org secret `PRIVATE_DEPS_TOKEN` and pass it instead:
+
+```yaml
+    secrets:
+      token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
+```
+
+Supplying both is fine — the app wins. Supplying neither falls back to
+`github.token`, which cannot read another repo, so the job fails closed.
+
+Making `gsheet` and `observe` public removes the need for either.
 
 ### Python
 
