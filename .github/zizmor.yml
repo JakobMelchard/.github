@@ -1,0 +1,8 @@
+# Our own reusable workflows are consumed at @main on purpose (lint.yml here is the gate).
+# Third-party actions must be hash-pinned.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "JakobMelchard/*": ref-pin
+        "*": hash-pin

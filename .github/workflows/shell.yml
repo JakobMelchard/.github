@@ -4,6 +4,9 @@ name: shell
 # bin/ scripts are extensionless with shebangs, so globbing on *.sh is not enough —
 # detect by shebang instead.
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -24,12 +27,16 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
 
       - name: collect shell scripts
         id: collect
+        env:
+          PATHS: ${{ inputs.paths }}
         run: |
           : > /tmp/scripts.txt
-          for root in ${{ inputs.paths }}; do
+          # shellcheck disable=SC2086 # space-separated roots by contract
+          for root in $PATHS; do
             while IFS= read -r f; do
               case "$(head -c 2 "$f")" in
                 '#!') head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)' && echo "$f" >> /tmp/scripts.txt ;;
@@ -59,13 +66,15 @@ jobs:
 
       - name: shellcheck
         if: steps.collect.outputs.count != '0'
+        env:
+          SEVERITY: ${{ inputs.severity }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
           # zsh is out of shellcheck's scope; skip those.
           rc=0
           while IFS= read -r f; do
             head -1 "$f" | grep -q zsh && continue
-            shellcheck --severity=${{ inputs.severity }} "$f" || rc=1
+            shellcheck --severity="$SEVERITY" "$f" || rc=1
           done < /tmp/scripts.txt
           exit $rc
         shell: bash

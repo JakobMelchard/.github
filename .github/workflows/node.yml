@@ -3,6 +3,9 @@ name: node
 # Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -38,6 +41,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -45,16 +49,24 @@ jobs:
 
       - name: install
         if: inputs.install-cmd != ''
-        run: ${{ inputs.install-cmd }}
+        env:
+          CMD: ${{ inputs.install-cmd }}
+        run: eval "$CMD"
 
       - name: check
         if: inputs.check-cmd != ''
-        run: ${{ inputs.check-cmd }}
+        env:
+          CMD: ${{ inputs.check-cmd }}
+        run: eval "$CMD"
 
       - name: lint
         if: inputs.lint-cmd != ''
-        run: ${{ inputs.lint-cmd }}
+        env:
+          CMD: ${{ inputs.lint-cmd }}
+        run: eval "$CMD"
 
       - name: test
         if: inputs.test-cmd != ''
-        run: ${{ inputs.test-cmd }}
+        env:
+          CMD: ${{ inputs.test-cmd }}
+        run: eval "$CMD"

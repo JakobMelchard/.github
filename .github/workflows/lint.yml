@@ -3,6 +3,9 @@ name: lint
 # This repo's own CI: the reusable workflows here run in every other repo,
 # so a syntax error is an org-wide outage.
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main]
@@ -14,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
 
       - name: actionlint
         run: |
@@ -24,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
 
       # Hooks run on macOS (bash 3.2) as well as here — keep them portable.
       - name: syntax
@@ -42,10 +47,19 @@ jobs:
           fi
           echo "portable"
 
+  zizmor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+      - run: uvx zizmor --no-online-audits .
+
   infra:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_wrapper: false }
       - run: tofu fmt -check -recursive

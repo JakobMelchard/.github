@@ -6,13 +6,22 @@ This repo is public so that `lilfeelz` repos can call the workflows cross-accoun
 and so the org profile renders; everything else on the platform is private —
 see `JakobMelchard/.agents/PLATFORM.md` for the map.
 
-Actions are pinned by commit SHA with the version in a trailing comment.
-Bump deliberately; `lint.yml` gates every change to this repo — actionlint,
-shellcheck over the hooks, a bash-3.2 portability check, and a smoke call of
-every reusable workflow with empty inputs.
+Actions are pinned by commit SHA with the version in a trailing comment; Renovate
+(`config:best-practices`) keeps the pins fresh. Every workflow declares
+`permissions: contents: read` at the top, checkouts do not persist credentials,
+and caller-supplied `*-cmd` inputs reach the shell through `env`, never by
+template expansion. `lint.yml` gates every change here — actionlint, zizmor,
+shellcheck over the hooks, a bash-3.2 portability check, tofu validate, and a
+smoke call of every reusable workflow with empty inputs.
 
 Callers currently reference `@main`, so fixes propagate immediately. `v1` is
 tagged as a stable alternative if you would rather pin and bump deliberately.
+
+## Starter workflows
+
+`workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
+`terraform`). They show up under **Actions → New workflow** in every org repo, keyed by
+`filePatterns`, so a repo that skips `org-repo new` still gets the shared pipeline.
 
 ## Reusable workflows
 
