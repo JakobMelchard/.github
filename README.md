@@ -1,8 +1,10 @@
 # .github
 
-Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos.
-Reusable workflows, composite actions, and the common git hook set live here —
-there is no separate `core` repo.
+Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos:
+reusable workflows, composite actions, and the org's GitHub settings as code.
+This repo is public so that `lilfeelz` repos can call the workflows cross-account
+and so the org profile renders; everything else on the platform is private —
+see `JakobMelchard/.agents/PLATFORM.md` for the map.
 
 Actions are pinned by commit SHA with the version in a trailing comment.
 Bump deliberately; `lint.yml` gates every change to this repo — actionlint,
@@ -152,41 +154,32 @@ jobs:
 
 ## Git hooks
 
-One hook set replaces the per-repo `.githooks/` copies. `pre-commit` dispatches
-on staged file type and skips any tool that is not installed:
+The hook set lives in the private repo **`JakobMelchard/.githooks`**. Install with
+`hooks-install` from `JakobMelchard/bin` (vendors `pre-commit` + `pre-push` into
+`.githooks/`, sets `core.hooksPath`). In CI, `actions/hooks` points `core.hooksPath`
+at the vendored copies; it can refresh them first given a token that can read
+`.githooks` (`github.token` cannot — that repo is private).
 
-| Staged | Action |
-|--------|--------|
-| any | `gitleaks` on the staged diff — **blocks** |
-| `*.go` | `gofmt -w` + re-stage |
-| `*.py` | `py_compile` — blocks; `ruff check` — blocks |
-| shebang `bash`/`sh`/`zsh` | `bash -n` / `zsh -n` — blocks; `shellcheck` — blocks |
-| `*.js` `*.css` `*.html` `*.md` `*.yml` … | `prettier --write` + re-stage (needs `package.json`) |
-| `*.js` | `eslint --quiet` — blocks |
-| `*.tf` | `terraform fmt` + re-stage |
+`hooks/` here is a deprecated shim that forwards to the new installer. It goes
+away one cycle after every consumer has re-vendored.
 
-Repo-specific checks go in `.githooks/pre-commit.local` / `.githooks/pre-push.local`
-(executable). The shared hook runs them last, so the shared part stays updatable.
+## Infra
 
-`pre-push` is a cheap build gate: `go vet` + `go build` when `go.mod` exists,
-`terraform fmt -check` when `terraform/` exists. Tests belong in CI.
+`infra/` is OpenTofu for the org: every repo listed in `infra/settings.json` is
+adopted (import blocks) and kept at the shared settings — merge strategies,
+branch deletion, auto-merge, visibility, archived, Dependabot alerts. Org-level
+settings apply only with `-var manage_org=true` and an `admin:org` token.
+`bin/org-repo sync` applies the same document imperatively when tofu is not at hand.
 
-Install:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/JakobMelchard/.github/main/hooks/install.sh | bash
-```
-
-Hooks target **bash 3.2** — macOS ships 3.2 and never updated it. No `mapfile`,
-no `declare -A`. `lint.yml` rejects both.
-
-Bypass with `git commit --no-verify`.
+Rulesets and branch protection are not managed: unavailable on private repos
+under the free plan.
 
 ## Layout
 
 ```
 .github/workflows/    reusable workflows + this repo's own lint.yml
 actions/              composite actions (gitleaks, hooks)
-hooks/                shared pre-commit / pre-push / install.sh
+infra/                opentofu: org + repo settings, settings.json
+hooks/                DEPRECATED shim → JakobMelchard/.githooks
 profile/              org profile README
 ```

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# DEPRECATED: moved to JakobMelchard/.githooks. Run hooks-install (JakobMelchard/bin) to re-vendor.
 # Shared pre-commit. Source: JakobMelchard/.github/hooks/
 # Dispatches on staged file type; every tool is optional and skipped when absent.
 # Bypass with --no-verify.

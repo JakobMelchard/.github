@@ -1,27 +1,39 @@
 name: hooks
 description: >
-  Install the shared git hooks from JakobMelchard/.github into the current
-  checkout and point core.hooksPath at them.
+  Point core.hooksPath at the vendored .githooks/ in this checkout, so hook-driven
+  checks run in CI exactly as they do locally. Optionally refresh the vendored
+  copies from JakobMelchard/.githooks first — that repo is private, so a refresh
+  needs a token that can read it (an app token or PAT); github.token cannot.
 
 inputs:
+  refresh:
+    description: Re-vendor pre-commit and pre-push from JakobMelchard/.githooks before use.
+    required: false
+    default: "false"
   ref:
-    description: Ref of JakobMelchard/.github to take hooks from.
+    description: Ref of JakobMelchard/.githooks to refresh from.
     required: false
     default: main
+  token:
+    description: Token with contents:read on JakobMelchard/.githooks. Only used when refresh is true.
+    required: false
+    default: ""
 
 runs:
   using: composite
   steps:
-    - name: fetch shared hooks
+    - name: refresh vendored hooks
+      if: inputs.refresh == 'true'
       shell: bash
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ inputs.token || github.token }}
+        HOOKS_REF: ${{ inputs.ref }}
       run: |
-        tmp=$(mktemp -d)
-        gh api "repos/JakobMelchard/.github/tarball/${{ inputs.ref }}" > "$tmp/h.tgz"
-        tar -xzf "$tmp/h.tgz" -C "$tmp" --strip-components=1
-        mkdir -p .githooks
-        cp "$tmp"/hooks/* .githooks/
-        chmod +x .githooks/*
+        gh api "repos/JakobMelchard/.githooks/contents/install?ref=$HOOKS_REF" -q .content | base64 -d | bash
+
+    - name: use vendored hooks
+      shell: bash
+      run: |
+        [ -x .githooks/pre-commit ] || { echo "no vendored .githooks/pre-commit — run hooks-install locally and commit it" >&2; exit 1; }
         git config core.hooksPath .githooks
-        echo "installed: $(ls .githooks | tr '\n' ' ')"
+        echo "hooksPath=.githooks: $(ls .githooks | tr '\n' ' ')"
