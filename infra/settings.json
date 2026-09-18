@@ -1,0 +1,95 @@
+{
+  "$comment": "Single source of truth for org + repo settings. Read by .github/infra (tofu) and by bin/org-repo (gh api). Keys under repo_defaults are github_repository / PATCH /repos attributes. Per-repo entries override.",
+  "org": {
+    "default_repository_permission": "read",
+    "members_can_create_repositories": false,
+    "members_can_create_public_repositories": false,
+    "members_can_create_private_repositories": false,
+    "members_can_create_pages": true,
+    "web_commit_signoff_required": false
+  },
+  "repo_defaults": {
+    "visibility": "private",
+    "has_issues": true,
+    "has_wiki": false,
+    "has_projects": false,
+    "allow_merge_commit": true,
+    "allow_squash_merge": true,
+    "allow_rebase_merge": true,
+    "squash_merge_commit_title": "PR_TITLE",
+    "squash_merge_commit_message": "PR_BODY",
+    "delete_branch_on_merge": true,
+    "allow_auto_merge": true,
+    "allow_update_branch": true,
+    "web_commit_signoff_required": false,
+    "vulnerability_alerts": true,
+    "archived": false
+  },
+  "repos": {
+    ".github": {
+      "description": "Shared CI, composite actions, org infra as code",
+      "visibility": "public"
+    },
+    "JakobMelchard.github.io": {
+      "description": "docs.melchard.org \u2014 GitHub Pages docs site",
+      "visibility": "public"
+    },
+    "agent-tg": {},
+    "agentest": {},
+    "assets": {},
+    "cf": {
+      "description": "Monorepo for Cloudflare Pages sites + shared tooling."
+    },
+    "hx": {
+      "visibility": "public",
+      "description": "htmx + JSDoc library: router, html, Store adapters"
+    },
+    "cse": {},
+    "feedback-loop": {},
+    "forgejo": {},
+    "gsheet": {
+      "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)"
+    },
+    "habits": {
+      "description": "Habits tracker \u2014 htmx+JSDoc consumer of JakobMelchard/core",
+      "archived": true
+    },
+    "health": {},
+    "health-editor": {},
+    "infra": {},
+    "interviews": {
+      "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
+    },
+    "lift": {},
+    "lyrics": {
+      "description": "Lil Peep lyrics API worker"
+    },
+    "monitor": {},
+    "observe": {
+      "description": "Deployment-agnostic observability sidecar"
+    },
+    "remind": {},
+    "transcriber": {},
+    "weiterbildungszeit": {
+      "archived": true
+    },
+    "workouts": {
+      "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
+    },
+    ".githooks": {
+      "description": "Shared git hooks"
+    },
+    ".agents": {
+      "description": "Org agent rules and skills"
+    },
+    ".devcontainer": {
+      "description": "Dev environments: base image, features, templates"
+    },
+    ".config": {
+      "description": "Shared lint, format and release configs"
+    },
+    "bin": {
+      "description": "Org tooling"
+    }
+  }
+}

@@ -42,6 +42,18 @@ jobs:
           fi
           echo "portable"
 
+  infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_wrapper: false }
+      - run: tofu fmt -check -recursive
+        working-directory: infra
+      - run: tofu init -backend=false -input=false && tofu validate
+        working-directory: infra
+      - run: jq -e . infra/settings.json >/dev/null
+
   # Integration smoke: actually call each reusable workflow with its emptiest
   # viable inputs. A previous bug — an empty `${{ inputs.install-cmd }}` left an
   # empty if-body and broke every caller — passed actionlint but died at runtime.
