@@ -28,17 +28,21 @@
   "repos": {
     ".github": {
       "description": "Shared CI, composite actions, org infra as code",
-      "visibility": "public"
+      "visibility": "public",
+      "has_wiki": true
     },
     "JakobMelchard.github.io": {
       "description": "docs.melchard.org \u2014 GitHub Pages docs site",
-      "visibility": "public"
+      "visibility": "public",
+      "has_wiki": true
     },
     "agent-tg": {},
     "agentest": {},
     "assets": {},
     "cf": {
-      "description": "Monorepo for Cloudflare Pages sites + shared tooling."
+      "description": "Monorepo for Cloudflare Pages sites + shared tooling.",
+      "allow_merge_commit": false,
+      "allow_rebase_merge": false
     },
     "hx": {
       "visibility": "public",
@@ -54,7 +58,10 @@
       "description": "Habits tracker \u2014 htmx+JSDoc consumer of JakobMelchard/core",
       "archived": true
     },
-    "health": {},
+    "health": {
+      "allow_merge_commit": false,
+      "allow_rebase_merge": false
+    },
     "health-editor": {},
     "infra": {},
     "interviews": {
@@ -69,7 +76,9 @@
       "description": "Deployment-agnostic observability sidecar"
     },
     "remind": {},
-    "transcriber": {},
+    "transcriber": {
+      "allow_merge_commit": false
+    },
     "weiterbildungszeit": {
       "archived": true
     },
