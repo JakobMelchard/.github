@@ -7,12 +7,14 @@ and so the org profile renders; everything else on the platform is private —
 see `JakobMelchard/.agents/PLATFORM.md` for the map.
 
 Actions are pinned by commit SHA with the version in a trailing comment; Renovate
-(`config:best-practices`) keeps the pins fresh. Every workflow declares
-`permissions: contents: read` at the top, checkouts do not persist credentials,
-and caller-supplied `*-cmd` inputs reach the shell through `env`, never by
-template expansion. `lint.yml` gates every change here — actionlint, zizmor,
-shellcheck over the hooks, a bash-3.2 portability check, tofu validate, and a
-smoke call of every reusable workflow with empty inputs.
+(`config:best-practices`) keeps the pins fresh. The CI workflows declare
+`permissions: contents: read` at the top (`release.yml` needs `contents: write` +
+`pull-requests: write`), checkouts do not persist credentials, and caller-supplied
+`*-cmd` inputs reach the shell through `env`, never by template expansion.
+`lint.yml` gates every change here — actionlint over workflows and starter
+templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
+validate, and smoke calls of `go` `python` `node` (including the Chromium path)
+and `shell`. `release.yml` and `terraform.yml` are not smoke-called.
 
 Callers currently reference `@main`, so fixes propagate immediately. `v1` is
 tagged as a stable alternative if you would rather pin and bump deliberately.
@@ -20,8 +22,10 @@ tagged as a stable alternative if you would rather pin and bump deliberately.
 ## Starter workflows
 
 `workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
-`terraform`). They show up under **Actions → New workflow** in every org repo, keyed by
-`filePatterns`, so a repo that skips `org-repo new` still gets the shared pipeline.
+`terraform`). They are offered under **Actions → New workflow** in every org repo —
+suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
+`.tf`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
+pipeline in one click. Nothing is installed automatically.
 
 ## Reusable workflows
 
@@ -32,7 +36,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `release.yml` | any repo using release-please | — |
 | `go.yml` | `gsheet` `health` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
-| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `weiterbildungszeit` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` |
+| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `lyrics` `lift` `hx` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
 
@@ -169,7 +173,8 @@ The hook set lives in the private repo **`JakobMelchard/.githooks`**. Install wi
 at the vendored copies; it can refresh them first given a token that can read
 `.githooks` (`github.token` cannot — that repo is private).
 
-`hooks/` here is a deprecated shim that forwards to the new installer. It goes
+`hooks/install.sh` here is a deprecated shim that forwards to the new installer;
+`hooks/pre-commit` and `hooks/pre-push` are the frozen legacy copies. All three go
 away one cycle after every consumer has re-vendored.
 
 ## Infra

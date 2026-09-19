@@ -11,3 +11,5 @@ on:
 jobs:
   ci:
     uses: JakobMelchard/.github/.github/workflows/node.yml@main
+    with:
+      install-cmd: npm ci   # no lockfile committed? use `npm install`
