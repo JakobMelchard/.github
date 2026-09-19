@@ -1,6 +1,6 @@
 name: node
 
-# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit.
+# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, lyrics, lift, hx.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
 
 permissions:
@@ -29,6 +29,14 @@ on:
       test-cmd:
         type: string
         default: ""
+      e2e-cmd:
+        description: Browser end-to-end step, e.g. "npm run e2e". Empty skips.
+        type: string
+        default: ""
+      browsers:
+        description: Install Playwright Chromium (with system deps) before e2e.
+        type: boolean
+        default: false
       runs-on:
         type: string
         default: ubuntu-latest
@@ -72,5 +80,17 @@ jobs:
         if: inputs.test-cmd != ''
         env:
           CMD: ${{ inputs.test-cmd }}
+        shell: bash
+        run: eval "$CMD"
+
+      - name: install chromium
+        # --with-deps drives apt; only Linux runners have that path
+        if: inputs.browsers && inputs.e2e-cmd != '' && runner.os == 'Linux'
+        run: npx --yes playwright-core install --with-deps chromium
+
+      - name: e2e
+        if: inputs.e2e-cmd != ''
+        env:
+          CMD: ${{ inputs.e2e-cmd }}
         shell: bash
         run: eval "$CMD"
