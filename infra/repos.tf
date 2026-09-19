@@ -29,7 +29,6 @@ resource "github_repository" "this" {
   allow_auto_merge            = each.value.allow_auto_merge
   allow_update_branch         = each.value.allow_update_branch
   web_commit_signoff_required = each.value.web_commit_signoff_required
-  vulnerability_alerts        = each.value.vulnerability_alerts
 
   lifecycle {
     prevent_destroy = true
@@ -37,6 +36,19 @@ resource "github_repository" "this" {
       auto_init, gitignore_template, license_template, template,
       homepage_url, topics, pages, security_and_analysis,
       has_downloads, has_discussions, is_template, archive_on_destroy,
+      vulnerability_alerts, # deprecated attribute; managed by the resource below
     ]
   }
+}
+
+# Dependabot alerts: the github_repository attribute is deprecated in provider v6.
+import {
+  for_each = { for k, v in local.repos : k => v if v.vulnerability_alerts && !v.archived }
+  to       = github_repository_vulnerability_alerts.this[each.key]
+  id       = each.key
+}
+
+resource "github_repository_vulnerability_alerts" "this" {
+  for_each   = { for k, v in local.repos : k => v if v.vulnerability_alerts && !v.archived }
+  repository = github_repository.this[each.key].name
 }

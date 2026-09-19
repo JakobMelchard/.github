@@ -51,22 +51,26 @@ jobs:
         if: inputs.install-cmd != ''
         env:
           CMD: ${{ inputs.install-cmd }}
+        shell: bash
         run: eval "$CMD"
 
       - name: check
         if: inputs.check-cmd != ''
         env:
           CMD: ${{ inputs.check-cmd }}
+        shell: bash
         run: eval "$CMD"
 
       - name: lint
         if: inputs.lint-cmd != ''
         env:
           CMD: ${{ inputs.lint-cmd }}
+        shell: bash
         run: eval "$CMD"
 
       - name: test
         if: inputs.test-cmd != ''
         env:
           CMD: ${{ inputs.test-cmd }}
+        shell: bash
         run: eval "$CMD"

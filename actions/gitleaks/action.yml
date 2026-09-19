@@ -3,7 +3,7 @@ description: Scan the checkout for committed secrets.
 
 inputs:
   args:
-    description: Extra gitleaks arguments.
+    description: Extra gitleaks arguments, space-separated; values with spaces are not supported.
     required: false
     default: ""
   config:

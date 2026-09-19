@@ -11,7 +11,9 @@ inputs:
     required: false
     default: "false"
   ref:
-    description: Ref of JakobMelchard/.githooks to refresh from.
+    description: >
+      Ref of JakobMelchard/.githooks to refresh from. Executed with the supplied
+      token, so only point it at refs you control (a tag or SHA of that repo).
     required: false
     default: main
   token:
@@ -29,11 +31,16 @@ runs:
         GH_TOKEN: ${{ inputs.token || github.token }}
         HOOKS_REF: ${{ inputs.ref }}
       run: |
-        gh api "repos/JakobMelchard/.githooks/contents/install?ref=$HOOKS_REF" -q .content | base64 -d | bash
+        tmp=$(mktemp)
+        gh api -H 'Accept: application/vnd.github.raw+json' "repos/JakobMelchard/.githooks/contents/install?ref=$HOOKS_REF" > "$tmp"
+        [ -s "$tmp" ] || { echo "empty response from gh api" >&2; exit 1; }
+        bash "$tmp"
 
     - name: use vendored hooks
       shell: bash
       run: |
-        [ -x .githooks/pre-commit ] || { echo "no vendored .githooks/pre-commit — run hooks-install locally and commit it" >&2; exit 1; }
+        for h in pre-commit pre-push; do
+          [ -x ".githooks/$h" ] || { echo "no vendored .githooks/$h — run hooks-install locally and commit it" >&2; exit 1; }
+        done
         git config core.hooksPath .githooks
         echo "hooksPath=.githooks: $(ls .githooks | tr '\n' ' ')"

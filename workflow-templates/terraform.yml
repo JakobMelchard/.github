@@ -11,3 +11,5 @@ on:
 jobs:
   ci:
     uses: JakobMelchard/.github/.github/workflows/terraform.yml@main
+    with:
+      working-directory: .   # infra keeps its root under terraform/; most repos do not

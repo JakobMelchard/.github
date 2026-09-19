@@ -102,16 +102,19 @@ jobs:
         if: inputs.vet-cmd != ''
         env:
           CMD: ${{ inputs.vet-cmd }}
+        shell: bash
         run: eval "$CMD"
 
       - name: test
         if: inputs.test-cmd != ''
         env:
           CMD: ${{ inputs.test-cmd }}
+        shell: bash
         run: eval "$CMD"
 
       - name: build
         if: inputs.build-cmd != ''
         env:
           CMD: ${{ inputs.build-cmd }}
+        shell: bash
         run: eval "$CMD"
