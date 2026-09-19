@@ -1,0 +1,7 @@
+{
+  "name": "node",
+  "description": "Node: eslint, prettier, tests, optional Playwright e2e (node.yml)",
+  "iconName": "octicon check-circle",
+  "categories": ["JavaScript"],
+  "filePatterns": ["package.json$"]
+}

@@ -7,6 +7,9 @@ name: go
 #       uses: JakobMelchard/.github/.github/workflows/go.yml@main
 #       secrets: inherit          # only if the repo needs private modules
 
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -65,6 +68,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
@@ -96,12 +100,21 @@ jobs:
 
       - name: vet
         if: inputs.vet-cmd != ''
-        run: ${{ inputs.vet-cmd }}
+        env:
+          CMD: ${{ inputs.vet-cmd }}
+        shell: bash
+        run: eval "$CMD"
 
       - name: test
         if: inputs.test-cmd != ''
-        run: ${{ inputs.test-cmd }}
+        env:
+          CMD: ${{ inputs.test-cmd }}
+        shell: bash
+        run: eval "$CMD"
 
       - name: build
         if: inputs.build-cmd != ''
-        run: ${{ inputs.build-cmd }}
+        env:
+          CMD: ${{ inputs.build-cmd }}
+        shell: bash
+        run: eval "$CMD"

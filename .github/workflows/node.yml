@@ -1,7 +1,10 @@
 name: node
 
-# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit.
+# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, lyrics, lift, hx.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
+
+permissions:
+  contents: read
 
 on:
   workflow_call:
@@ -26,6 +29,14 @@ on:
       test-cmd:
         type: string
         default: ""
+      e2e-cmd:
+        description: Browser end-to-end step, e.g. "npm run e2e". Empty skips.
+        type: string
+        default: ""
+      browsers:
+        description: Install Playwright Chromium (with system deps) before e2e.
+        type: boolean
+        default: false
       runs-on:
         type: string
         default: ubuntu-latest
@@ -38,6 +49,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
@@ -45,16 +57,40 @@ jobs:
 
       - name: install
         if: inputs.install-cmd != ''
-        run: ${{ inputs.install-cmd }}
+        env:
+          CMD: ${{ inputs.install-cmd }}
+        shell: bash
+        run: eval "$CMD"
 
       - name: check
         if: inputs.check-cmd != ''
-        run: ${{ inputs.check-cmd }}
+        env:
+          CMD: ${{ inputs.check-cmd }}
+        shell: bash
+        run: eval "$CMD"
 
       - name: lint
         if: inputs.lint-cmd != ''
-        run: ${{ inputs.lint-cmd }}
+        env:
+          CMD: ${{ inputs.lint-cmd }}
+        shell: bash
+        run: eval "$CMD"
 
       - name: test
         if: inputs.test-cmd != ''
-        run: ${{ inputs.test-cmd }}
+        env:
+          CMD: ${{ inputs.test-cmd }}
+        shell: bash
+        run: eval "$CMD"
+
+      - name: install chromium
+        # --with-deps drives apt; only Linux runners have that path
+        if: inputs.browsers && inputs.e2e-cmd != '' && runner.os == 'Linux'
+        run: npx --yes playwright-core install --with-deps chromium
+
+      - name: e2e
+        if: inputs.e2e-cmd != ''
+        env:
+          CMD: ${{ inputs.e2e-cmd }}
+        shell: bash
+        run: eval "$CMD"

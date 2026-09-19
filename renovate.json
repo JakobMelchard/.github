@@ -1,0 +1,14 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "packageRules": [
+    { "matchManagers": ["github-actions"], "groupName": "github actions" },
+    {
+      "description": "Our own reusable workflows are consumed at @main on purpose; never pin them to a digest.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["JakobMelchard/.github"],
+      "pinDigests": false,
+      "enabled": false
+    }
+  ]
+}
