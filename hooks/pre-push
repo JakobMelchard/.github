@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# DEPRECATED: moved to JakobMelchard/.githooks. Run hooks-install (JakobMelchard/bin) to re-vendor.
 # Shared pre-push. Source: JakobMelchard/.github/hooks/
 # Cheap build-level gate only — the full test suite belongs in CI.
 set -euo pipefail
