@@ -3,7 +3,7 @@ description: Scan the checkout for committed secrets.
 
 inputs:
   args:
-    description: Extra gitleaks arguments.
+    description: Extra gitleaks arguments, space-separated; values with spaces are not supported.
     required: false
     default: ""
   config:
@@ -24,7 +24,11 @@ runs:
 
     - name: scan
       shell: bash
+      env:
+        CONFIG: ${{ inputs.config }}
+        EXTRA: ${{ inputs.args }}
       run: |
         args=""
-        [ -n '${{ inputs.config }}' ] && args="--config ${{ inputs.config }}"
-        gitleaks dir . --no-banner --redact $args ${{ inputs.args }}
+        [ -n "$CONFIG" ] && args="--config $CONFIG"
+        # shellcheck disable=SC2086 # deliberate word splitting of caller-supplied flags
+        gitleaks dir . --no-banner --redact $args $EXTRA

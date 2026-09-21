@@ -1,24 +1,31 @@
 # .github
 
-Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos.
-Reusable workflows, composite actions, and the common git hook set live here.
+Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos:
+reusable workflows, composite actions, and the org's GitHub settings as code.
+This repo is public so that `lilfeelz` repos can call the workflows cross-account
+and so the org profile renders; everything else on the platform is private —
+see `JakobMelchard/.agents/PLATFORM.md` for the map.
 
-The boundary against `core`: **this repo is how code is built and checked,
-`core` is code that ships inside the app.** Workflows, composite actions,
-hooks and scaffolding templates belong here; `core` keeps `src/`, `SPEC.md`,
-the store contract test, and the semver tags consumers pin. `core` must not
-grow a second reusable CI workflow or a second hook set.
-
-Actions are pinned by commit SHA with the version in a trailing comment.
-Bump deliberately; `lint.yml` gates every change to this repo — actionlint,
-shellcheck over the hooks, a bash-3.2 portability check, and a smoke call of
-`go.yml` `python.yml` `node.yml` `shell.yml` with empty inputs. `release.yml`
-is not smoked — release-please holds `contents: write` and would open real
-release PRs on every run — and neither is `terraform.yml`, which needs a
-Terraform config directory to act on.
+Actions are pinned by commit SHA with the version in a trailing comment; Renovate
+(`config:best-practices`) keeps the pins fresh. The CI workflows declare
+`permissions: contents: read` at the top (`release.yml` needs `contents: write` +
+`pull-requests: write`), checkouts do not persist credentials, and caller-supplied
+`*-cmd` inputs reach the shell through `env`, never by template expansion.
+`lint.yml` gates every change here — actionlint over workflows and starter
+templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
+validate, and smoke calls of `go` `python` `node` (including the Chromium path)
+and `shell`. `release.yml` and `terraform.yml` are not smoke-called.
 
 Callers currently reference `@main`, so fixes propagate immediately. `v1` is
 tagged as a stable alternative if you would rather pin and bump deliberately.
+
+## Starter workflows
+
+`workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
+`terraform`). They are offered under **Actions → New workflow** in every org repo —
+suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
+`.tf`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
+pipeline in one click. Nothing is installed automatically.
 
 ## Reusable workflows
 
@@ -29,13 +36,11 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `release.yml` | any repo using release-please | — |
 | `go.yml` | `gsheet` `health` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
-| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `weiterbildungszeit` `core` `lift` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` `private-deps` |
+| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `lyrics` `lift` `hx` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
 
-Every `*-cmd` input skips its step when set to `""` — except `python.yml`'s
-`install-cmd`, which overrides the `package-manager` default rather than
-skipping. Install nothing there with `package-manager: none`.
+Every `*-cmd` input skips its step when set to `""`.
 
 ### Go
 
@@ -91,19 +96,11 @@ scoped to the listed repos that is revoked when the job ends.
    - Where can it be installed: *Only on this account*
 2. After creating it: note the **Client ID**, then **Generate a private key**
    (downloads a `.pem`).
-3. **Install App** → Only select repositories → every repo that will be read
-   as a dependency (`observe` today). A token can only be minted for repos in
-   the installation, so add each new private dependency here as well —
-   `private-repos` naming a repo the App is not installed on fails to mint.
-4. Add two secrets (Settings → Secrets and variables → Actions):
+3. **Install App** → Only select repositories → `observe`.
+4. Add two org secrets (Settings → Secrets and variables → Actions), scoped to
+   `transcriber`:
    - `APP_CLIENT_ID` — the Client ID
    - `APP_PRIVATE_KEY` — the full contents of the `.pem`, `BEGIN`/`END` lines included
-
-   **These must be repository secrets, not org secrets.** `JakobMelchard` is
-   on the free plan, where an org secret can only be granted to public repos;
-   every consumer here is private. Add them on each consuming repo — `lift`
-   today — and repeat the pair when a second consumer appears. Org secrets
-   become an option on Team.
 
 ```yaml
     with:
@@ -157,38 +154,6 @@ jobs:
       check-cmd: make check
       lint-cmd: make lint
 ```
-
-`install-cmd` defaults to `npm ci`. Repos with no committed lockfile (`lift`)
-must pass `npm install` instead.
-
-Set `browsers: true` to install and cache Playwright Chromium, and put the
-browser-driven suite in `e2e-cmd` so it runs after `test-cmd`:
-
-```yaml
-    with:
-      install-cmd: npm install
-      lint-cmd: ""
-      check-cmd: npx tsc
-      test-cmd: npm test
-      e2e-cmd: npm run e2e
-      browsers: true
-```
-
-For a private JakobMelchard package as a dependency, set `private-deps` and
-name the repos in `private-repos` — same app/PAT credentials as `go.yml` and
-`python.yml`. npm expands the `github:owner/repo` shorthand to `git+ssh`, so
-this authenticates the ssh and scp-like forms as well as https:
-
-```yaml
-    with:
-      private-deps: true
-      private-repos: observe     # must be in the App installation, see above
-    secrets:
-      app-client-id: ${{ secrets.APP_CLIENT_ID }}
-      app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
-```
-
-`lift` does not need any of this: it depends on `core`, which is public.
 
 ## Composite actions
 

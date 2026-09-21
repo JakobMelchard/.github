@@ -1,0 +1,14 @@
+# Our own reusable workflows are consumed at @main on purpose (lint.yml here is the gate).
+# Third-party actions must be hash-pinned.
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        "JakobMelchard/*": ref-pin
+        "*": hash-pin
+  # ./ self-references in lint.yml: actionlint does not yet parse the $/ form
+  # (GitHub, July 2026). Revisit when it does; $/ counts as pinned under the
+  # require-SHA-pinning policy, ./ does not.
+  self-repository:
+    ignore:
+      - lint.yml

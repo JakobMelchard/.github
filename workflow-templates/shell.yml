@@ -1,0 +1,13 @@
+name: ci
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [$default-branch]
+  pull_request:
+
+jobs:
+  ci:
+    uses: JakobMelchard/.github/.github/workflows/shell.yml@main
