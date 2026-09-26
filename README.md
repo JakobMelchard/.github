@@ -96,11 +96,19 @@ scoped to the listed repos that is revoked when the job ends.
    - Where can it be installed: *Only on this account*
 2. After creating it: note the **Client ID**, then **Generate a private key**
    (downloads a `.pem`).
-3. **Install App** → Only select repositories → `observe`.
-4. Add two org secrets (Settings → Secrets and variables → Actions), scoped to
-   `transcriber`:
+3. **Install App** → Only select repositories → every repo that will be read
+   as a dependency (`observe` today). A token is only mintable for repos in the
+   installation, so `private-repos` naming one the App is not installed on
+   fails to mint.
+4. Add two secrets (Settings → Secrets and variables → Actions) on each repo
+   that calls a workflow with `private-deps` — `transcriber` today:
    - `APP_CLIENT_ID` — the Client ID
    - `APP_PRIVATE_KEY` — the full contents of the `.pem`, `BEGIN`/`END` lines included
+
+   **Repository secrets, not org secrets.** `JakobMelchard` is on the free
+   plan, where an org secret can only be granted to public repos, and the
+   consumers that need these are private. Org secrets become an option on Team,
+   or for a public caller.
 
 ```yaml
     with:
@@ -113,7 +121,8 @@ scoped to the listed repos that is revoked when the job ends.
 
 **PAT — simpler, expires.** Fine-grained PAT, resource owner `JakobMelchard`,
 repository access limited to `observe`, permission Contents: Read-only. Store
-as org secret `PRIVATE_DEPS_TOKEN` and pass it instead:
+as a repository secret `PRIVATE_DEPS_TOKEN` on the calling repo — same free-plan
+constraint as above — and pass it instead:
 
 ```yaml
     secrets:
