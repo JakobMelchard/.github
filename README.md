@@ -182,10 +182,6 @@ The hook set lives in the private repo **`JakobMelchard/.githooks`**. Install wi
 at the vendored copies; it can refresh them first given a token that can read
 `.githooks` (`github.token` cannot — that repo is private).
 
-`hooks/install.sh` here is a deprecated shim that forwards to the new installer;
-`hooks/pre-commit` and `hooks/pre-push` are the frozen legacy copies. All three go
-away one cycle after every consumer has re-vendored.
-
 ## Infra
 
 `infra/` is OpenTofu for the org: every repo listed in `infra/settings.json` is
