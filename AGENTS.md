@@ -15,18 +15,17 @@ a second hook set.
 
 - `.github/workflows/` `release go python node shell terraform lint`
 - `actions/gitleaks/`, `actions/hooks/` composite actions
-- `hooks/` `pre-commit`, `pre-push`, `install.sh`
 - `profile/README.md` the org profile page
 
 ## Commands
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/JakobMelchard/.github/main/hooks/install.sh | bash
+hooks-install          # JakobMelchard/bin
 ```
 
-Copies the hooks into `.githooks/` and sets `core.hooksPath`. Re-run to update.
-It detects being run from a clone of this repo and copies locally instead of
-fetching. `HOOKS_REF` overrides the ref.
+Hooks live in `JakobMelchard/.githooks`, not here — they moved out of this repo.
+`hooks-install` vendors them into `.githooks/` and sets `core.hooksPath`; see
+that repo's `install` for `HOOKS_REF` and the rest.
 
 ## Rules
 
