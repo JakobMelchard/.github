@@ -12,3 +12,4 @@ rules:
   self-repository:
     ignore:
       - lint.yml
+      - self-release.yml

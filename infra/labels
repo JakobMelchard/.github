@@ -21,6 +21,9 @@ declared=$(jq -r '.labels | keys[]' "$S" | sort)
 rc=0
 for r in "$@"; do
   echo "$r"
+  if ! live=$(gh label list -R "$ORG/$r" --limit 200 --json name -q '.[].name' 2>/dev/null); then
+    echo "  skipped: cannot read $ORG/$r (missing, or no access)" >&2; rc=1; continue
+  fi
   while IFS=$'\t' read -r name color desc; do
     if gh label create "$name" -R "$ORG/$r" --color "$color" --description "$desc" --force >/dev/null 2>&1; then
       echo "  $name"
@@ -28,8 +31,7 @@ for r in "$@"; do
       echo "  FAILED $name" >&2; rc=1
     fi
   done < <(jq -r '.labels | to_entries[] | [.key, .value.color, (.value.description // "")] | @tsv' "$S")
-  live=$(gh label list -R "$ORG/$r" --limit 200 --json name -q '.[].name' | sort)
-  extra=$(comm -23 <(printf '%s\n' "$live") <(printf '%s\n' "$declared") | tr '\n' ' ')
+  extra=$(comm -23 <(printf '%s\n' "$live" | sort) <(printf '%s\n' "$declared") | tr '\n' ' ')
   if [ -n "$extra" ]; then echo "  undeclared: $extra"; fi
 done
 exit $rc

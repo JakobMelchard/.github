@@ -18,8 +18,8 @@ templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
 validate, and smoke calls of `go` `python` `node` (including the Chromium path)
 and `shell`. `release.yml` and `terraform.yml` are not smoke-called.
 
-Callers currently reference `@main`, so fixes propagate immediately. `v1` is
-tagged as a stable alternative if you would rather pin and bump deliberately.
+Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
+alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
 
 ## Starter workflows
 
@@ -27,7 +27,10 @@ tagged as a stable alternative if you would rather pin and bump deliberately.
 `terraform`). They are offered under **Actions → New workflow** in every org repo —
 suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
 `.tf`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
-pipeline in one click. Nothing is installed automatically.
+pipeline in one click. Nothing is installed automatically. `auto` is the toolchain-free
+starter: it detects `go.mod`, `pyproject.toml`, `package.json` and `*.tf` at run time and
+calls the matching workflow, shell always. It is the same file as `ci.yml` in the template
+repository.
 
 ## Community files
 
@@ -225,6 +228,36 @@ The hook set lives in the private repo **`JakobMelchard/.githooks`**. Install wi
 at the vendored copies; it can refresh them first given a token that can read
 `.githooks` (`github.token` cannot — that repo is private).
 
+## Releases of this repo
+
+`self-release.yml` runs release-please on every push to `main` (the reusable `release.yml`,
+called locally) and, once a release exists, moves the major tag (`v1`) onto it. Immutable
+releases are enabled here, so `vX.Y.Z` release tags and their assets never change after
+publish; `v1` is a plain tag, not a release, which is why it may move. Pin `@v1` for a
+tested line, `@vX.Y.Z` for a frozen one, `@main` to follow every merge. `bootstrap-sha` in
+`release-please-config.json` keeps history before the first automated release out of the
+changelog. Release PRs are opened with `github.token`, so `lint.yml` does not run on them;
+they only touch `CHANGELOG.md` and the manifest.
+
+## Fleet sync
+
+`fleet-sync.yml` runs `fleet-sync` (JakobMelchard/bin) weekly with the org app token: for
+every non-archived repo in `infra/settings.json` it refreshes the vendored copies the repo
+already carries (config-sync groups whose file exists, `.githooks/` when hooks are vendored),
+and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet/deps`.
+Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the diffs, or run
+`fleet-sync --dry-run` locally with your own gh auth.
+
+## Template repository
+
+`JakobMelchard/template` is a GitHub template repository (**Use this template**, or
+`gh repo create JakobMelchard/<name> --template JakobMelchard/template --private`). After
+creating a repo from it, set `toolchain` in `template.json` to one of `go` `py` `hx-app` `cf`
+`infra` `c-cpp` and commit: `bootstrap.yml` copies the matching `.devcontainer`, rewrites the
+README title and removes itself from the picture. Its `ci.yml` is the `auto` starter above.
+Both mirror sources here and in `.devcontainer`; change those first, then the template.
+`org-repo new` stays the terminal path and additionally vendors configs, hooks and agent rules.
+
 ## Infra
 
 `infra/` is OpenTofu for the org: every repo listed in `infra/settings.json` is
@@ -241,11 +274,11 @@ under the free plan.
 ## Layout
 
 ```
-.github/workflows/    reusable workflows + this repo's own lint.yml, labels.yml
+.github/workflows/    reusable workflows + this repo's own lint.yml, labels.yml, self-release.yml, fleet-sync.yml
 .github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
 actions/              composite actions (gitleaks, hooks)
 infra/                opentofu: org + repo settings, settings.json, labels script
 renovate/             org Renovate preset
-hooks/                DEPRECATED shim → JakobMelchard/.githooks
+release-please-config.json  this repo's own releases (self-release.yml)
 profile/              org profile README
 ```

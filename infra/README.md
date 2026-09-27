@@ -21,6 +21,8 @@ Two constraints of the GitHub API: **unarchiving is not supported**, so `archive
 
 - **Rulesets / branch protection.** Unavailable on private repos under the free plan. Governance is hooks + CI + convention.
 - **App installations.** Read them with `org-repo apps`. `github_app_installation_repositories` needs per-app installation ids and can't express "all repositories"; not worth the state.
+- **Labels.** `settings.json` `labels` is applied by `infra/labels` (`org-repo labels`, `labels.yml`), not by tofu: the provider's label resource fails on a label that already exists and importing needs every label to exist first.
+- **Private vulnerability reporting, `is_template`.** Own endpoint / plain PATCH attribute; `org-repo sync` applies them, tofu ignores `is_template`.
 - **Secrets.** Set through the UI or `gh secret set --org`; never in tofu state.
 
 State is local and gitignored. Add a backend before a second machine applies.
