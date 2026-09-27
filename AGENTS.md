@@ -13,8 +13,11 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform lint`
+- `.github/workflows/` `release go python node shell terraform lint labels`
+- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/`, `actions/hooks/` composite actions
+- `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
+- `renovate/default.json` the org Renovate preset every repo extends
 - `profile/README.md` the org profile page
 
 ## Commands
@@ -36,6 +39,8 @@ that repo's `install` for `HOOKS_REF` and the rest.
   `package-manager: none`.
 - Actions are pinned by commit SHA with the version in a trailing comment. Bump
   deliberately.
+- Labels are declared in `infra/settings.json` and written only by `infra/labels`.
+  Never `gh label create` by hand in a repo; add it to the document.
 - `lint.yml` gates every change here: actionlint, shellcheck over the hooks, a
   bash 3.2 portability check, and a smoke call of `go.yml` `python.yml`
   `node.yml` `shell.yml` with empty inputs. A new workflow of that kind must

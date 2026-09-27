@@ -77,5 +77,5 @@ jobs:
   smoke-shell:
     uses: ./.github/workflows/shell.yml
     with:
-      paths: hooks
+      paths: infra
       severity: warning
