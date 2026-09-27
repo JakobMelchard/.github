@@ -29,6 +29,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
+      - name: repositories from settings.json
+        id: repos
+        shell: bash
+        run: echo "list=$(jq -r '.repos | to_entries[] | select(.value.archived != true) | .key' infra/settings.json | paste -sd, -)" >> "$GITHUB_OUTPUT"
+
       - name: mint app token
         id: app
         if: env.HAS_APP == 'true'
@@ -37,6 +42,7 @@ jobs:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.repos.outputs.list }}
           permission-issues: write
 
       - name: sync labels
