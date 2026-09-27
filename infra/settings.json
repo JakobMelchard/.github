@@ -51,7 +51,6 @@
       "description": "htmx + JSDoc library: router, html, Store adapters",
       "private_vulnerability_reporting": true
     },
-    "cse": {},
     "feedback-loop": {},
     "forgejo": {},
     "gsheet": {
@@ -67,7 +66,6 @@
       "allow_merge_commit": false,
       "allow_rebase_merge": false
     },
-    "health-editor": {},
     "infra": {},
     "interviews": {
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
@@ -84,7 +82,8 @@
     },
     "remind": {},
     "transcriber": {
-      "allow_merge_commit": false
+      "allow_merge_commit": false,
+      "archived": true
     },
     "weiterbildungszeit": {
       "archived": true
@@ -106,6 +105,10 @@
     },
     "bin": {
       "description": "Org tooling"
+    },
+    "template": {
+      "description": "Repository template: set toolchain in template.json, bootstrap does the rest",
+      "is_template": true
     }
   },
   "labels": {

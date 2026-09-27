@@ -13,7 +13,7 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform lint labels`
+- `.github/workflows/` `release go python node shell terraform lint labels self-release fleet-sync`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/`, `actions/hooks/` composite actions
 - `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
@@ -49,7 +49,10 @@ that repo's `install` for `HOOKS_REF` and the rest.
   holds `contents: write` and would open real release PRs, and terraform needs
   a config directory to act on.
 - Callers reference `@main`, so a mistake here reaches every repo immediately.
-  `v1` exists for anyone who prefers to pin.
+  `v1` follows the latest 1.x release and is moved only by `self-release.yml`;
+  release tags are immutable. Never move a tag by hand.
+- `workflow-templates/auto.yml` and `.devcontainer/templates` are mirrored into
+  `JakobMelchard/template`. Change the source here first, then the template.
 - `github.token` is scoped to the calling repo. A cross-repo private module needs
   a PAT or app token mapped explicitly as `secrets.token`, not `secrets: inherit`,
   so only that one secret crosses the boundary.
