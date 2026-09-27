@@ -52,15 +52,17 @@
       "private_vulnerability_reporting": true
     },
     "feedback-loop": {},
+    "flatplan": {
+      "description": "2D furniture arrangement planner. Vanilla TS + Canvas, no runtime deps."
+    },
     "forgejo": {},
+    "gb-vitals": {
+      "description": "Android companion for Gadgetbridge and an Amazfit Helio Strap"
+    },
     "gsheet": {
       "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
       "visibility": "public",
       "private_vulnerability_reporting": true
-    },
-    "habits": {
-      "description": "Habits tracker — htmx+JSDoc consumer of JakobMelchard/core",
-      "archived": true
     },
     "health": {
       "allow_merge_commit": false,
@@ -71,6 +73,9 @@
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
     },
     "lift": {},
+    "lists": {
+      "description": "Generic todo and grocery lists"
+    },
     "lyrics": {
       "description": "Lil Peep lyrics API worker"
     },
@@ -81,11 +86,17 @@
       "private_vulnerability_reporting": true
     },
     "remind": {},
+    "switchboard": {
+      "description": "Personal automation hub"
+    },
     "transcriber": {
       "allow_merge_commit": false,
       "archived": true
     },
     "weiterbildungszeit": {
+      "archived": true
+    },
+    "workout": {
       "archived": true
     },
     "workouts": {
