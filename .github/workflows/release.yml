@@ -1,6 +1,9 @@
 name: release
 
-# Shared release-please. Callers that need to publish assets read the outputs:
+# Shared release-please. With the org app's credentials the release PR and the
+# release are authored by the app, so `pull_request` workflows run on the release
+# PR (github.token-created PRs trigger nothing). Without them it falls back to
+# github.token. Callers that need to publish assets read the outputs:
 #
 #   jobs:
 #     release:
@@ -23,6 +26,16 @@ on:
       manifest-file:
         type: string
         default: .release-please-manifest.json
+    secrets:
+      app-client-id:
+        description: GitHub App client ID. With app-private-key, the app authors the release PR.
+        required: false
+      app-private-key:
+        description: GitHub App private key. Presence of this selects the app path.
+        required: false
+      token:
+        description: PAT fallback, used when no app private key is supplied.
+        required: false
     outputs:
       release_created:
         value: ${{ jobs.release-please.outputs.release_created }}
@@ -38,6 +51,9 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    env:
+      # `secrets` is not available in a step-level `if`; only the boolean lands in env.
+      HAS_APP: ${{ secrets.app-private-key != '' }}
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -56,10 +72,22 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: mint app token
+        id: app
+        if: env.HAS_APP == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.app-client-id }}
+          private-key: ${{ secrets.app-private-key }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app.outputs.token || secrets.token || secrets.GITHUB_TOKEN }}
           release-type: ${{ inputs.release-type }}
           config-file: ${{ inputs.config-file }}
           manifest-file: ${{ inputs.manifest-file }}
