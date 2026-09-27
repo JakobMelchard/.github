@@ -1,0 +1,64 @@
+name: ci
+
+# Toolchain-agnostic caller: detect marker files, call the matching reusable
+# workflow from JakobMelchard/.github. Shell always runs (vacuously green with
+# no scripts). Tune the `with:` inputs once the repo has a Makefile.
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [$default-branch]
+  pull_request:
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.d.outputs.go }}
+      python: ${{ steps.d.outputs.python }}
+      node: ${{ steps.d.outputs.node }}
+      node-install: ${{ steps.d.outputs.node-install }}
+      terraform: ${{ steps.d.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - id: d
+        shell: bash
+        run: |
+          has() { [ -e "$1" ] && echo true || echo false; }
+          {
+            echo "go=$(has go.mod)"
+            echo "python=$(has pyproject.toml)"
+            echo "node=$(has package.json)"
+            echo "node-install=$([ -e package-lock.json ] && echo 'npm ci' || echo 'npm install')"
+            echo "terraform=$([ -n "$(find . -name '*.tf' -not -path './.git/*' -print -quit)" ] && echo true || echo false)"
+          } | tee -a "$GITHUB_OUTPUT"
+
+  go:
+    needs: detect
+    if: needs.detect.outputs.go == 'true'
+    uses: JakobMelchard/.github/.github/workflows/go.yml@main
+
+  python:
+    needs: detect
+    if: needs.detect.outputs.python == 'true'
+    uses: JakobMelchard/.github/.github/workflows/python.yml@main
+
+  node:
+    needs: detect
+    if: needs.detect.outputs.node == 'true'
+    uses: JakobMelchard/.github/.github/workflows/node.yml@main
+    with:
+      install-cmd: ${{ needs.detect.outputs.node-install }}
+
+  terraform:
+    needs: detect
+    if: needs.detect.outputs.terraform == 'true'
+    uses: JakobMelchard/.github/.github/workflows/terraform.yml@main
+    with:
+      working-directory: .
+
+  shell:
+    uses: JakobMelchard/.github/.github/workflows/shell.yml@main

@@ -1,0 +1,45 @@
+name: self-release
+
+# release-please for this repo itself (the reusable release.yml, called locally),
+# then move the major tag onto the new release. Immutable releases are on for
+# this repo: vX.Y.Z release tags never move. v1 is a plain tag, not a release,
+# so it may follow the latest 1.x — that is what `@v1` callers track.
+
+permissions: {}
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/release.yml
+
+  major-tag:
+    needs: release
+    if: needs.release.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.release.outputs.tag_name }}
+    steps:
+      - name: move major tag
+        shell: bash
+        run: |
+          major=${TAG%%.*}                                  # v1.4.2 -> v1
+          ref=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")
+          sha=$(jq -r .object.sha <<<"$ref")
+          if [ "$(jq -r .object.type <<<"$ref")" = tag ]; then   # annotated: dereference
+            sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" -q .object.sha)
+          fi
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$major" >/dev/null 2>&1; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$major" -f sha="$sha" -F force=true >/dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$major" -f sha="$sha" >/dev/null
+          fi
+          echo "$major -> $TAG ($sha)" | tee -a "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,79 @@
+name: fleet-sync
+
+# Weekly: refresh the vendored org config and hooks in every repo that carries
+# them and open one PR per changed repo. The work is bin/fleet-sync
+# (JakobMelchard/bin, private); this job fetches it with the org app token,
+# which also clones and pushes the consumers. Without the APP_* secrets the job
+# says so and exits green. Run locally: `fleet-sync --dry-run`.
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "23 6 * * 1"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Print the diff per repo, push nothing.
+        type: boolean
+        default: false
+      repos:
+        description: Space-separated repo names. Empty = every non-archived repo in settings.json.
+        type: string
+        default: ""
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      HAS_APP: ${{ secrets.APP_PRIVATE_KEY != '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: repositories from settings.json
+        id: repos
+        shell: bash
+        run: echo "list=$(jq -r '.repos | to_entries[] | select(.value.archived != true) | .key' infra/settings.json | paste -sd, -)" >> "$GITHUB_OUTPUT"
+
+      - name: mint app token
+        id: app
+        if: env.HAS_APP == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.repos.outputs.list }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: fetch org tooling
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          gh api "repos/$GITHUB_REPOSITORY_OWNER/bin/tarball/main" | tar -xz -C "$RUNNER_TEMP/bin" --strip-components=1
+          ls "$RUNNER_TEMP/bin"
+
+      - name: fleet-sync
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          DRY: ${{ inputs.dry-run }}
+          REPOS: ${{ inputs.repos }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC2086 # space-separated repo names by contract
+          set -- $REPOS
+          if [ "$DRY" = true ]; then set -- --dry-run "$@"; fi
+          "$RUNNER_TEMP/bin/fleet-sync" "$@" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: no app credentials
+        if: env.HAS_APP != 'true'
+        run: |
+          echo "APP_CLIENT_ID / APP_PRIVATE_KEY are not set on this repo; nothing synced."
+          echo "Run 'fleet-sync --dry-run' locally, or install the org app (README, section 'GitHub App')."

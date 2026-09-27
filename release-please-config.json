@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "$comment": "bootstrap-sha: history before it is not in the first changelog. v1 was a hand-placed tag; self-release.yml moves it to every 1.x release.",
+  "bootstrap-sha": "756314b103b2697db6e66e8a05c214aae087ca8b",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "include-component-in-tag": false
+    }
+  }
+}
