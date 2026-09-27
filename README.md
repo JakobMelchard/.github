@@ -7,7 +7,9 @@ and so the org profile renders; everything else on the platform is private —
 see `JakobMelchard/.agents/PLATFORM.md` for the map.
 
 Actions are pinned by commit SHA with the version in a trailing comment; Renovate
-(`config:best-practices`) keeps the pins fresh. The CI workflows declare
+keeps the pins fresh through the org preset in `renovate/default.json`, which every
+repo extends (`github>JakobMelchard/.github//renovate/default`). Digest and patch
+bumps automerge once CI is green; everything else waits for a review. The CI workflows declare
 `permissions: contents: read` at the top (`release.yml` needs `contents: write` +
 `pull-requests: write`), checkouts do not persist credentials, and caller-supplied
 `*-cmd` inputs reach the shell through `env`, never by template expansion.
@@ -26,6 +28,47 @@ tagged as a stable alternative if you would rather pin and bump deliberately.
 suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
 `.tf`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
 pipeline in one click. Nothing is installed automatically.
+
+## Community files
+
+Default community health files here apply to every org repo that has none of its own,
+private repos included: the issue forms under `.github/ISSUE_TEMPLATE/` (`Bug`, `Task`,
+blank issues off), `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md` and `CONTRIBUTING.md`.
+CODEOWNERS and LICENSE are not inheritable and stay per repo. Private vulnerability
+reporting is on for the public repos (`private_vulnerability_reporting` in `infra/settings.json`).
+
+## Labels
+
+`infra/settings.json` `labels` declares the label set every non-archived repo carries: the
+GitHub defaults, `fleet/*` for agent-driven work, and release-please's `autorelease: *`.
+`infra/labels` creates or updates them with `gh label create --force` and only lists labels
+it does not know; it never deletes. Two callers, one script:
+
+```sh
+org-repo labels [repo…]        # JakobMelchard/bin, your gh auth
+```
+
+`.github/workflows/labels.yml` runs the same script weekly and on every change to the file,
+with a token from the org GitHub App (see below). Without the `APP_*` secrets it exits green
+and says so.
+
+## GitHub App
+
+One org-owned GitHub App serves every cross-repo job: private dependencies in the reusable
+workflows, `labels.yml`, and `fleet-sync.yml`. Create it once (Org Settings → Developer
+settings → GitHub Apps), webhook off, installed on **all repositories**, with repository
+permissions
+
+| Permission | Level | Used by |
+|------------|-------|---------|
+| Contents | Read and write | private deps (read), `fleet-sync` (write) |
+| Pull requests | Read and write | `fleet-sync` |
+| Issues | Read and write | `labels.yml` |
+
+Store the Client ID and the private key as `APP_CLIENT_ID` and `APP_PRIVATE_KEY` on this
+repo (it is public, so an org secret works too) and on any private repo that passes them
+to a reusable workflow. Each job mints a short-lived token limited to the permissions it
+names, revoked when the job ends.
 
 ## Reusable workflows
 
@@ -189,6 +232,8 @@ adopted (import blocks) and kept at the shared settings — merge strategies,
 branch deletion, auto-merge, visibility, archived, Dependabot alerts. Org-level
 settings apply only with `-var manage_org=true` and an `admin:org` token.
 `bin/org-repo sync` applies the same document imperatively when tofu is not at hand.
+Labels (`labels`) and private vulnerability reporting are applied by `org-repo` and the
+workflows, not by tofu: the provider's label resource fails on labels that already exist.
 
 Rulesets and branch protection are not managed: unavailable on private repos
 under the free plan.
@@ -196,9 +241,11 @@ under the free plan.
 ## Layout
 
 ```
-.github/workflows/    reusable workflows + this repo's own lint.yml
+.github/workflows/    reusable workflows + this repo's own lint.yml, labels.yml
+.github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
 actions/              composite actions (gitleaks, hooks)
-infra/                opentofu: org + repo settings, settings.json
+infra/                opentofu: org + repo settings, settings.json, labels script
+renovate/             org Renovate preset
 hooks/                DEPRECATED shim → JakobMelchard/.githooks
 profile/              org profile README
 ```

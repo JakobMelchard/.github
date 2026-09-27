@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Org preset. Every repo: { \"extends\": [\"github>JakobMelchard/.github//renovate/default\"] }. Public here so private and public consumers read the same file.",
+  "extends": ["config:best-practices"],
+  "automergeType": "pr",
+  "platformAutomerge": false,
+  "packageRules": [
+    {
+      "matchPackageNames": ["JakobMelchard/hx", "@jakobmelchard/hx"],
+      "groupName": "hx"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "description": "Our own reusable workflows are consumed at @main on purpose; never digest-pin them.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["JakobMelchard/.github"],
+      "enabled": false
+    },
+    {
+      "description": "Low-risk updates merge on their own once CI is green. Renovate's own automerge, not GitHub's: native auto-merge needs branch protection, which the free plan does not enforce on private repos. A repo with no passing check never automerges.",
+      "matchUpdateTypes": ["digest", "pin", "pinDigest", "patch"],
+      "automerge": true
+    }
+  ]
+}

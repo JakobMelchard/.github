@@ -1,0 +1,52 @@
+name: labels
+
+# Keep every org repo's labels at what infra/settings.json declares (infra/labels
+# does the work; `org-repo labels` runs the same script locally). github.token
+# only reaches this repo, so cross-repo writes need the org GitHub App — see
+# README "GitHub App". Without the APP_* secrets the job says so and exits green.
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - infra/settings.json
+      - infra/labels
+      - .github/workflows/labels.yml
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      # `secrets` is not available in a step-level `if`; only the boolean lands in env.
+      HAS_APP: ${{ secrets.APP_PRIVATE_KEY != '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: mint app token
+        id: app
+        if: env.HAS_APP == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          permission-issues: write
+
+      - name: sync labels
+        if: env.HAS_APP == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: infra/labels
+
+      - name: no app credentials
+        if: env.HAS_APP != 'true'
+        run: |
+          echo "APP_CLIENT_ID / APP_PRIVATE_KEY are not set on this repo; nothing synced."
+          echo "Run 'org-repo labels' locally, or install the org app (README, section 'GitHub App')."
