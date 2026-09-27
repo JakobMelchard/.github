@@ -57,6 +57,25 @@ on:
         required: false
 
 jobs:
+  # The PR title becomes the squash-commit subject that release-please reads.
+  # Same regex as .githooks/commit-msg. Skipped on push.
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: conventional title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
+          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
+            echo "ok: $TITLE"
+          else
+            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
+            exit 1
+          fi
+
   ci:
     runs-on: ${{ inputs.runs-on }}
     env:
@@ -69,6 +88,19 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
+
+      - name: provenance
+        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
+        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
+        # actionlint's job-context type does not know them yet.
+        env:
+          JOB: ${{ toJSON(job) }}
+        shell: bash
+        run: |
+          ref=$(jq -r '.workflow_ref // "unknown"' <<<"$JOB")
+          sha=$(jq -r '.workflow_sha // "unknown"' <<<"$JOB")
+          echo "reusable workflow: $ref @ $sha"
+          echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:

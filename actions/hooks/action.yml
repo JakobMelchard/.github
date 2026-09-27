@@ -1,6 +1,6 @@
 name: hooks
 description: >
-  Point core.hooksPath at the vendored .githooks/ in this checkout, so hook-driven
+  Point core.hooksPath at the vendored .githooks/ (pre-commit, pre-push, commit-msg) in this checkout, so hook-driven
   checks run in CI exactly as they do locally. Optionally refresh the vendored
   copies from JakobMelchard/.githooks first — that repo is private, so a refresh
   needs a token that can read it (an app token or PAT); github.token cannot.
@@ -42,5 +42,6 @@ runs:
         for h in pre-commit pre-push; do
           [ -x ".githooks/$h" ] || { echo "no vendored .githooks/$h — run hooks-install locally and commit it" >&2; exit 1; }
         done
+        [ -x .githooks/commit-msg ] || echo "note: no vendored .githooks/commit-msg — run hooks-install to pick it up"
         git config core.hooksPath .githooks
         echo "hooksPath=.githooks: $(ls .githooks | tr '\n' ' ')"
