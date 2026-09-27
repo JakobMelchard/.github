@@ -57,21 +57,24 @@ and says so.
 
 ## GitHub App
 
-One org-owned GitHub App serves every cross-repo job: private dependencies in the reusable
-workflows, `labels.yml`, and `fleet-sync.yml`. Create it once (Org Settings → Developer
-settings → GitHub Apps), webhook off, installed on **all repositories**, with repository
-permissions
+`melchbot` is the org GitHub App behind every cross-repo job: private dependencies in
+the reusable workflows, `labels.yml`, and `fleet-sync.yml`. It is installed on **all
+repositories** with Contents, Issues and Pull requests read and write, which is exactly
+what those jobs mint tokens for (each job requests only the permissions it names, scoped
+to the repos in `infra/settings.json`, revoked when the job ends).
 
-| Permission | Level | Used by |
-|------------|-------|---------|
-| Contents | Read and write | private deps (read), `fleet-sync` (write) |
-| Pull requests | Read and write | `fleet-sync` |
-| Issues | Read and write | `labels.yml` |
+Its credentials live in Infisical (the project `interviews` uses, `dev` environment) as
+`MELCHBOT_CLIENT_ID` and `MELCHBOT_PRIVATE_KEY`. The workflows read them as Actions
+secrets `APP_CLIENT_ID` and `APP_PRIVATE_KEY` on this repo; copy them without echoing:
 
-Store the Client ID and the private key as `APP_CLIENT_ID` and `APP_PRIVATE_KEY` on this
-repo (it is public, so an org secret works too) and on any private repo that passes them
-to a reusable workflow. Each job mints a short-lived token limited to the permissions it
-names, revoked when the job ends.
+```sh
+cd ~/Workspaces/JakobMelchard/interviews
+infisical secrets get MELCHBOT_CLIENT_ID --plain | gh secret set APP_CLIENT_ID -R JakobMelchard/.github
+infisical secrets get MELCHBOT_PRIVATE_KEY --plain | gh secret set APP_PRIVATE_KEY -R JakobMelchard/.github
+```
+
+A private repo that passes them to a reusable workflow (`private-deps`) needs the same
+two secrets on itself: the free plan only lets org secrets reach public repos.
 
 ## Reusable workflows
 
