@@ -82,7 +82,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 
 | Workflow | For | Key inputs |
 |----------|-----|------------|
-| `release.yml` | any repo using release-please | — |
+| `release.yml` | any repo using release-please | `release-type` `config-file`; secrets `app-client-id` `app-private-key` (or `token`) make the app author the release PR so CI runs on it |
 | `go.yml` | `gsheet` `health` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
 | `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `lyrics` `lift` `hx` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
@@ -239,8 +239,10 @@ releases are enabled here, so `vX.Y.Z` release tags and their assets never chang
 publish; `v1` is a plain tag, not a release, which is why it may move. Pin `@v1` for a
 tested line, `@vX.Y.Z` for a frozen one, `@main` to follow every merge. `bootstrap-sha` in
 `release-please-config.json` keeps history before the first automated release out of the
-changelog. Release PRs are opened with `github.token`, so `lint.yml` does not run on them;
-they only touch `CHANGELOG.md` and the manifest.
+changelog. The release PR is authored by melchbot (the `APP_*` secrets go to `release.yml`),
+so `lint.yml` runs on it like on any PR. A consumer gets the same by passing its own
+`APP_CLIENT_ID` / `APP_PRIVATE_KEY` repository secrets to `release.yml`; with `github.token`
+alone the release PR triggers no workflows.
 
 ## Fleet sync
 

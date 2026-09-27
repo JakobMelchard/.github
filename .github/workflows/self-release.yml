@@ -1,7 +1,8 @@
 name: self-release
 
-# release-please for this repo itself (the reusable release.yml, called locally),
-# then move the major tag onto the new release. Immutable releases are on for
+# release-please for this repo itself (the reusable release.yml, called locally,
+# authoring as the org app so lint.yml runs on the release PR), then move the
+# major tag onto the new release. Immutable releases are on for
 # this repo: vX.Y.Z release tags never move. v1 is a plain tag, not a release,
 # so it may follow the latest 1.x — that is what `@v1` callers track.
 
@@ -17,6 +18,9 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/release.yml
+    secrets:
+      app-client-id: ${{ secrets.APP_CLIENT_ID }}
+      app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
   major-tag:
     needs: release
