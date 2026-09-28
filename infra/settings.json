@@ -54,10 +54,14 @@
       "has_wiki": true,
       "private_vulnerability_reporting": true
     },
-    "agent-tg": {},
+    "agent-tg": {
+      "archived": true
+    },
     "agentest": {},
     "assets": {},
-    "attach": {},
+    "attach": {
+      "description": "iPad client for zmx sessions: workspaces, scrollback, input, Blink hand-off"
+    },
     "bin": {
       "description": "Org tooling"
     },
@@ -66,13 +70,12 @@
       "allow_merge_commit": false,
       "allow_rebase_merge": false
     },
-    "feedback-loop": {},
     "flatplan": {
       "description": "2D furniture arrangement planner. Vanilla TS + Canvas, no runtime deps."
     },
     "forgejo": {},
     "gb-vitals": {
-      "description": "Android companion for Gadgetbridge and an Amazfit Helio Strap"
+      "description": "Gadgetbridge vitals alerts for Amazfit Helio Strap (Health Connect + sqlite export)"
     },
     "gsheet": {
       "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
@@ -105,9 +108,11 @@
       "visibility": "public",
       "private_vulnerability_reporting": true
     },
-    "remind": {},
+    "swiftkit": {
+      "description": "Shared Swift package and XcodeGen base for the org iOS apps"
+    },
     "switchboard": {
-      "description": "Personal automation hub"
+      "description": "event -> handler -> output hub on Workers + Mac mini runner"
     },
     "template": {
       "description": "Repository template: set toolchain in template.json, bootstrap does the rest",
