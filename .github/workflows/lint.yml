@@ -79,3 +79,12 @@ jobs:
     with:
       paths: infra
       severity: warning
+
+  # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the
+  # generate/lint plumbing on a bare checkout.
+  smoke-xcode:
+    uses: ./.github/workflows/xcode.yml
+    with:
+      scheme: ""
+      generate-cmd: ""
+      lint-cmd: ""
