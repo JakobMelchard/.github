@@ -12,5 +12,12 @@ locals {
     for name, override in local.settings.repos :
     name => merge(local.defaults, override)
   }
-  repos = { for k, v in local.all_repos : k => v if !v.archived }
+  # GitHub ignores allow_auto_merge on private repos under the free plan (native
+  # auto-merge needs branch protection), so asking for it there is a permanent
+  # diff. Renovate's own automerge covers private repos (renovate/default.json).
+  repos = {
+    for k, v in local.all_repos : k => merge(v, {
+      allow_auto_merge = v.allow_auto_merge && v.visibility == "public"
+    }) if !v.archived
+  }
 }
