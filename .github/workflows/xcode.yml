@@ -1,14 +1,13 @@
 name: xcode
 
-# Reusable Xcode CI for iOS apps. Callers: attach, zmxapp, zmxkit, swiftkit, lift, switchboard,
-# monitor, interviews.
+# Reusable Xcode CI for Apple apps and packages. Callers: attach, zmxapp, zmxkit.
 #
 #   jobs:
 #     ci:
 #       uses: JakobMelchard/.github/.github/workflows/xcode.yml@main
 #       with:
 #         scheme: Attach
-#         siblings: swiftkit      # public org repos cloned next to the checkout
+#         siblings: zmxkit        # optional: public org repos cloned next to the checkout
 #
 # Runs on a macOS runner (10x the minute cost of Linux on the free plan), so callers
 # should trigger it on pull_request and main only. Every *-cmd input skips its step
@@ -57,7 +56,7 @@ on:
         description: >
           Space-separated public JakobMelchard repos to clone next to the checkout, as
           name or name@ref (default ref main), mirroring the local ~/Workspaces/JakobMelchard
-          layout. For apps whose project.yml includes ../../swiftkit/xcodegen/base.yml.
+          layout. For projects that include or depend on a sibling checkout by path.
         type: string
         default: ""
       working-directory:
