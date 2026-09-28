@@ -123,6 +123,11 @@
     },
     "workouts": {
       "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
+    },
+    "zmxkit": {
+      "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
+      "visibility": "public",
+      "private_vulnerability_reporting": true
     }
   },
   "labels": {
