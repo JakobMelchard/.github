@@ -113,7 +113,9 @@ jobs:
 
       # v6 defaults to a proprietary caching component (gradle.com terms of use, preview-only
       # for private repos). cache-provider: basic keeps the open-source actions/cache path.
+      # basic caching keys on the Gradle files and fails without any (lint.yml's smoke job has none)
       - uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
+        if: hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') != ''
         with:
           cache-provider: basic
 
