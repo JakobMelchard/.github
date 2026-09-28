@@ -1,0 +1,48 @@
+name: hooks
+
+# Reusable prek run: the repo's own .pre-commit-config.yaml over every tracked file. This is the
+# gate for the checks the local hooks run (local hooks can be skipped, this cannot). Hooks come
+# from the pinned revs in the caller's config, e.g. JakobMelchard/.githooks (public, no token).
+# Callers: zmxkit.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      skip:
+        description: Comma-separated hook ids to skip on this runner (e.g. swift-format on Linux).
+        type: string
+        default: ""
+      working-directory:
+        type: string
+        default: "."
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  prek:
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: provenance
+        # Which commit of JakobMelchard/.github defined this job (see shell.yml).
+        env:
+          JOB: ${{ toJSON(job) }}
+        shell: bash
+        run: |
+          ref=$(jq -r '.workflow_ref // "unknown"' <<<"$JOB")
+          sha=$(jq -r '.workflow_sha // "unknown"' <<<"$JOB")
+          echo "reusable workflow: $ref @ $sha"
+          echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+        env:
+          SKIP: ${{ inputs.skip }}
+        with:
+          working-directory: ${{ inputs.working-directory }}
+          extra-args: --all-files

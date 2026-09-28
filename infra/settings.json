@@ -38,7 +38,9 @@
       "description": "Dev environments: base image, features, templates"
     },
     ".githooks": {
-      "description": "Shared git hooks"
+      "description": "Shared git hooks",
+      "visibility": "public",
+      "private_vulnerability_reporting": true
     },
     ".github": {
       "description": "Shared CI, composite actions, org infra as code",

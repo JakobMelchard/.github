@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Org preset. Every repo: { \"extends\": [\"github>JakobMelchard/.github//renovate/default\"] }. Public here so private and public consumers read the same file.",
-  "extends": ["config:best-practices"],
+  "extends": ["config:best-practices", ":enablePreCommit"],
   "automergeType": "pr",
   "platformAutomerge": false,
   "packageRules": [
@@ -12,6 +12,11 @@
     {
       "matchManagers": ["github-actions"],
       "groupName": "github actions"
+    },
+    {
+      "description": "Hook revs in .pre-commit-config.yaml (prek): one PR per repo.",
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks"
     },
     {
       "description": "Our own reusable workflows are consumed at @main on purpose; never digest-pin them.",
