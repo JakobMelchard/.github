@@ -109,7 +109,9 @@
       "private_vulnerability_reporting": true
     },
     "swiftkit": {
-      "description": "Shared Swift package and XcodeGen base for the org iOS apps"
+      "description": "Shared Swift package and XcodeGen base for the org iOS apps",
+      "visibility": "public",
+      "private_vulnerability_reporting": true
     },
     "switchboard": {
       "description": "event -> handler -> output hub on Workers + Mac mini runner"
