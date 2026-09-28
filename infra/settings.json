@@ -77,10 +77,6 @@
       "visibility": "public",
       "private_vulnerability_reporting": true
     },
-    "habits": {
-      "description": "Habits tracker \u2014 htmx+JSDoc consumer of JakobMelchard/core",
-      "archived": true
-    },
     "health": {
       "allow_merge_commit": false,
       "allow_rebase_merge": false
