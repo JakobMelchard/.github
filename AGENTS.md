@@ -13,9 +13,9 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform xcode lint labels self-release fleet-sync`
+- `.github/workflows/` `release go python node shell terraform xcode hooks lint labels self-release fleet-sync`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
-- `actions/gitleaks/`, `actions/hooks/` composite actions
+- `actions/gitleaks/` composite action
 - `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
 - `renovate/default.json` the org Renovate preset every repo extends
 - `profile/README.md` the org profile page
@@ -23,12 +23,12 @@ a second hook set.
 ## Commands
 
 ```sh
-hooks-install          # JakobMelchard/bin
+prek install           # once per clone (brew install prek)
+prek run --all-files   # what the smoke-hooks job runs
 ```
 
-Hooks live in `JakobMelchard/.githooks`, not here — they moved out of this repo.
-`hooks-install` vendors them into `.githooks/` and sets `core.hooksPath`; see
-that repo's `install` for `HOOKS_REF` and the rest.
+Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-config.yaml`.
+`hooks.yml` here is the reusable CI job that runs a caller's config.
 
 ## Rules
 

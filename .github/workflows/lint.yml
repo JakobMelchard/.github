@@ -48,6 +48,12 @@ jobs:
   # Integration smoke: actually call each reusable workflow with its emptiest
   # viable inputs. A previous bug — an empty `${{ inputs.install-cmd }}` left an
   # empty if-body and broke every caller — passed actionlint but died at runtime.
+  smoke-hooks:
+    uses: ./.github/workflows/hooks.yml
+    with:
+      # the infra job runs tofu fmt; ubuntu-latest has no tofu
+      skip: tofu-fmt
+
   smoke-python:
     uses: ./.github/workflows/python.yml
     with:

@@ -218,17 +218,14 @@ jobs:
 - uses: JakobMelchard/.github/actions/gitleaks@main
   with:
     config: .gitleaks.toml     # optional
-
-- uses: JakobMelchard/.github/actions/hooks@main
 ```
 
 ## Git hooks
 
-The hook set lives in the private repo **`JakobMelchard/.githooks`**. Install with
-`hooks-install` from `JakobMelchard/bin` (vendors `pre-commit` + `pre-push` into
-`.githooks/`, sets `core.hooksPath`). In CI, `actions/hooks` points `core.hooksPath`
-at the vendored copies; it can refresh them first given a token that can read
-`.githooks` (`github.token` cannot — that repo is private).
+The hooks live in the public repo **`JakobMelchard/.githooks`** as a prek / pre-commit hook
+repository. Each repo pins it by tag in `.pre-commit-config.yaml` (Renovate bumps the pin) and
+runs `prek install` once per clone. In CI, the reusable `hooks.yml` runs the same config over
+every file; its `skip` input names hooks the runner cannot run.
 
 ## Releases of this repo
 
