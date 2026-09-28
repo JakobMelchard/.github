@@ -16,7 +16,7 @@ bumps automerge once CI is green; everything else waits for a review. The CI wor
 `lint.yml` gates every change here — actionlint over workflows and starter
 templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
 validate, and smoke calls of `go` `python` `node` (including the Chromium path)
-and `shell`. `release.yml` and `terraform.yml` are not smoke-called.
+and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x). `release.yml` and `terraform.yml` are not smoke-called.
 
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
@@ -83,11 +83,12 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | Workflow | For | Key inputs |
 |----------|-----|------------|
 | `release.yml` | any repo using release-please | `release-type` `config-file`; secrets `app-client-id` `app-private-key` (or `token`) make the app author the release PR so CI runs on it |
-| `go.yml` | `gsheet` `health` `workouts` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
-| `python.yml` | `transcriber` `monitor` `observe` `CKAD-prep` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
-| `node.yml` | `cf` `transcriber` `lilfeelz.github.io` `lyrics` `lift` `hx` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
-| `shell.yml` | `bin` `monitor` `infra` | `paths` `severity` |
+| `go.yml` | `health` `workouts` `gsheet` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
+| `python.yml` | `monitor` `observe` `cf` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
+| `node.yml` | `cf` `hx` `lift` `lists` `lyrics` `switchboard` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
+| `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `.devcontainer` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
+| `xcode.yml` | `attach` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 
 Every `*-cmd` input skips its step when set to `""`.
 
@@ -104,9 +105,10 @@ jobs:
       build-cmd: make build
 ```
 
-`workouts` depends on the private `github.com/JakobMelchard/gsheet` module.
-`GOPRIVATE` alone does not authenticate a runner, so set `private-modules` and
-pass a token with read access to the module repo:
+A repo that depends on a private Go module in the org needs more than
+`GOPRIVATE`, which does not authenticate a runner. Set `private-modules` and
+pass a token with read access to the module repo (`gsheet`, which `workouts`
+imports, is public since 2026-09-27 and needs neither):
 
 ```yaml
 jobs:
@@ -131,9 +133,6 @@ than using `secrets: inherit`, so only that one secret crosses the boundary:
 `transcriber` imports private `observe` and needs cross-repo read access. The
 shared workflows support two credential types and prefer the app when its
 private key is present.
-
-(`workouts` imports private `gsheet`, but `gsheet` is being retired — see that
-repo's open CI PR.)
 
 **GitHub App — recommended.** No expiry to babysit, and each run mints a token
 scoped to the listed repos that is revoked when the job ends.

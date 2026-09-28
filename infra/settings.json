@@ -26,6 +26,20 @@
     "archived": false
   },
   "repos": {
+    ".agents": {
+      "description": "Org agent rules and skills"
+    },
+    ".config": {
+      "description": "Shared lint, format and tsconfig bases: npm package @jakobmelchard/config, plus copied ruff/gitleaks/editorconfig",
+      "visibility": "public",
+      "private_vulnerability_reporting": true
+    },
+    ".devcontainer": {
+      "description": "Dev environments: base image, features, templates"
+    },
+    ".githooks": {
+      "description": "Shared git hooks"
+    },
     ".github": {
       "description": "Shared CI, composite actions, org infra as code",
       "visibility": "public",
@@ -33,7 +47,7 @@
       "private_vulnerability_reporting": true
     },
     "JakobMelchard.github.io": {
-      "description": "docs.melchard.org — GitHub Pages docs site",
+      "description": "docs.melchard.org \u2014 GitHub Pages docs site",
       "visibility": "public",
       "has_wiki": true,
       "private_vulnerability_reporting": true
@@ -41,15 +55,14 @@
     "agent-tg": {},
     "agentest": {},
     "assets": {},
+    "attach": {},
+    "bin": {
+      "description": "Org tooling"
+    },
     "cf": {
       "description": "Monorepo for Cloudflare Pages sites + shared tooling.",
       "allow_merge_commit": false,
       "allow_rebase_merge": false
-    },
-    "hx": {
-      "visibility": "public",
-      "description": "htmx + JSDoc library: router, html, Store adapters",
-      "private_vulnerability_reporting": true
     },
     "feedback-loop": {},
     "flatplan": {
@@ -64,9 +77,18 @@
       "visibility": "public",
       "private_vulnerability_reporting": true
     },
+    "habits": {
+      "description": "Habits tracker \u2014 htmx+JSDoc consumer of JakobMelchard/core",
+      "archived": true
+    },
     "health": {
       "allow_merge_commit": false,
       "allow_rebase_merge": false
+    },
+    "hx": {
+      "visibility": "public",
+      "description": "htmx + JSDoc library: router, html, Store adapters",
+      "private_vulnerability_reporting": true
     },
     "infra": {},
     "interviews": {
@@ -89,6 +111,10 @@
     "switchboard": {
       "description": "Personal automation hub"
     },
+    "template": {
+      "description": "Repository template: set toolchain in template.json, bootstrap does the rest",
+      "is_template": true
+    },
     "transcriber": {
       "allow_merge_commit": false,
       "archived": true
@@ -101,25 +127,6 @@
     },
     "workouts": {
       "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
-    },
-    ".githooks": {
-      "description": "Shared git hooks"
-    },
-    ".agents": {
-      "description": "Org agent rules and skills"
-    },
-    ".devcontainer": {
-      "description": "Dev environments: base image, features, templates"
-    },
-    ".config": {
-      "description": "Shared lint, format and release configs"
-    },
-    "bin": {
-      "description": "Org tooling"
-    },
-    "template": {
-      "description": "Repository template: set toolchain in template.json, bootstrap does the rest",
-      "is_template": true
     }
   },
   "labels": {

@@ -1,7 +1,7 @@
 name: node
 
-# Reusable Node CI. Callers: cf, transcriber, lilfeelz.github.io, weiterbildungszeit,
-# core, lift.
+# Reusable Node CI. Callers: cf, hx, lift, lists, lyrics, switchboard,
+# lilfeelz.github.io.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
 #
 # Repos with no committed lockfile must pass install-cmd: npm install.
