@@ -142,7 +142,7 @@ jobs:
           set -o pipefail
           xcodebuild "$flag" "$p" -scheme "$SCHEME" -destination "$DEST" \
             -skipMacroValidation -skipPackagePluginValidation \
-            CODE_SIGNING_ALLOWED=NO test 2>&1 | tee xcodebuild.log | grep -E 'error:|warning: |Test Suite|Test Case|Executed|\*\*'
+            test 2>&1 | tee xcodebuild.log | grep -E 'error:|warning: |Test Suite|Test Case|Executed|\*\*'
 
       - name: xcodebuild log
         if: failure()
