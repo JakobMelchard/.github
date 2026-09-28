@@ -1,0 +1,153 @@
+name: xcode
+
+# Reusable Xcode CI for iOS apps. Callers: attach.
+#
+#   jobs:
+#     ci:
+#       uses: JakobMelchard/.github/.github/workflows/xcode.yml@main
+#       with:
+#         scheme: Attach
+#
+# Runs on a macOS runner (10x the minute cost of Linux on the free plan), so callers
+# should trigger it on pull_request and main only. Every *-cmd input skips its step
+# when "", and an empty scheme skips xcodebuild entirely — that is what lint.yml's
+# smoke job passes.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      scheme:
+        description: Xcode scheme to build and test. Empty skips xcodebuild.
+        type: string
+        default: ""
+      project:
+        description: >
+          .xcodeproj or .xcworkspace path. Empty picks the first one in working-directory
+          after generate-cmd has run.
+        type: string
+        default: ""
+      destination:
+        description: xcodebuild -destination for the test run.
+        type: string
+        default: "platform=iOS Simulator,name=iPad Air 11-inch (M4)"
+      generate-cmd:
+        description: Runs before anything else, e.g. xcodegen for repos that git-ignore the .xcodeproj.
+        type: string
+        default: "if [ -f project.yml ]; then brew install xcodegen && xcodegen generate; fi"
+      lint-cmd:
+        description: Empty string skips the step.
+        type: string
+        default: "xcrun swift-format lint --strict --recursive ."
+      test-cmd:
+        description: >
+          Replaces the default `xcodebuild test` (built from scheme/project/destination)
+          when set. Empty runs the default, or nothing when scheme is empty.
+        type: string
+        default: ""
+      xcode-version:
+        description: Xcode app to select, e.g. "26.0". Empty keeps the runner default.
+        type: string
+        default: ""
+      working-directory:
+        type: string
+        default: "."
+      runs-on:
+        type: string
+        default: macos-latest
+
+jobs:
+  # The PR title becomes the squash-commit subject that release-please reads.
+  # Same regex as .githooks/commit-msg. Skipped on push.
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: conventional title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
+          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
+            echo "ok: $TITLE"
+          else
+            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
+            exit 1
+          fi
+
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: provenance
+        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
+        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
+        # actionlint's job-context type does not know them yet.
+        env:
+          JOB: ${{ toJSON(job) }}
+        shell: bash
+        run: |
+          ref=$(jq -r '.workflow_ref // "unknown"' <<<"$JOB")
+          sha=$(jq -r '.workflow_sha // "unknown"' <<<"$JOB")
+          echo "reusable workflow: $ref @ $sha"
+          echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: select xcode
+        if: inputs.xcode-version != ''
+        env:
+          XCODE: ${{ inputs.xcode-version }}
+        shell: bash
+        run: |
+          sudo xcode-select -s "/Applications/Xcode_${XCODE}.app"
+          xcodebuild -version
+
+      - name: generate
+        if: inputs.generate-cmd != ''
+        env:
+          CMD: ${{ inputs.generate-cmd }}
+        shell: bash
+        run: eval "$CMD"
+
+      - name: lint
+        if: inputs.lint-cmd != ''
+        env:
+          CMD: ${{ inputs.lint-cmd }}
+        shell: bash
+        run: eval "$CMD"
+
+      - name: test
+        if: inputs.test-cmd != '' || inputs.scheme != ''
+        env:
+          CMD: ${{ inputs.test-cmd }}
+          SCHEME: ${{ inputs.scheme }}
+          PROJECT: ${{ inputs.project }}
+          DEST: ${{ inputs.destination }}
+        shell: bash
+        run: |
+          if [ -n "$CMD" ]; then eval "$CMD"; exit; fi
+          p="$PROJECT"
+          if [ -z "$p" ]; then
+            for f in ./*.xcworkspace ./*.xcodeproj; do [ -d "$f" ] && { p=$f; break; }; done
+          fi
+          [ -n "$p" ] || { echo "::error::no .xcodeproj/.xcworkspace found" >&2; exit 1; }
+          case "$p" in *.xcworkspace) flag=-workspace ;; *) flag=-project ;; esac
+          set -o pipefail
+          xcodebuild "$flag" "$p" -scheme "$SCHEME" -destination "$DEST" \
+            -skipMacroValidation -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO test 2>&1 | tee xcodebuild.log | grep -E 'error:|warning: |Test Suite|Test Case|Executed|\*\*'
+
+      - name: xcodebuild log
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: xcodebuild-log
+          path: ${{ inputs.working-directory }}/xcodebuild.log
+          if-no-files-found: ignore

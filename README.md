@@ -16,7 +16,7 @@ bumps automerge once CI is green; everything else waits for a review. The CI wor
 `lint.yml` gates every change here — actionlint over workflows and starter
 templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
 validate, and smoke calls of `go` `python` `node` (including the Chromium path)
-and `shell`. `release.yml` and `terraform.yml` are not smoke-called.
+and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x). `release.yml` and `terraform.yml` are not smoke-called.
 
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
@@ -88,6 +88,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `node.yml` | `cf` `hx` `lift` `lists` `lyrics` `switchboard` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `.devcontainer` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
+| `xcode.yml` | `attach` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 
 Every `*-cmd` input skips its step when set to `""`.
 
