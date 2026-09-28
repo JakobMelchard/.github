@@ -1,6 +1,6 @@
 name: android
 
-# Reusable Android (Gradle) CI. Callers: zmxdroid.
+# Reusable Android (Gradle) CI. Callers: zmxdroid, lift (Capacitor, android/).
 #
 #   jobs:
 #     ci:
