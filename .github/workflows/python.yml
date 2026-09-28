@@ -1,9 +1,9 @@
 name: python
 
-# Reusable Python CI. Callers: transcriber, monitor, observe, CKAD-prep.
+# Reusable Python CI. Callers: monitor, observe, cf.
 #
 # package-manager:
-#   uv    -> uv sync (observe, transcriber, CKAD-prep)
+#   uv    -> uv sync (observe)
 #   pip   -> python -m venv .venv && .venv/bin/pip install -e ".[dev]"
 #   none  -> stdlib only, no install step (monitor)
 

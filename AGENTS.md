@@ -3,12 +3,12 @@
 Reusable workflows, composite actions and the common git hook set for the
 `JakobMelchard` org and the `lilfeelz` personal repos. No application code.
 
-## Boundary against core
+## Boundary against hx
 
-This repo is **how code is built and checked**. `core` is code that **ships
+This repo is **how code is built and checked**. `hx` is code that **ships
 inside the app**. Workflows, composite actions, hooks and scaffolding templates
-belong here. `core` keeps `src/`, `SPEC.md`, the store contract test and the
-semver tags consumers pin. `core` must never grow a second reusable workflow or
+belong here. `hx` keeps `src/`, `SPEC.md`, the store contract test and the
+semver tags consumers pin. `hx` must never grow a second reusable workflow or
 a second hook set.
 
 ## Layout
@@ -64,5 +64,6 @@ itself takes `repository:`/`ref:`, so this is a property of these workflows and
 of token scope, not a platform limit: every checkout here is bare, none takes a
 `repository` input, and `github.token` only reads the calling repo. Pointing one
 at another repo would need both a new input and a token passed in. That is why
-`core`'s `consumers-e2e.yml` inlines its steps instead of calling `node.yml` —
-and why it needs `CONSUMERS_TOKEN` to read a private consumer.
+`hx`'s `consumers-e2e.yml` inlines its steps instead of calling `node.yml`,
+and why it mints an app token (falling back to `CONSUMERS_TOKEN`) to read a
+private consumer.
