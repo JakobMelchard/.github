@@ -124,6 +124,9 @@
     "workouts": {
       "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
     },
+    "zmxdroid": {
+      "description": "Android window for zmx sessions: tabs of Termux terminals plus an fzf picker over SSH"
+    },
     "zmxkit": {
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
       "visibility": "public",
