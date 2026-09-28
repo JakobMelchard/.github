@@ -95,6 +95,14 @@ jobs:
       generate-cmd: ""
       lint-cmd: ""
 
+  # Exercises xcode.yml's simulator step: the runner must end up with the default iPad.
+  smoke-simulator:
+    uses: ./.github/workflows/xcode.yml
+    with:
+      generate-cmd: ""
+      lint-cmd: ""
+      test-cmd: "echo 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' && xcrun simctl list devices available | grep -F 'iPad Air 11-inch (M4) ('"
+
   # No Android project here: gradle-tasks "" runs only the JDK, SDK and Gradle setup.
   smoke-android:
     uses: ./.github/workflows/android.yml

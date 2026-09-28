@@ -146,6 +146,44 @@ jobs:
         shell: bash
         run: eval "$CMD"
 
+      # Runner images can ship without iOS simulators (macos-latest with Xcode 26.6 lists only
+      # placeholders), so create the device the destination names, downloading the iOS
+      # runtime first when none is installed. The name comes from destination, or from a
+      # `name=` inside test-cmd.
+      - name: simulator
+        if: inputs.test-cmd != '' || inputs.scheme != ''''
+        env:
+          CMD: ${{ inputs.test-cmd }}
+          DEST: ${{ inputs.destination }}
+        shell: bash
+        run: |
+          spec="$DEST"; [ -n "$CMD" ] && spec="$CMD"
+          case "$spec" in *"iOS Simulator"*) ;; *) echo "no iOS Simulator destination"; exit 0 ;; esac
+          name=$(printf '%s' "$spec" | sed -nE "s/.*name=([^,'\"]+).*/\1/p")
+          [ -n "$name" ] || { echo "no simulator name in the destination"; exit 0; }
+          if xcrun simctl list devices available | grep -qF "    $name ("; then echo "simulator '$name' present"; exit 0; fi
+          rt() {
+            xcrun simctl list runtimes available -j |
+              jq -c '[.runtimes[] | select(.platform == "iOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
+          }
+          runtime=$(rt)
+          if [ -z "$runtime" ]; then
+            echo "no iOS runtime installed; downloading one"
+            xcodebuild -downloadPlatform iOS
+            runtime=$(rt)
+          fi
+          [ -n "$runtime" ] || { echo "::error::no iOS simulator runtime available"; exit 1; }
+          rid=$(jq -r .identifier <<<"$runtime")
+          # a device type the runtime supports: the named one, else its newest iPad
+          type=$(jq -r --arg n "$name" '.supportedDeviceTypes[] | select(.name == $n) | .identifier' <<<"$runtime" | head -1)
+          if [ -z "$type" ]; then
+            type=$(jq -r '[.supportedDeviceTypes[] | select(.productFamily == "iPad")] | last | .identifier // empty' <<<"$runtime")
+            [ -n "$type" ] || { echo "::error::$rid supports no iPad device type"; exit 1; }
+            echo "::warning::$rid has no device type named '$name'; creating it as $type"
+          fi
+          udid=$(xcrun simctl create "$name" "$type" "$rid")
+          echo "created '$name' ($type, $rid): $udid"
+
       - name: test
         if: inputs.test-cmd != '' || inputs.scheme != ''
         env:
