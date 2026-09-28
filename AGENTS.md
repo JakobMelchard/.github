@@ -13,7 +13,7 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform xcode hooks lint labels self-release fleet-sync`
+- `.github/workflows/` `release go python node shell terraform xcode android hooks lint labels self-release fleet-sync`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
 - `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`

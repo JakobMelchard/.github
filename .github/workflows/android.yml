@@ -1,0 +1,142 @@
+name: android
+
+# Reusable Android (Gradle) CI. Callers: zmxdroid, lift (Capacitor, android/).
+#
+#   jobs:
+#     ci:
+#       uses: JakobMelchard/.github/.github/workflows/android.yml@main
+#       with:
+#         gradle-tasks: ":app:testDebugUnitTest :app:assembleDebug"
+#         android-packages: "platforms;android-36 build-tools;36.0.0"
+#         artifact-path: app/build/outputs/apk/debug/*.apk
+#
+# Linux runner: JDK, Android SDK (licenses accepted by setup-android) and the Gradle
+# wrapper cache. A Capacitor wrapper builds its web assets first through setup-cmd and
+# points working-directory at its android/ folder. Every *-cmd input and gradle-tasks
+# skip their step when "", which is what lint.yml's smoke job passes.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: Directory holding gradlew.
+        type: string
+        default: "."
+      java-version:
+        type: string
+        default: "17"
+      java-distribution:
+        type: string
+        default: temurin
+      android-packages:
+        description: >
+          Space-separated sdkmanager packages, e.g. "platforms;android-36 build-tools;36.0.0".
+          AGP fetches anything missing itself; listing them keeps that out of the Gradle log.
+        type: string
+        default: platform-tools
+      setup-cmd:
+        description: >
+          Runs in the repository root before Gradle, e.g. "npm install && npx cap sync android".
+          Empty string skips the step.
+        type: string
+        default: ""
+      gradle-tasks:
+        description: >
+          Tasks (and flags) for ./gradlew --no-daemon, e.g. ":app:testDebugUnitTest :app:assembleDebug".
+          Empty string skips Gradle.
+        type: string
+        default: "testDebugUnitTest assembleDebug"
+      artifact-path:
+        description: >
+          Glob to upload after the build, relative to the repository root, e.g.
+          app/build/outputs/apk/debug/*.apk. Empty string skips the upload.
+        type: string
+        default: ""
+      artifact-name:
+        type: string
+        default: app-debug
+      runs-on:
+        type: string
+        default: ubuntu-latest
+
+jobs:
+  # The PR title becomes the squash-commit subject that release-please reads.
+  # Same regex as .githooks/commit-msg. Skipped on push.
+  pr-title:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: conventional title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        shell: bash
+        run: |
+          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
+          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
+            echo "ok: $TITLE"
+          else
+            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
+            exit 1
+          fi
+
+  ci:
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: provenance
+        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
+        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
+        # actionlint's job-context type does not know them yet.
+        env:
+          JOB: ${{ toJSON(job) }}
+        shell: bash
+        run: |
+          ref=$(jq -r '.workflow_ref // "unknown"' <<<"$JOB")
+          sha=$(jq -r '.workflow_sha // "unknown"' <<<"$JOB")
+          echo "reusable workflow: $ref @ $sha"
+          echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: ${{ inputs.java-distribution }}
+          java-version: ${{ inputs.java-version }}
+
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4.0.4
+        with:
+          packages: ${{ inputs.android-packages }}
+          log-accepted-android-sdk-licenses: false
+
+      # Held at v5: from v6 the caching component is proprietary (gradle.com terms of use).
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
+
+      - name: setup
+        if: inputs.setup-cmd != ''
+        env:
+          CMD: ${{ inputs.setup-cmd }}
+        shell: bash
+        run: eval "$CMD"
+
+      - name: gradle
+        if: inputs.gradle-tasks != ''
+        working-directory: ${{ inputs.working-directory }}
+        env:
+          TASKS: ${{ inputs.gradle-tasks }}
+        shell: bash
+        # TASKS is split into words on purpose: it is a task list, not one argument.
+        run: |
+          chmod +x gradlew
+          # shellcheck disable=SC2086
+          ./gradlew --no-daemon $TASKS
+
+      - name: upload
+        if: always() && inputs.artifact-path != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ inputs.artifact-name }}
+          path: ${{ inputs.artifact-path }}
+          if-no-files-found: ignore

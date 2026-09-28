@@ -94,3 +94,9 @@ jobs:
       scheme: ""
       generate-cmd: ""
       lint-cmd: ""
+
+  # No Android project here: gradle-tasks "" runs only the JDK, SDK and Gradle setup.
+  smoke-android:
+    uses: ./.github/workflows/android.yml
+    with:
+      gradle-tasks: ""
