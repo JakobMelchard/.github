@@ -24,6 +24,11 @@
       "automerge": false
     },
     {
+      "description": "Template updates (copier, JakobMelchard/template) can touch CI, hooks and configs at once: review, never automerge.",
+      "matchManagers": ["copier"],
+      "automerge": false
+    },
+    {
       "description": "Our own reusable workflows are consumed at @main on purpose; never digest-pin them.",
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["JakobMelchard/.github"],
