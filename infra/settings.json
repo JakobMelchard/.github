@@ -101,7 +101,9 @@
       "description": "Dev environments: base image, features, templates"
     },
     ".config": {
-      "description": "Shared lint, format and release configs"
+      "description": "Shared lint, format and tsconfig bases: npm package @jakobmelchard/config, plus copied ruff/gitleaks/editorconfig",
+      "visibility": "public",
+      "private_vulnerability_reporting": true
     },
     "bin": {
       "description": "Org tooling"
