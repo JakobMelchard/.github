@@ -19,6 +19,11 @@
       "groupName": "pre-commit hooks"
     },
     {
+      "description": "setup-gradle v6+ must keep cache-provider: basic (the default caching is proprietary); a major bump needs review, never automerge.",
+      "matchPackageNames": ["gradle/actions"],
+      "automerge": false
+    },
+    {
       "description": "Our own reusable workflows are consumed at @main on purpose; never digest-pin them.",
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["JakobMelchard/.github"],
