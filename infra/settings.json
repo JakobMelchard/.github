@@ -124,6 +124,9 @@
     "workouts": {
       "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
     },
+    "zmxapp": {
+      "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh"
+    },
     "zmxdroid": {
       "description": "Android window for zmx sessions: tabs of Termux terminals plus an fzf picker over SSH"
     },
