@@ -1,12 +1,14 @@
 name: xcode
 
-# Reusable Xcode CI for iOS apps. Callers: attach.
+# Reusable Xcode CI for iOS apps. Callers: attach, zmxapp, zmxkit, swiftkit, lift, switchboard,
+# monitor, interviews.
 #
 #   jobs:
 #     ci:
 #       uses: JakobMelchard/.github/.github/workflows/xcode.yml@main
 #       with:
 #         scheme: Attach
+#         siblings: swiftkit      # public org repos cloned next to the checkout
 #
 # Runs on a macOS runner (10x the minute cost of Linux on the free plan), so callers
 # should trigger it on pull_request and main only. Every *-cmd input skips its step
@@ -51,6 +53,13 @@ on:
         description: Xcode app to select, e.g. "26.0". Empty keeps the runner default.
         type: string
         default: ""
+      siblings:
+        description: >
+          Space-separated public JakobMelchard repos to clone next to the checkout, as
+          name or name@ref (default ref main), mirroring the local ~/Workspaces/JakobMelchard
+          layout. For apps whose project.yml includes ../../swiftkit/xcodegen/base.yml.
+        type: string
+        default: ""
       working-directory:
         type: string
         default: "."
@@ -86,6 +95,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
+
+      - name: clone sibling repos
+        if: inputs.siblings != ''
+        working-directory: ${{ github.workspace }}
+        env:
+          SIBLINGS: ${{ inputs.siblings }}
+        shell: bash
+        run: |
+          for s in $SIBLINGS; do
+            [[ "$s" =~ ^[A-Za-z0-9._-]+(@[A-Za-z0-9._/-]+)?$ ]] || { echo "::error::bad sibling '$s'"; exit 1; }
+            name=${s%%@*}; ref=main; [[ "$s" == *@* ]] && ref=${s#*@}
+            git clone -q --depth 1 --branch "$ref" "https://github.com/JakobMelchard/$name.git" "../$name"
+            echo "sibling $name @ $ref -> $(git -C "../$name" rev-parse --short HEAD)"
+          done
 
       - name: provenance
         # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
