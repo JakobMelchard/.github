@@ -16,7 +16,8 @@ bumps automerge once CI is green; everything else waits for a review. The CI wor
 `lint.yml` gates every change here — actionlint over workflows and starter
 templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
 validate, and smoke calls of `go` `python` `node` (including the Chromium path)
-and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x). `release.yml` and `terraform.yml` are not smoke-called.
+and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
+with no Gradle tasks (toolchain setup only). `release.yml` and `terraform.yml` are not smoke-called.
 
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
@@ -24,9 +25,9 @@ alternative: it follows the latest 1.x release of this repo (see *Releases of th
 ## Starter workflows
 
 `workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
-`terraform`). They are offered under **Actions → New workflow** in every org repo —
+`terraform` `xcode` `android`). They are offered under **Actions → New workflow** in every org repo —
 suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
-`.tf`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
+`.tf`, `gradlew`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
 pipeline in one click. Nothing is installed automatically. `auto` is the toolchain-free
 starter: it detects `go.mod`, `pyproject.toml`, `package.json` and `*.tf` at run time and
 calls the matching workflow, shell always. It is the same file as `ci.yml` in the template
@@ -89,6 +90,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `.devcontainer` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `terraform-version` |
 | `xcode.yml` | `attach` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
+| `android.yml` | `zmxdroid` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
 
 Every `*-cmd` input skips its step when set to `""`.
 

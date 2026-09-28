@@ -1,0 +1,16 @@
+name: ci
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [$default-branch]
+  pull_request:
+
+jobs:
+  ci:
+    uses: JakobMelchard/.github/.github/workflows/android.yml@main
+    with:
+      gradle-tasks: ":app:testDebugUnitTest :app:assembleDebug"
+      artifact-path: app/build/outputs/apk/debug/*.apk
