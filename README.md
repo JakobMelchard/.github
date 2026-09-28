@@ -253,13 +253,12 @@ Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the 
 
 ## Template repository
 
-`JakobMelchard/template` is a GitHub template repository (**Use this template**, or
-`gh repo create JakobMelchard/<name> --template JakobMelchard/template --private`). After
-creating a repo from it, set `toolchain` in `template.json` to one of `go` `py` `hx-app` `cf`
-`infra` `c-cpp` and commit: `bootstrap.yml` copies the matching `.devcontainer`, rewrites the
-README title and removes itself from the picture. Its `ci.yml` is the `auto` starter above.
-Both mirror sources here and in `.devcontainer`; change those first, then the template.
-`org-repo new` stays the terminal path and additionally vendors configs, hooks and agent rules.
+`JakobMelchard/template` is a [copier](https://copier.readthedocs.io) template (tags `v*`), not a
+GitHub template repository. `org-repo new <name> --template <t>` (JakobMelchard/bin) renders it
+and does the GitHub side; templates are `hx-app` `cf` `go` `py` `c-cpp` `infra` `ios` `macos`.
+Each rendered repo records its answers in `.copier-answers.yml`; Renovate's copier manager opens a PR
+when the template gets a new tag, and `uvx copier update --defaults` does the same by hand. The
+template's CI callers point at the workflows here, so change a workflow here first, then the template.
 
 ## Infra
 

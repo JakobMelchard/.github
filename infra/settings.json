@@ -117,8 +117,8 @@
       "description": "event -> handler -> output hub on Workers + Mac mini runner"
     },
     "template": {
-      "description": "Repository template: set toolchain in template.json, bootstrap does the rest",
-      "is_template": true
+      "description": "Copier template for every org stack (hx-app, cf, go, py, c-cpp, infra, ios, macos); org-repo new renders it",
+      "is_template": false
     },
     "transcriber": {
       "allow_merge_commit": false,
