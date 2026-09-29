@@ -14,6 +14,20 @@
       "macOS"
     ]
   },
+  "rulesets": {
+    "$comment": "Branch ruleset on the default branch of every public repo (rulesets.tf). Per repo: `checks` = required status contexts as GitHub shows them (`<job> / <reusable job>`), only jobs that run on every PR; `bypass_always` = app names that may push to main directly; `ruleset: false` opts out. Private repos: not enforced on the free plan, so never created.",
+    "defaults": {
+      "required_linear_history": true,
+      "required_review_thread_resolution": true,
+      "strict_status_checks": false,
+      "bypass_apps": ["renovate"]
+    },
+    "apps": {
+      "github-actions": 15368,
+      "renovate": 2740,
+      "melchbot": 4579923
+    }
+  },
   "repo_defaults": {
     "visibility": "private",
     "has_issues": true,
@@ -38,7 +52,8 @@
     ".config": {
       "description": "Shared lint, format and tsconfig bases: npm package @jakobmelchard/config, plus copied ruff/gitleaks/editorconfig",
       "visibility": "public",
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": ["check", "hooks / prek"]
     },
     ".devcontainer": {
       "description": "Dev environments: base image, features, templates"
@@ -46,13 +61,26 @@
     ".githooks": {
       "description": "Shared git hooks",
       "visibility": "public",
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": ["hooks", "portable", "shell / ci", "shell / pr-title"]
     },
     ".github": {
       "description": "Shared CI, composite actions, org infra as code",
       "visibility": "public",
       "has_wiki": true,
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": [
+        "actionlint",
+        "zizmor",
+        "infra",
+        "plan",
+        "smoke-hooks / prek",
+        "smoke-go / ci",
+        "smoke-node / ci",
+        "smoke-python / ci",
+        "smoke-shell / ci"
+      ],
+      "bypass_always": ["melchbot"]
     },
     "JakobMelchard.github.io": {
       "description": "docs.melchard.org \u2014 GitHub Pages docs site",
@@ -70,7 +98,8 @@
     },
     "bin": {
       "description": "Org tooling",
-      "visibility": "public"
+      "visibility": "public",
+      "checks": ["shell / ci", "shell / pr-title", "hooks / prek"]
     },
     "cf": {
       "description": "Monorepo for Cloudflare Pages sites + shared tooling.",
@@ -87,7 +116,8 @@
     "gsheet": {
       "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
       "visibility": "public",
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
     },
     "health": {
       "allow_merge_commit": false,
@@ -97,7 +127,8 @@
     "hx": {
       "visibility": "public",
       "description": "htmx + JSDoc library: router, html, Store adapters",
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": ["self / ci", "self / pr-title", "hooks / prek"]
     },
     "infra": {},
     "interviews": {
@@ -114,7 +145,8 @@
     "observe": {
       "description": "Deployment-agnostic observability sidecar",
       "visibility": "public",
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": ["python / ci", "python / pr-title", "hooks / prek"]
     },
     "swiftkit": {
       "description": "Shared Swift package and XcodeGen base for the org iOS apps",
@@ -136,6 +168,12 @@
     "weiterbildungszeit": {
       "archived": true
     },
+    "workline": {
+      "description": "Text notation for strength sets: tree-sitter grammar, JS semantics, Go/Swift bindings",
+      "visibility": "public",
+      "private_vulnerability_reporting": true,
+      "checks": ["go / ci", "go / pr-title", "js / ci", "js / pr-title", "hooks / prek"]
+    },
     "workout": {
       "archived": true
     },
@@ -153,7 +191,8 @@
     "zmxkit": {
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
       "visibility": "public",
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
     }
   },
   "personal": {
