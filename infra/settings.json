@@ -204,7 +204,8 @@
         "visibility": "public",
         "required_checks": [
           "ci / ci"
-        ]
+        ],
+        "actions_can_approve_prs": true
       }
     }
   },

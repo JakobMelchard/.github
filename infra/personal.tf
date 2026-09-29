@@ -63,6 +63,30 @@ resource "github_repository_vulnerability_alerts" "personal" {
   repository = github_repository.personal[each.key].name
 }
 
+# actions_can_approve_prs: let github.token open and approve PRs, which the
+# shared release.yml needs where the org app secrets are not available (they
+# are org-only, so every personal repo running release-please). The token's
+# default permissions stay read; workflows that write declare it themselves.
+locals {
+  personal_actions_approve = { for k, v in local.personal_repos : k => v if try(v.actions_can_approve_prs, false) }
+}
+
+import {
+  for_each = local.personal_actions_approve
+  provider = github.personal
+  to       = github_workflow_repository_permissions.personal[each.key]
+  id       = each.key
+}
+
+resource "github_workflow_repository_permissions" "personal" {
+  for_each = local.personal_actions_approve
+  provider = github.personal
+
+  repository                       = github_repository.personal[each.key].name
+  can_approve_pull_request_reviews = true
+  default_workflow_permissions     = "read"
+}
+
 # required_checks → a ruleset on the default branch. Rulesets need a public repo on the
 # free plan, so private repos with required_checks are skipped.
 resource "github_repository_ruleset" "personal" {
