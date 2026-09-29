@@ -9,10 +9,6 @@
     "web_commit_signoff_required": false
   },
   "runners": {
-    "RUNNER_LINUX": [
-      "self-hosted",
-      "Linux"
-    ],
     "RUNNER_MACOS": [
       "self-hosted",
       "macOS"

@@ -1,5 +1,8 @@
 # Self-hosted runner routing. Workflows use
-#   runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+#   runs-on: ${{ fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
+# and the same with RUNNER_LINUX / ubuntu-latest. Only RUNNER_MACOS is set
+# today: macOS minutes count 10x, Linux stays on hosted runners. Adding
+# RUNNER_LINUX back to settings.json moves Linux jobs to mimi too.
 # Org variables would be simpler, but the free plan does not pass org-level
 # variables to private repos at runtime, so every private repo gets its own
 # copy of settings.json `runners`. Public repos get none and stay on free
