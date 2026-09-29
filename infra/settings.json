@@ -156,6 +156,19 @@
       "private_vulnerability_reporting": true
     }
   },
+  "personal": {
+    "$comment": "Repos owned by the lilfeelz user account, managed by infra/personal.tf with the same repo_defaults. required_checks becomes a ruleset on the default branch; rulesets need a public repo on the free plan.",
+    "owner": "lilfeelz",
+    "repos": {
+      "kanata-ios": {
+        "description": "kanata-configured SwiftUI keyboard extension for iOS",
+        "visibility": "public",
+        "required_checks": [
+          "ci / ci"
+        ]
+      }
+    }
+  },
   "labels": {
     "bug": {
       "color": "d73a4a",
