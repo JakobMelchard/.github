@@ -19,15 +19,18 @@ on:
         type: string
         default: warning
       runs-on:
+        description: >
+          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
+          private repos only) and falls back to ubuntu-latest.
         type: string
-        default: ubuntu-latest
+        default: ""
 
 jobs:
   # The PR title becomes the squash-commit subject that release-please reads.
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - name: conventional title
         env:
@@ -43,7 +46,7 @@ jobs:
           fi
 
   ci:
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }

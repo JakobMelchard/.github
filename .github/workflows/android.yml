@@ -59,6 +59,9 @@ on:
         type: string
         default: app-debug
       runs-on:
+        description: >
+          Stays on hosted ubuntu-latest by default: the self-hosted Linux runners are
+          arm64 and Android build-tools (aapt2) ship x86_64 only.
         type: string
         default: ubuntu-latest
 
@@ -67,7 +70,7 @@ jobs:
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - name: conventional title
         env:
