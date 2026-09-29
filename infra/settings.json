@@ -69,7 +69,8 @@
       "description": "iPad client for zmx sessions: workspaces, scrollback, input, Blink hand-off"
     },
     "bin": {
-      "description": "Org tooling"
+      "description": "Org tooling",
+      "visibility": "public"
     },
     "cf": {
       "description": "Monorepo for Cloudflare Pages sites + shared tooling.",
