@@ -10,7 +10,7 @@ variable "manage_org" {
 }
 
 variable "personal_token" {
-  description = "Token for the personal-account provider (personal.tf). Empty falls back to GITHUB_TOKEN. CI: secret PERSONAL_GITHUB_TOKEN, a fine-grained PAT with repository Administration read/write on the personal repos."
+  description = "Token for the personal-account provider (personal.tf). Empty falls back to GITHUB_TOKEN. CI: an installation token of the org app installed on the personal account (infra.yml)."
   type        = string
   default     = ""
   sensitive   = true

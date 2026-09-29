@@ -52,8 +52,6 @@ jobs:
         shell: bash
     env:
       TF_VAR_state_passphrase: ${{ secrets.TOFU_STATE_PASSPHRASE }}
-      # personal.tf: the org app cannot reach repos of the personal account.
-      TF_VAR_personal_token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -92,6 +90,18 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
+      # personal.tf: an installation token is per account, so the same app,
+      # installed on the personal account (settings.json personal.owner),
+      # mints a second one. No PAT anywhere.
+      - name: mint app token (personal)
+        id: app-personal
+        if: steps.changed.outputs.run != 'false'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: lilfeelz
+
       - if: steps.changed.outputs.run != 'false'
         run: tofu fmt -check -recursive
       - if: steps.changed.outputs.run != 'false'
@@ -104,6 +114,7 @@ jobs:
         if: steps.changed.outputs.run != 'false'
         env:
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+          TF_VAR_personal_token: ${{ steps.app-personal.outputs.token }}
         run: |
           set -o pipefail
           tofu plan -no-color -out=plan.tfplan 2>&1 | tee plan.txt
@@ -154,7 +165,6 @@ jobs:
         shell: bash
     env:
       TF_VAR_state_passphrase: ${{ secrets.TOFU_STATE_PASSPHRASE }}
-      TF_VAR_personal_token: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
       STATE: state/terraform.tfstate
     steps:
       # The branch head, not github.sha: a run queued behind another apply
@@ -176,12 +186,21 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
+      - name: mint app token (personal) # see the plan job
+        id: app-personal
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: lilfeelz
+
       - run: tofu init -input=false
 
       - name: tofu apply
         id: apply
         env:
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+          TF_VAR_personal_token: ${{ steps.app-personal.outputs.token }}
         run: |
           set -o pipefail
           old=$(jq -r .serial "$STATE" 2>/dev/null || echo none)

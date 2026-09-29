@@ -1,7 +1,7 @@
 # Repos owned by the personal account (settings.json `personal`), with the org's
 # repo_defaults. Locally the same PAT covers both (the account owns the org);
-# in CI the org app's installation token cannot reach personal repos, so the
-# token comes from var.personal_token (secret PERSONAL_GITHUB_TOKEN).
+# in CI an installation token is per account, so infra.yml mints a second one
+# from the same app installed on the personal account (var.personal_token).
 provider "github" {
   alias = "personal"
   owner = local.settings.personal.owner
