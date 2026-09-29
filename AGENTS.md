@@ -16,6 +16,9 @@ a second hook set.
 - `.github/workflows/` `release go python node shell terraform xcode android hooks lint labels self-release fleet-sync`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
+- `actions/tokens-check/` composite action: `config-sync --check` of a repo's vendored
+  design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
+  `hooks.yml` and `node.yml`, a no-op for repos that did not opt in
 - `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
 - `renovate/default.json` the org Renovate preset every repo extends
 - `profile/README.md` the org profile page
