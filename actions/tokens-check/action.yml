@@ -1,0 +1,35 @@
+name: tokens-check
+description: >
+  Fail when a repo that opted in to the org design tokens (.config/tokens.path) carries a
+  vendored tokens.css that differs from the JakobMelchard/.config version its header names.
+  A no-op for repos without .config/tokens.path.
+
+inputs:
+  working-directory:
+    description: Repo root relative to the workspace.
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - name: tokens drift check
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      env:
+        # config-sync --ref downloads the .config tarball through gh; .config is public.
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        if [ ! -f .config/tokens.path ]; then
+          echo "no .config/tokens.path: not opted in to tokens, skipped"
+          exit 0
+        fi
+        dest=$(head -n 1 .config/tokens.path)
+        # Header: /* VENDORED from JakobMelchard/.config tokens/tokens.css @<ref>. Do not edit; ... */
+        ref=$(head -n 1 "$dest" | sed -nE 's/.*@([^ ]+)\. Do not edit.*/\1/p')
+        if [ -z "$ref" ]; then
+          echo "::error file=$dest::no VENDORED header naming a .config ref; run config-sync tokens --ref <tag>"
+          exit 1
+        fi
+        git clone -q --depth 1 https://github.com/JakobMelchard/bin.git "$RUNNER_TEMP/org-bin"
+        "$RUNNER_TEMP/org-bin/config-sync" --check --ref "$ref" tokens

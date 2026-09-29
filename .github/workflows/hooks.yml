@@ -43,6 +43,11 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
+      # Opt-in repos (.config/tokens.path) only; a no-op everywhere else.
+      - uses: JakobMelchard/.github/actions/tokens-check@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
       - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
         env:
           SKIP: ${{ inputs.skip }}

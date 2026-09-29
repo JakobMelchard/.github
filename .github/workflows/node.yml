@@ -102,6 +102,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
+      # Opt-in repos (.config/tokens.path) only; a no-op everywhere else. Also in hooks.yml,
+      # for callers that run node.yml without it.
+      - uses: JakobMelchard/.github/actions/tokens-check@main
+        with:
+          working-directory: ${{ inputs.working-directory }}
+
       - name: provenance
         # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
         # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
