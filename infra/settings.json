@@ -135,10 +135,12 @@
       "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
     },
     "zmxapp": {
-      "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh"
+      "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh",
+      "archived": true
     },
     "zmxdroid": {
-      "description": "Android window for zmx sessions: tabs of Termux terminals plus an fzf picker over SSH"
+      "description": "Android window for zmx sessions: tabs of Termux terminals plus an fzf picker over SSH",
+      "archived": true
     },
     "zmxkit": {
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
