@@ -1,0 +1,248 @@
+name: infra
+
+# Plan/apply for infra/ (org repos, rulesets, runner variables).
+#
+# - pull_request: tofu plan against the state committed on main (the checkout
+#   is the PR merged into main), posted as one PR comment. Runs on every PR,
+#   not only infra changes, because `plan` is a required check on this repo
+#   and a required check that never reports blocks the merge. When nothing
+#   under infra/ changed it reports success without planning.
+# - push to main: tofu apply -auto-approve, then commit the updated encrypted
+#   state back to main (only when the serial moved). The state commit is pushed
+#   as the org app, which has an `always` bypass on this repo's ruleset.
+# - workflow_dispatch: a plan, as a drift check.
+#
+# Auth: an installation token of the org app (melchbot): repository
+# administration + variables, read and write, on all org repos. github.token
+# cannot manage repo settings. State encryption: encryption.tofu, passphrase
+# in secret TOFU_STATE_PASSPHRASE (Infisical core/dev has the same value).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths:
+      - infra/**
+      - "!infra/state/**"
+      - .github/workflows/infra.yml
+  workflow_dispatch:
+
+permissions: {}
+
+# One run at a time across all refs: plans and applies share one state file.
+# Queued, never cancelled (a cancelled apply could lose its state commit).
+concurrency:
+  group: infra-state
+  cancel-in-progress: false
+
+env:
+  TF_IN_AUTOMATION: "1"
+  TF_INPUT: "0"
+
+jobs:
+  plan:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: infra
+        shell: bash
+    env:
+      TF_VAR_state_passphrase: ${{ secrets.TOFU_STATE_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      # Skip the plan when the PR does not touch infra/ or this workflow; the
+      # job still reports success so the required check is satisfied.
+      - name: changed files
+        id: changed
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
+          if grep -Eq '^(infra/|\.github/workflows/infra\.yml$)' <<<"$files"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::no infra changes in this PR; plan skipped"
+          fi
+
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        if: steps.changed.outputs.run != 'false'
+        with:
+          tofu_wrapper: false
+
+      # Unscoped on purpose: the action has no `permission-*` input for
+      # Variables (actions.tf), and naming any permission drops the rest.
+      # The install itself is scoped to what infra needs.
+      - name: mint app token
+        id: app
+        if: steps.changed.outputs.run != 'false'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      # personal.tf: an installation token is per account, so the same app,
+      # installed on the personal account (settings.json personal.owner),
+      # mints a second one. No PAT anywhere.
+      - name: mint app token (personal)
+        id: app-personal
+        if: steps.changed.outputs.run != 'false'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: lilfeelz
+
+      - if: steps.changed.outputs.run != 'false'
+        run: tofu fmt -check -recursive
+      - if: steps.changed.outputs.run != 'false'
+        run: tofu init -input=false
+      - if: steps.changed.outputs.run != 'false'
+        run: tofu validate
+
+      - name: tofu plan
+        id: plan
+        if: steps.changed.outputs.run != 'false'
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+          TF_VAR_personal_token: ${{ steps.app-personal.outputs.token }}
+        run: |
+          set -o pipefail
+          tofu plan -no-color -out=plan.tfplan 2>&1 | tee plan.txt
+
+      - name: comment
+        if: always() && github.event_name == 'pull_request' && steps.changed.outputs.run != 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          OUTCOME: ${{ steps.plan.outcome }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          marker='<!-- infra-plan -->'
+          {
+            echo "$marker"
+            echo "### infra plan"
+            echo
+            echo "Outcome: \`$OUTCOME\`"
+            echo
+            summary=$(grep -E '^(Plan:|No changes\.)' plan.txt | tail -1 || true)
+            [ -n "$summary" ] && echo "**${summary}**" && echo
+            echo '<details><summary>plan output</summary>'
+            echo
+            echo '```'
+            head -c 60000 plan.txt
+            echo '```'
+            echo '</details>'
+            echo
+            echo "[run]($RUN_URL)"
+          } > comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | tail -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@comment.md >/dev/null
+          else
+            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@comment.md >/dev/null
+          fi
+
+  apply:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # the state commit is pushed with the app token, not github.token
+    defaults:
+      run:
+        working-directory: infra
+        shell: bash
+    env:
+      TF_VAR_state_passphrase: ${{ secrets.TOFU_STATE_PASSPHRASE }}
+      STATE: state/terraform.tfstate
+    steps:
+      # The branch head, not github.sha: a run queued behind another apply
+      # must see the state commit that run pushed.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_wrapper: false
+
+      - name: mint app token # unscoped: see the plan job
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: mint app token (personal) # see the plan job
+        id: app-personal
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: lilfeelz
+
+      - run: tofu init -input=false
+
+      - name: tofu apply
+        id: apply
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+          TF_VAR_personal_token: ${{ steps.app-personal.outputs.token }}
+        run: |
+          set -o pipefail
+          old=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
+          tofu apply -auto-approve -input=false -no-color 2>&1 | tee apply.txt
+          new=$(jq -r .serial "$STATE")
+          {
+            echo "### infra apply"
+            echo
+            echo '```'
+            grep -E '^(Apply complete!|No changes\.)' apply.txt || tail -5 apply.txt
+            echo '```'
+            echo "state serial: $old -> $new"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Every apply re-encrypts the file (new nonce), so compare the serial,
+      # which only moves on a real state change. Runs even if the apply failed
+      # part-way: whatever it wrote to state must not be lost.
+      - name: commit state
+        if: always() && steps.apply.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOKEN: ${{ steps.app.outputs.token }}
+          APP: ${{ steps.app.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          old=$(git show "HEAD:infra/$STATE" 2>/dev/null | jq -r .serial || echo none)
+          new=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
+          if [ "$old" = "$new" ]; then
+            echo "state unchanged (serial $new)"
+            exit 0
+          fi
+          # never commit a plaintext state
+          jq -e '.encrypted_data and (.resources == null)' "$STATE" >/dev/null
+          uid=$(gh api "users/${APP}[bot]" --jq .id)
+          git config user.name "${APP}[bot]"
+          git config user.email "${uid}+${APP}[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$STATE"
+          git commit -m "chore(infra): update encrypted state (serial $new) [skip ci]"
+          # Nothing else pushes state while this group runs, but a human merge
+          # can land in between: rebase once and retry.
+          if ! git push origin "HEAD:$GITHUB_REF"; then
+            git pull --rebase origin "$GITHUB_REF"
+            git push origin "HEAD:$GITHUB_REF"
+          fi

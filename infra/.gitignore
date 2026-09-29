@@ -1,6 +1,11 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+# the encrypted state is the one tracked file (encryption.tofu enforces it)
+!state/terraform.tfstate
 *.tfvars
 !*.tfvars.example
+*.tfplan
+plan.txt
+apply.txt
 crash.log

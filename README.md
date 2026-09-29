@@ -270,8 +270,15 @@ settings apply only with `-var manage_org=true` and an `admin:org` token.
 Labels (`labels`) and private vulnerability reporting are applied by `org-repo` and the
 workflows, not by tofu: the provider's label resource fails on labels that already exist.
 
-Rulesets and branch protection are not managed: unavailable on private repos
-under the free plan.
+Every public repo gets a branch ruleset on `main` (`rulesets.tf`): PR only, no
+force push or deletion, linear history, and the repo's `checks` from `settings.json`
+as required status checks. Private repos get none: the free plan does not enforce
+rulesets there.
+
+`infra.yml` runs it: `tofu plan` on every PR as a comment and a required check,
+`tofu apply` on push to `main`, then the encrypted state (`infra/state/`) is
+committed back by the org app. `infra/README.md` has the details and the local
+fallback (`make plan`, `make apply`).
 
 ## Layout
 
