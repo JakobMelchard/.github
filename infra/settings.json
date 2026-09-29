@@ -8,6 +8,16 @@
     "members_can_create_pages": true,
     "web_commit_signoff_required": false
   },
+  "runners": {
+    "RUNNER_LINUX": [
+      "self-hosted",
+      "Linux"
+    ],
+    "RUNNER_MACOS": [
+      "self-hosted",
+      "macOS"
+    ]
+  },
   "repo_defaults": {
     "visibility": "private",
     "has_issues": true,

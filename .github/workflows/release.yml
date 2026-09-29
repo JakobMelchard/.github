@@ -50,7 +50,7 @@ permissions:
 
 jobs:
   release-please:
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     env:
       # `secrets` is not available in a step-level `if`; only the boolean lands in env.
       HAS_APP: ${{ secrets.app-private-key != '' }}

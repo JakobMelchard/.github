@@ -34,8 +34,11 @@ on:
         type: string
         default: "pytest"
       runs-on:
+        description: >
+          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
+          private repos only) and falls back to ubuntu-latest.
         type: string
-        default: ubuntu-latest
+        default: ""
       private-deps:
         description: >
           Authenticate git so private JakobMelchard repos referenced as
@@ -64,7 +67,7 @@ jobs:
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - name: conventional title
         env:
@@ -80,7 +83,7 @@ jobs:
           fi
 
   ci:
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     env:
       # `secrets` is not available in a step-level `if`. Evaluate the
       # comparison here so only the boolean — never the key — is in env.
