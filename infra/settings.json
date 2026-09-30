@@ -193,7 +193,8 @@
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
+      "archived": true
     }
   },
   "personal": {
