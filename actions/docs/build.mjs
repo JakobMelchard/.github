@@ -1,13 +1,13 @@
 #!/usr/bin/env node
-// Markdown docs → static pages in the docs.melchard.org shell (tokens + style.css from the docs
-// root, one centred column, mono). SUMMARY.md is the nav: nested list items, links to .md files
-// become pages, external links stay links, plain items are section labels. Everything that is
-// not markdown (images, css) is copied as is.
+// Markdown docs → static pages in the docs.melchard.org shell (tokens.css + style.css from the
+// docs root, one centred column, mono). SUMMARY.md is the nav: nested list items, links to .md
+// files become nav entries, external links stay links, plain items are section labels. Every
+// .md under src is rendered, listed or not; everything else (images, css) is copied as is.
 //
 //   node build.mjs --src docs --out site/docs --title flatplan \
 //     --assets https://docs.melchard.org/assets --repo https://github.com/owner/name
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve, sep } from 'node:path'
 import { marked } from 'marked'
 
 const args = Object.fromEntries(
@@ -20,9 +20,12 @@ const ASSETS = (args.assets ?? 'https://docs.melchard.org/assets').replace(/\/$/
 const REPO = args.repo ?? ''
 const SKIP = new Set(['SUMMARY.md', 'book.json', 'dark.css', '_book', 'node_modules'])
 
-/** @typedef {{ title: string, href?: string, page?: string, depth: number }} Entry */
+const inside = (a, b) => a === b || a.startsWith(b + sep)
+if (inside(OUT, SRC) || inside(SRC, OUT)) throw new Error(`out (${OUT}) and src (${SRC}) must not overlap`)
 
-/** `- [Title](file.md)` lines of SUMMARY.md with their indent → flat entries. @returns {Entry[]} */
+/** @typedef {{ title: string, href?: string, page?: string, hash?: string, depth: number }} Entry */
+
+/** `- [Title](file.md#frag)` lines of SUMMARY.md with their indent → flat entries. @returns {Entry[]} */
 function nav() {
   const entries = []
   for (const line of readFileSync(join(SRC, 'SUMMARY.md'), 'utf8').split('\n')) {
@@ -31,15 +34,40 @@ function nav() {
     const depth = Math.floor(m[1].length / 2)
     if (m[4]) entries.push({ title: m[4].trim(), depth })
     else if (/^[a-z]+:/.test(m[3])) entries.push({ title: m[2], href: m[3], depth })
-    else entries.push({ title: m[2], page: m[3].replace(/^\.\//, ''), depth })
+    else {
+      const [page, hash] = m[3].replace(/^\.\//, '').split('#')
+      entries.push({ title: m[2], page, hash: hash ? `#${hash}` : '', depth })
+    }
   }
   return entries
 }
 
+/** All markdown files under src, as paths relative to src. */
+function pages(dir = SRC, acc = []) {
+  for (const f of readdirSync(dir)) {
+    if (SKIP.has(f) || f.startsWith('.')) continue
+    const p = join(dir, f)
+    if (statSync(p).isDirectory()) pages(p, acc)
+    else if (f.endsWith('.md')) acc.push(relative(SRC, p))
+  }
+  return acc.sort()
+}
+
 /** docs/x.md → x.html, README.md → index.html, keeps subdirectories. */
 const out = (page) => page.replace(/README\.md$/, 'index.html').replace(/\.md$/, '.html')
+/** A markdown href (maybe with a fragment) → the html one; external, absolute and pure fragments untouched. */
+const html = (href) =>
+  /^[a-z]+:|^#|^\//.test(href) ? href : href.replace(/README\.md(#.*)?$/, 'index.html$1').replace(/\.md(#.*)?$/, '.html$1')
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const slug = (s) =>
+  s
+    .toLowerCase()
+    .replace(/<[^>]+>/g, '')
+    .replace(/&[a-z]+;/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
 
 const CSS = `
 .doc-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding-bottom:12px;border-bottom:1px solid var(--line,rgba(255,255,255,.16))}
@@ -64,36 +92,41 @@ const CSS = `
 .doc-foot{display:flex;justify-content:space-between;gap:12px;margin-top:36px;padding-top:12px;border-top:1px solid var(--line,rgba(255,255,255,.16));font-size:.85rem;color:var(--muted,#9aa4b2)}
 `
 
+marked.use({
+  renderer: {
+    link({ href, title, tokens }) {
+      const text = this.parser.parseInline(tokens)
+      const ext = /^[a-z]+:/.test(href) ? ' target="_blank" rel="noopener"' : ''
+      return `<a href="${esc(html(href))}"${title ? ` title="${esc(title)}"` : ''}${ext}>${text}</a>`
+    },
+    heading({ tokens, depth }) {
+      const text = this.parser.parseInline(tokens)
+      return `<h${depth} id="${slug(text)}">${text}</h${depth}>\n`
+    },
+  },
+})
+
 /** @param {Entry[]} entries @param {string} page */
 function render(entries, page) {
   const md = readFileSync(join(SRC, page), 'utf8')
   const here = out(page)
   const up = relative(dirname(join(OUT, here)), OUT) || '.'
   const link = (target) => `${up}/${target}`.replace(/^\.\//, '')
-  marked.use({
-    renderer: {
-      link({ href, title, text }) {
-        const h = /^[a-z]+:|^#|^\//.test(href) ? href : href.replace(/README\.md(#.*)?$/, 'index.html$1').replace(/\.md(#.*)?$/, '.html$1')
-        const ext = /^[a-z]+:/.test(href) ? ' target="_blank" rel="noopener"' : ''
-        return `<a href="${esc(h)}"${title ? ` title="${esc(title)}"` : ''}${ext}>${text}</a>`
-      },
-    },
-  })
-  const html = marked.parse(md)
-  const pages = entries.filter((e) => e.page)
-  const i = pages.findIndex((e) => e.page === page)
-  const name = pages[i]?.title ?? page
+  const body = marked.parse(md)
+  const listed = entries.filter((e) => e.page)
+  const i = listed.findIndex((e) => e.page === page)
+  const name = listed[i]?.title ?? page.replace(/\.md$/, '')
   const navHtml = entries
     .map((e) =>
       e.href
         ? `<a href="${esc(e.href)}" target="_blank" rel="noopener">${esc(e.title)}</a>`
         : e.page
-          ? `<a href="${esc(link(out(e.page)))}"${e.page === page ? ' class="active"' : ''}>${esc(e.title)}</a>`
+          ? `<a href="${esc(link(out(e.page)) + e.hash)}"${e.page === page && !e.hash ? ' class="active"' : ''}>${esc(e.title)}</a>`
           : `<span>${esc(e.title)}</span>`,
     )
     .join('\n      ')
-  const prev = pages[i - 1] && `<a href="${esc(link(out(pages[i - 1].page)))}">← ${esc(pages[i - 1].title)}</a>`
-  const next = pages[i + 1] && `<a href="${esc(link(out(pages[i + 1].page)))}">${esc(pages[i + 1].title)} →</a>`
+  const prev = listed[i - 1] && `<a href="${esc(link(out(listed[i - 1].page)))}">← ${esc(listed[i - 1].title)}</a>`
+  const next = listed[i + 1] && `<a href="${esc(link(out(listed[i + 1].page)))}">${esc(listed[i + 1].title)} →</a>`
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -113,7 +146,7 @@ function render(entries, page) {
     </nav>
   </header>
   <article class="doc">
-${html}
+${body}
   </article>
   <footer class="doc-foot"><span>${prev ?? ''}</span><span>${next ?? ''}</span></footer>
 </main>
@@ -136,15 +169,14 @@ function copyAssets(dir = SRC) {
 }
 
 const entries = nav()
+for (const e of entries)
+  if (e.page && !existsSync(join(SRC, e.page))) throw new Error(`SUMMARY.md links ${e.page}, which does not exist`)
 mkdirSync(OUT, { recursive: true })
-let n = 0
-for (const e of entries) {
-  if (!e.page) continue
-  if (!existsSync(join(SRC, e.page))) throw new Error(`SUMMARY.md links ${e.page}, which does not exist`)
-  const dest = join(OUT, out(e.page))
+const all = pages()
+for (const page of all) {
+  const dest = join(OUT, out(page))
   mkdirSync(dirname(dest), { recursive: true })
-  writeFileSync(dest, render(entries, e.page))
-  n++
+  writeFileSync(dest, render(entries, page))
 }
 copyAssets()
-console.log(`docs: ${n} pages → ${OUT}`)
+console.log(`docs: ${all.length} pages → ${OUT}`)

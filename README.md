@@ -30,7 +30,8 @@ switchboard from observe's in-app form) with opencode's read-only agent in `acti
 which needs the repo secret `OPENCODE_API_KEY_GHA`.
 
 `actions/docs` builds a repo's markdown docs (`docs/`, nav from `SUMMARY.md`) into static pages in the
-docs.melchard.org shell: the docs root's `tokens.css` + `style.css`, one centred mono column, no HonKit.
+docs.melchard.org shell: `tokens.css` + `style.css` loaded from the `assets` input (default
+`https://docs.melchard.org/assets`, the docs root's files), one centred mono column, no HonKit.
 Callers: flatplan, lilfeelz/keyboard. They are offered under **Actions → New workflow** in every org repo —
 suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
 `.tf`, `gradlew`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
