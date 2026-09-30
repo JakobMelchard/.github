@@ -20,7 +20,9 @@
       "required_linear_history": true,
       "required_review_thread_resolution": true,
       "strict_status_checks": false,
-      "bypass_apps": ["renovate"]
+      "bypass_apps": [
+        "renovate"
+      ]
     },
     "apps": {
       "github-actions": 15368,
@@ -53,7 +55,10 @@
       "description": "Shared lint, format and tsconfig bases: npm package @jakobmelchard/config, plus copied ruff/gitleaks/editorconfig",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["check", "hooks / prek"]
+      "checks": [
+        "check",
+        "hooks / prek"
+      ]
     },
     ".devcontainer": {
       "archived": true
@@ -62,7 +67,12 @@
       "description": "Shared git hooks",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["hooks", "portable", "shell / ci", "shell / pr-title"]
+      "checks": [
+        "hooks",
+        "portable",
+        "shell / ci",
+        "shell / pr-title"
+      ]
     },
     ".github": {
       "description": "Shared CI, composite actions, org infra as code",
@@ -80,10 +90,12 @@
         "smoke-python / ci",
         "smoke-shell / ci"
       ],
-      "bypass_always": ["melchbot"]
+      "bypass_always": [
+        "melchbot"
+      ]
     },
     "JakobMelchard.github.io": {
-      "description": "docs.melchard.org \u2014 GitHub Pages docs site",
+      "description": "docs.melchard.org — GitHub Pages docs site",
       "visibility": "public",
       "has_wiki": true,
       "private_vulnerability_reporting": true
@@ -97,7 +109,11 @@
     "bin": {
       "description": "Org tooling",
       "visibility": "public",
-      "checks": ["shell / ci", "shell / pr-title", "hooks / prek"]
+      "checks": [
+        "shell / ci",
+        "shell / pr-title",
+        "hooks / prek"
+      ]
     },
     "cf": {
       "description": "Monorepo for Cloudflare Pages sites + shared tooling.",
@@ -108,7 +124,11 @@
       "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
+      "checks": [
+        "ci / ci",
+        "ci / pr-title",
+        "hooks / prek"
+      ]
     },
     "forgejo": {
       "archived": true
@@ -120,14 +140,22 @@
       "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
+      "checks": [
+        "ci / ci",
+        "ci / pr-title",
+        "hooks / prek"
+      ],
       "archived": true
     },
     "hx": {
       "visibility": "public",
       "description": "htmx + JSDoc library: router, html, Store adapters",
       "private_vulnerability_reporting": true,
-      "checks": ["self / ci", "self / pr-title", "hooks / prek"]
+      "checks": [
+        "self / ci",
+        "self / pr-title",
+        "hooks / prek"
+      ]
     },
     "infra": {
       "description": "OpenTofu root modules for the tailnet policy and Cloudflare, plus the Forgejo setup on mimi; moved into monitor",
@@ -150,7 +178,11 @@
       "description": "Deployment-agnostic observability sidecar",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["python / ci", "python / pr-title", "hooks / prek"]
+      "checks": [
+        "python / ci",
+        "python / pr-title",
+        "hooks / prek"
+      ]
     },
     "swiftkit": {
       "description": "Shared Swift package and XcodeGen base for the org iOS apps",
@@ -173,7 +205,13 @@
       "description": "Text notation for strength sets: tree-sitter grammar, JS semantics, Go/Swift bindings",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["go / ci", "go / pr-title", "js / ci", "js / pr-title", "hooks / prek"]
+      "checks": [
+        "go / ci",
+        "go / pr-title",
+        "js / ci",
+        "js / pr-title",
+        "hooks / prek"
+      ]
     },
     "workouts-go": {
       "description": "Workout tracking server and PWA (Go, stdlib net/http) on Google Sheets: workline loads, in-repo gsheet client and CLI"
@@ -185,7 +223,11 @@
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
+      "checks": [
+        "ci / ci",
+        "ci / pr-title",
+        "hooks / prek"
+      ],
       "archived": true
     }
   },
@@ -214,9 +256,7 @@
         "description": "Keyboard layout as firmware and software: ZMK config, kanata iOS keyboard extension",
         "visibility": "public",
         "required_checks": [
-          "kanata-ios / ci",
-          "kanata-ios / pr-title",
-          "hooks / prek"
+          "prek / prek"
         ],
         "actions_can_approve_prs": true
       },
