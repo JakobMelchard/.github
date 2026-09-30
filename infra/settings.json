@@ -56,7 +56,7 @@
       "checks": ["check", "hooks / prek"]
     },
     ".devcontainer": {
-      "description": "Dev environments: base image, features, templates"
+      "archived": true
     },
     ".githooks": {
       "description": "Shared git hooks",
@@ -162,7 +162,7 @@
       "description": "event -> handler -> output hub on Workers + Mac mini runner"
     },
     "template": {
-      "description": "Copier template for every org stack (hx-app, cf, go, py, c-cpp, infra, ios, macos); org-repo new renders it",
+      "description": "Copier template for every org stack (hx-app, cf, go, py, c-cpp, infra, macos); org-repo new renders it. Dev environments: base image, features, devcontainer templates",
       "is_template": false
     },
     "transcriber": {

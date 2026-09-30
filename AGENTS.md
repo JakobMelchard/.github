@@ -54,8 +54,9 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
 - Callers reference `@main`, so a mistake here reaches every repo immediately.
   `v1` follows the latest 1.x release and is moved only by `self-release.yml`;
   release tags are immutable. Never move a tag by hand.
-- `workflow-templates/auto.yml` and `.devcontainer/templates` are mirrored into
-  `JakobMelchard/template`. Change the source here first, then the template.
+- `workflow-templates/auto.yml` is mirrored into `JakobMelchard/template`. Change the
+  source here first, then the template. Devcontainer templates live in
+  `JakobMelchard/template` itself (`devcontainer/`, formerly the `.devcontainer` repo).
 - `github.token` is scoped to the calling repo. A cross-repo private module needs
   a PAT or app token mapped explicitly as `secrets.token`, not `secrets: inherit`,
   so only that one secret crosses the boundary.
