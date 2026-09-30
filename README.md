@@ -261,14 +261,14 @@ Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the 
 ## Routines
 
 Two Claude Code cloud routines (claude.ai/code/routines, account of the org owner, Max
-subscription) work the org at night, Europe/Vienna: `nightly-sweep` hourly 22:07 to 05:07
+subscription) work the org at night, Europe/Vienna: `nightly-sweep` at 23:07 and 03:07
 triages new issues, implements issues labelled `agent:cloud` as draft PRs on `claude/issue-*`
 branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
 one draft PR on a `claude/improve-*` branch, one repo per night in rotation. Both stay
-inside the seventeen repos named in their prompts (thirteen org repos plus lilfeelz
-workspaces, bin, .config, .agents; the personal dotfiles use `dev` as base), never merge,
-never touch base branches, workflows or infra. `cf` and `monitor` are not in the Claude
-GitHub App installation, so the routines cannot reach them. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
+inside the repos named in their prompts (every live org repo plus lilfeelz workspaces,
+bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; attach, keyboard
+and gb-vitals get reading-only changes since their checks cannot run in the cloud), never
+merge, never touch base branches, workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
 file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
 The repos must be selected on each routine in the web form (menu next to the routine
 name, Edit, "Select a repository"): a run only reaches the repos attached to it (GitHub
