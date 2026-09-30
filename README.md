@@ -88,7 +88,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `python.yml` | `monitor` `observe` `cf` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
 | `node.yml` | `cf` `hx` `lift` `lists` `lyrics` `switchboard` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `.devcontainer` | `paths` `severity` |
-| `terraform.yml` | `infra` | `working-directory` `terraform-version` |
+| `terraform.yml` | `infra` | `working-directory` `validate` |
 | `xcode.yml` | `attach` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 | `android.yml` | `zmxdroid` `lift` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
 
