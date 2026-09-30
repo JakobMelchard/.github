@@ -1,0 +1,6 @@
+{
+  "name": "feedback",
+  "description": "Feedback: triage issues labeled feedback with opencode (feedback.yml)",
+  "iconName": "octicon comment-discussion",
+  "categories": ["Automation"]
+}
