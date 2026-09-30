@@ -258,6 +258,19 @@ and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet
 Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the diffs, or run
 `fleet-sync --dry-run` locally with your own gh auth.
 
+## Routines
+
+Two Claude Code cloud routines (claude.ai/code/routines, account of the org owner, Max
+subscription) work the org at night, Europe/Vienna: `nightly-sweep` hourly 22:07 to 05:07
+triages new issues, implements issues labelled `agent:cloud` as draft PRs on `claude/issue-*`
+branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
+one draft PR on a `claude/improve-*` branch, one repo per night in rotation. Both stay
+inside the ten repos named in their prompts, never merge, never touch default branches,
+workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
+file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
+Label `agent:cloud` queues an issue for the sweep; `agent:ready` still goes to switchboard
+(Jules or the mini). Every write shows up on GitHub, so the Telegram `github` topic sees it.
+
 ## Template repository
 
 `JakobMelchard/template` is a [copier](https://copier.readthedocs.io) template (tags `v*`), not a
