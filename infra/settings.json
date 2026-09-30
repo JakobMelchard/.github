@@ -116,7 +116,8 @@
       "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
+      "archived": true
     },
     "health": {
       "allow_merge_commit": false,
@@ -177,8 +178,8 @@
     "workout": {
       "archived": true
     },
-    "workouts": {
-      "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
+    "workouts-go": {
+      "description": "Workout tracking server and PWA (Go, stdlib net/http) on Google Sheets: workline loads, in-repo gsheet client and CLI"
     },
     "zmxapp": {
       "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh",
