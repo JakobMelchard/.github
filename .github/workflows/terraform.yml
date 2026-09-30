@@ -1,6 +1,6 @@
 name: terraform
 
-# Reusable Terraform/OpenTofu CI. Caller: infra (terraform/ and terraform/cloudflare/).
+# Reusable OpenTofu CI. Caller: infra (terraform/cloudflare/ and terraform/tailscale/).
 
 permissions:
   contents: read
@@ -11,12 +11,9 @@ on:
       working-directory:
         type: string
         default: terraform
-      terraform-version:
-        type: string
-        default: "~> 1.6"
       validate:
         description: >
-          Run `terraform validate`. Set false only for a config that is known
+          Run `tofu validate`. Set false only for a config that is known
           not to validate yet, and say why at the call site.
         type: boolean
         default: true
@@ -69,11 +66,10 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        with:
-          terraform_version: ${{ inputs.terraform-version }}
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_wrapper: false }
 
-      - run: terraform fmt -check -recursive
-      - run: terraform init -backend=false
+      - run: tofu fmt -check -recursive
+      - run: tofu init -backend=false
       - if: inputs.validate
-        run: terraform validate
+        run: tofu validate
