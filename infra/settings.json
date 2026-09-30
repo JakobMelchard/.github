@@ -208,10 +208,22 @@
       "kanata-ios": {
         "description": "kanata-configured SwiftUI keyboard extension for iOS",
         "visibility": "public",
+        "archived": true
+      },
+      "keyboard": {
+        "description": "Keyboard layout as firmware and software: ZMK config, kanata iOS keyboard extension",
+        "visibility": "public",
         "required_checks": [
-          "ci / ci"
+          "kanata-ios / ci",
+          "kanata-ios / pr-title",
+          "hooks / prek"
         ],
         "actions_can_approve_prs": true
+      },
+      "zmk": {
+        "description": "ZMK keyboard firmware configuration",
+        "visibility": "public",
+        "archived": true
       }
     }
   },
