@@ -106,7 +106,10 @@
       "allow_rebase_merge": false
     },
     "flatplan": {
-      "description": "2D furniture arrangement planner. Vanilla TS + Canvas, no runtime deps."
+      "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
+      "visibility": "public",
+      "private_vulnerability_reporting": true,
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
     },
     "forgejo": {
       "archived": true
