@@ -134,7 +134,6 @@
     "interviews": {
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
     },
-    "lift": {},
     "lists": {
       "description": "Generic todo and grocery lists"
     },
@@ -179,6 +178,9 @@
     },
     "workouts": {
       "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
+    },
+    "workouts-hx": {
+      "description": "Workout log PWA on hx: htmx front end, file store"
     },
     "zmxapp": {
       "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh",
