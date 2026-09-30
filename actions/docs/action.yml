@@ -1,0 +1,41 @@
+name: docs
+description: >
+  Build a repo's markdown docs into static pages in the docs.melchard.org shell: the docs
+  root's tokens.css + style.css, one centred mono column, the nav from SUMMARY.md. No HonKit.
+
+inputs:
+  src:
+    description: Docs source directory (holds SUMMARY.md).
+    required: false
+    default: docs
+  out:
+    description: Output directory.
+    required: false
+    default: site/docs
+  title:
+    description: Site title, shown as the brand link.
+    required: true
+  assets:
+    description: Base URL of tokens.css and style.css.
+    required: false
+    default: https://docs.melchard.org/assets
+  repo:
+    description: Repository URL for the GitHub link; empty hides it.
+    required: false
+    default: ${{ github.server_url }}/${{ github.repository }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build docs
+      shell: bash
+      env:
+        ACTION: ${{ github.action_path }}
+        SRC: ${{ inputs.src }}
+        OUT: ${{ inputs.out }}
+        TITLE: ${{ inputs.title }}
+        ASSETS: ${{ inputs.assets }}
+        REPO: ${{ inputs.repo }}
+      run: |
+        (cd "$ACTION" && npm install --no-save --no-audit --no-fund marked@18.0.14 >/dev/null)
+        node "$ACTION/build.mjs" --src "$SRC" --out "$OUT" --title "$TITLE" --assets "$ASSETS" --repo "$REPO"
