@@ -88,10 +88,9 @@
       "has_wiki": true,
       "private_vulnerability_reporting": true
     },
-    "agent-tg": {
-      "archived": true
+    "assets": {
+      "description": "Shared image assets for org projects"
     },
-    "assets": {},
     "attach": {
       "description": "iPad client for zmx sessions: workspaces, scrollback, input, Blink hand-off"
     },
@@ -124,18 +123,15 @@
       "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
       "archived": true
     },
-    "health": {
-      "allow_merge_commit": false,
-      "allow_rebase_merge": false,
-      "archived": true
-    },
     "hx": {
       "visibility": "public",
       "description": "htmx + JSDoc library: router, html, Store adapters",
       "private_vulnerability_reporting": true,
       "checks": ["self / ci", "self / pr-title", "hooks / prek"]
     },
-    "infra": {},
+    "infra": {
+      "description": "OpenTofu root modules for the tailnet policy and Cloudflare, plus the Forgejo setup on mimi"
+    },
     "interviews": {
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
     },
@@ -146,7 +142,9 @@
       "description": "Lil Peep lyrics API worker (moved to cf/workers/lyrics)",
       "archived": true
     },
-    "monitor": {},
+    "monitor": {
+      "description": "Local monitoring for mimi: Uptime Kuma, Prometheus and Grafana behind Caddy, plus the bio health data pipeline"
+    },
     "observe": {
       "description": "Deployment-agnostic observability sidecar",
       "visibility": "public",
@@ -170,31 +168,17 @@
       "allow_merge_commit": false,
       "archived": true
     },
-    "weiterbildungszeit": {
-      "archived": true
-    },
     "workline": {
       "description": "Text notation for strength sets: tree-sitter grammar, JS semantics, Go/Swift bindings",
       "visibility": "public",
       "private_vulnerability_reporting": true,
       "checks": ["go / ci", "go / pr-title", "js / ci", "js / pr-title", "hooks / prek"]
     },
-    "workout": {
-      "archived": true
-    },
     "workouts-go": {
       "description": "Workout tracking server and PWA (Go, stdlib net/http) on Google Sheets: workline loads, in-repo gsheet client and CLI"
     },
     "workouts-hx": {
       "description": "Workout log PWA on hx: htmx front end, file store"
-    },
-    "zmxapp": {
-      "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh",
-      "archived": true
-    },
-    "zmxdroid": {
-      "description": "Android window for zmx sessions: tabs of Termux terminals plus an fzf picker over SSH",
-      "archived": true
     },
     "zmxkit": {
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
@@ -208,6 +192,18 @@
     "$comment": "Repos owned by the lilfeelz user account, managed by infra/personal.tf with the same repo_defaults. required_checks becomes a ruleset on the default branch; rulesets need a public repo on the free plan.",
     "owner": "lilfeelz",
     "repos": {
+      ".agents": {
+        "description": "Personal agent rules and skill definitions for OpenCode and Pi"
+      },
+      ".config": {
+        "description": "Dotfiles"
+      },
+      ".config.local": {
+        "description": "Per-machine overrides for the .config dotfiles"
+      },
+      "bin": {
+        "description": "Personal CLI tools"
+      },
       "kanata-ios": {
         "description": "kanata-configured SwiftUI keyboard extension for iOS",
         "visibility": "public",
@@ -222,6 +218,21 @@
           "hooks / prek"
         ],
         "actions_can_approve_prs": true
+      },
+      "lilfeelz": {
+        "description": "Profile readme",
+        "visibility": "public",
+        "has_wiki": true
+      },
+      "lilfeelz.github.io": {
+        "description": "docs.lilfeelz.org GitHub Pages umbrella",
+        "visibility": "public"
+      },
+      "tu": {
+        "description": "TU Wien coursework"
+      },
+      "workspaces": {
+        "description": "Terminal stack: zsh, nvim, zmx workspace management"
       },
       "zmk": {
         "description": "ZMK keyboard firmware configuration",
