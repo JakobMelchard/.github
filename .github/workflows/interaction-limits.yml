@@ -34,6 +34,7 @@ jobs:
         run: |
           list=$(jq -c '.repos | to_entries | map(select(.value.interaction_limit != null and .value.archived != true) | {repo: .key, limit: .value.interaction_limit})' infra/settings.json)
           echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "names=$(jq -r 'map(.repo) | join(",")' <<<"$list")" >> "$GITHUB_OUTPUT"
 
       - name: mint app token
         id: app
@@ -43,6 +44,8 @@ jobs:
           client-id: ${{ secrets.APP_CLIENT_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.repos.outputs.names }}
+          permission-administration: write
 
       - name: apply
         if: env.HAS_APP == 'true'
