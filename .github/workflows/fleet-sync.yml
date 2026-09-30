@@ -2,7 +2,7 @@ name: fleet-sync
 
 # Weekly: refresh the vendored org config and hooks in every repo that carries
 # them and open one PR per changed repo. The work is bin/fleet-sync
-# (JakobMelchard/bin, private); this job fetches it with the org app token,
+# (JakobMelchard/bin, public); this job fetches it with the org app token,
 # which also clones and pushes the consumers. Without the APP_* secrets the job
 # says so and exits green. Run locally: `fleet-sync --dry-run`.
 
