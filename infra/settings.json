@@ -123,6 +123,7 @@
     "flatplan": {
       "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
       "visibility": "public",
+      "interaction_limit": "collaborators_only",
       "private_vulnerability_reporting": true,
       "checks": [
         "ci / ci",
