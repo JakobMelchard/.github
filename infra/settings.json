@@ -109,7 +109,9 @@
     "flatplan": {
       "description": "2D furniture arrangement planner. Vanilla TS + Canvas, no runtime deps."
     },
-    "forgejo": {},
+    "forgejo": {
+      "archived": true
+    },
     "gb-vitals": {
       "description": "Gadgetbridge vitals alerts for Amazfit Helio Strap (Health Connect + sqlite export)"
     },
