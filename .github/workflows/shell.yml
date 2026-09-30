@@ -92,7 +92,8 @@ jobs:
           rc=0
           while IFS= read -r f; do
             case "$(head -1 "$f")" in
-              *zsh) zsh -n "$f" || rc=1 ;;
+              # zsh anywhere in the shebang: `#!/bin/zsh -f`, `#!/usr/bin/env zsh`
+              *zsh*) zsh -n "$f" || rc=1 ;;
               *)    bash -n "$f" || rc=1 ;;
             esac
           done < /tmp/scripts.txt
