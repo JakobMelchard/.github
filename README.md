@@ -88,8 +88,8 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `release.yml` | any repo using release-please | `release-type` `config-file`; secrets `app-client-id` `app-private-key` (or `token`) make the app author the release PR so CI runs on it |
 | `go.yml` | `health` `workouts` `gsheet` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `monitor` `observe` `cf` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
-| `node.yml` | `cf` `hx` `lift` `lists` `switchboard` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
-| `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `.devcontainer` | `paths` `severity` |
+| `node.yml` | `cf` `hx` `workouts-hx` `lists` `switchboard` `interviews` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
+| `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `template` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `validate` |
 | `xcode.yml` | `attach` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 | `android.yml` | `zmxdroid` `lift` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
