@@ -106,9 +106,14 @@
       "allow_rebase_merge": false
     },
     "flatplan": {
-      "description": "2D furniture arrangement planner. Vanilla TS + Canvas, no runtime deps."
+      "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
+      "visibility": "public",
+      "private_vulnerability_reporting": true,
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
     },
-    "forgejo": {},
+    "forgejo": {
+      "archived": true
+    },
     "gb-vitals": {
       "description": "Gadgetbridge vitals alerts for Amazfit Helio Strap (Health Connect + sqlite export)"
     },
@@ -116,7 +121,8 @@
       "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
+      "archived": true
     },
     "health": {
       "allow_merge_commit": false,
@@ -133,12 +139,12 @@
     "interviews": {
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
     },
-    "lift": {},
     "lists": {
       "description": "Generic todo and grocery lists"
     },
     "lyrics": {
-      "description": "Lil Peep lyrics API worker"
+      "description": "Lil Peep lyrics API worker (moved to cf/workers/lyrics)",
+      "archived": true
     },
     "monitor": {},
     "observe": {
@@ -176,8 +182,11 @@
     "workout": {
       "archived": true
     },
-    "workouts": {
-      "description": "Workout tracking server (Go, stdlib net/http, gsheet-backed)"
+    "workouts-go": {
+      "description": "Workout tracking server and PWA (Go, stdlib net/http) on Google Sheets: workline loads, in-repo gsheet client and CLI"
+    },
+    "workouts-hx": {
+      "description": "Workout log PWA on hx: htmx front end, file store"
     },
     "zmxapp": {
       "description": "macOS window for zmx sessions: tabs of libghostty terminals plus an fzf picker over mosh",
@@ -191,7 +200,8 @@
       "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
       "visibility": "public",
       "private_vulnerability_reporting": true,
-      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"]
+      "checks": ["ci / ci", "ci / pr-title", "hooks / prek"],
+      "archived": true
     }
   },
   "personal": {
@@ -201,10 +211,22 @@
       "kanata-ios": {
         "description": "kanata-configured SwiftUI keyboard extension for iOS",
         "visibility": "public",
+        "archived": true
+      },
+      "keyboard": {
+        "description": "Keyboard layout as firmware and software: ZMK config, kanata iOS keyboard extension",
+        "visibility": "public",
         "required_checks": [
-          "ci / ci"
+          "kanata-ios / ci",
+          "kanata-ios / pr-title",
+          "hooks / prek"
         ],
         "actions_can_approve_prs": true
+      },
+      "zmk": {
+        "description": "ZMK keyboard firmware configuration",
+        "visibility": "public",
+        "archived": true
       }
     }
   },
