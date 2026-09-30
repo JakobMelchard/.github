@@ -1,6 +1,6 @@
 name: node
 
-# Reusable Node CI. Callers: cf, hx, lift, lists, lyrics, switchboard,
+# Reusable Node CI. Callers: cf, hx, lift, lists, switchboard,
 # lilfeelz.github.io.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
 #

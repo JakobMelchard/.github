@@ -138,7 +138,8 @@
       "description": "Generic todo and grocery lists"
     },
     "lyrics": {
-      "description": "Lil Peep lyrics API worker"
+      "description": "Lil Peep lyrics API worker (moved to cf/workers/lyrics)",
+      "archived": true
     },
     "monitor": {},
     "observe": {
