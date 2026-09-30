@@ -91,7 +91,9 @@
     "agent-tg": {
       "archived": true
     },
-    "agentest": {},
+    "agentest": {
+      "archived": true
+    },
     "assets": {},
     "attach": {
       "description": "iPad client for zmx sessions: workspaces, scrollback, input, Blink hand-off"
