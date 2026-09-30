@@ -268,6 +268,8 @@ one draft PR on a `claude/improve-*` branch, one repo per night in rotation. Bot
 inside the ten repos named in their prompts, never merge, never touch default branches,
 workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
 file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
+The ten repos must be selected on each routine in the web form: a run only reaches the
+repos attached to it (GitHub API calls for any other repo get a 403 from the gateway).
 Label `agent:cloud` queues an issue for the sweep; `agent:ready` still goes to switchboard
 (Jules or the mini). Every write shows up on GitHub, so the Telegram `github` topic sees it.
 

@@ -6,7 +6,7 @@ Only these ten, all under the GitHub org `JakobMelchard`: `flatplan`, `interview
 
 ## Getting a repository
 
-Call the `add_repo` tool with owner `JakobMelchard`, the repo name and access `push`, then run the clone command it returns without `--depth`, so a later push is not rejected as a thin pack. Clone only the repositories you actually change in this run; listing issues and pull requests needs no clone.
+The ten repositories are attached to this routine and cloned into the working directory when the run starts, one folder per repository; find them with `ls`. Work inside those clones. If a repository folder is missing and an `add_repo` tool exists, call it with owner `JakobMelchard`, the repo name and access `push`, then run the clone command it returns without `--depth`. If neither is possible, skip that repository and say so at the end. Before pushing, run `git fetch origin <default branch>` in the clone so the push is not rejected as a thin pack.
 
 The environment has no `gh` binary. Talk to GitHub through its REST API: `curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/...`. `GH_TOKEN` is set and acts as Jakob. Use it for issues, pull requests, comments, labels, check runs and releases. If `gh` turns out to exist, you may use it instead.
 
@@ -41,7 +41,7 @@ Across the ten repositories, list open issues labelled `agent:cloud`, oldest fir
 
 For each issue:
 
-1. Get the repository, create branch `claude/issue-<n>-<short-slug>` from the default branch.
+1. In the repository's clone, create branch `claude/issue-<n>-<short-slug>` from the default branch.
 2. Implement the smallest change that resolves the issue. No unrelated refactors, no new dependencies unless the issue asks for one.
 3. Run the repository's checks and make them pass: `make check` when the Makefile has that target, else `npm run check` and `npm test` when `package.json` defines them, else `go test ./...` when `go.mod` exists, else `uv run pytest` when `pyproject.toml` exists. Fix what you broke. Give up after two fix attempts.
 4. Commit with a body that ends in `Closes #<n>`. Push the branch. Open a draft pull request (`POST /repos/JakobMelchard/<repo>/pulls` with `"draft": true`) titled as a conventional commit, body: one paragraph on the change and why, a line on what checks ran, the line `Closes #<n>`.
