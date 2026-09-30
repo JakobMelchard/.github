@@ -1,10 +1,20 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Org preset. Every repo: { \"extends\": [\"github>JakobMelchard/.github//renovate/default\"] }. Public here so private and public consumers read the same file.",
-  "extends": ["config:best-practices", ":enablePreCommit"],
+  "extends": ["config:best-practices", ":enablePreCommit", ":timezone(Europe/Vienna)", "schedule:weekly"],
+  "rebaseWhen": "conflicted",
   "automergeType": "pr",
   "platformAutomerge": false,
   "packageRules": [
+    {
+      "description": "Actions minutes are scarce: at most one weekly PR per repo for automergeable updates and one for minors. Named groups below still win for their packages; majors stay separate.",
+      "matchUpdateTypes": ["digest", "pin", "pinDigest", "patch"],
+      "groupName": "patch and digest"
+    },
+    {
+      "matchUpdateTypes": ["minor"],
+      "groupName": "minor"
+    },
     {
       "matchPackageNames": ["JakobMelchard/hx", "@jakobmelchard/hx"],
       "groupName": "hx"
