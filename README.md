@@ -261,7 +261,7 @@ Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the 
 ## Routines
 
 Two Claude Code cloud routines (claude.ai/code/routines, account of the org owner, Max
-subscription) work the org at night, Europe/Vienna: `nightly-sweep` at 23:07 and 03:07
+subscription) work the org at night, Europe/Vienna: `nightly-sweep` at 03:07
 triages new issues, implements issues labelled `agent:cloud` as draft PRs on `claude/issue-*`
 branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
 one draft PR on a `claude/improve-*` branch, one repo per night in rotation. Both stay
