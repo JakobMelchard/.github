@@ -46,11 +46,24 @@ resource "github_repository" "personal" {
   allow_update_branch         = each.value.allow_update_branch
   web_commit_signoff_required = each.value.web_commit_signoff_required
 
+  # Same as repos.tf: free on public repos, rejected on private ones.
+  dynamic "security_and_analysis" {
+    for_each = each.value.visibility == "public" ? [1] : []
+    content {
+      secret_scanning {
+        status = "enabled"
+      }
+      secret_scanning_push_protection {
+        status = "enabled"
+      }
+    }
+  }
+
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
       auto_init, gitignore_template, license_template, template,
-      homepage_url, topics, pages, security_and_analysis,
+      homepage_url, topics, pages,
       has_downloads, has_discussions, is_template, archive_on_destroy,
       vulnerability_alerts,
     ]
