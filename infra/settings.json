@@ -130,7 +130,8 @@
       "checks": ["self / ci", "self / pr-title", "hooks / prek"]
     },
     "infra": {
-      "description": "OpenTofu root modules for the tailnet policy and Cloudflare, plus the Forgejo setup on mimi"
+      "description": "OpenTofu root modules for the tailnet policy and Cloudflare, plus the Forgejo setup on mimi; moved into monitor",
+      "archived": true
     },
     "interviews": {
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"
