@@ -248,6 +248,9 @@
       "bin": {
         "description": "Personal CLI tools"
       },
+      "chrome-extensions": {
+        "description": "MV3 Chromium extensions for the lilfeelz/JakobMelchard workflow, with Chromium e2e tests"
+      },
       "kanata-ios": {
         "description": "kanata-configured SwiftUI keyboard extension for iOS",
         "visibility": "public",
