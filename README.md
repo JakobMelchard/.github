@@ -287,7 +287,8 @@ Fallback without the Max subscription: `.github/workflows/routines-fallback.yml`
 `routines/*.md` prompts with opencode (`opencode-go/mimo-v2.5` by default) on the org app token,
 org repos only. It is dormant: `workflow_dispatch` runs it once (dry run by default); set the repo
 variable `ROUTINES_FALLBACK` to `on` and the nightly schedule takes over. Needs the repo secret
-`OPENCODE_API_KEY` next to the `APP_*` secrets.
+`OPENCODE_API_KEY` next to the `APP_*` secrets. Until the app gets Checks and Actions read, CI
+status of private repos is unreadable there and the Renovate verdicts say so.
 
 ## Template repository
 
