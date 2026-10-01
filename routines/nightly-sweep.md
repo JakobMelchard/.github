@@ -33,9 +33,9 @@ For each issue: read it, look at the code it touches, then:
 
 1. Add exactly one kind label: `bug`, `enhancement`, `question` or `documentation`.
 2. Decide whether it is scoped: one concrete change with an obvious definition of done that an unattended agent can finish without asking anything. Vague wishes, design questions, anything needing a human decision, a real device, secrets or a deploy is not scoped.
-3. If scoped, add the label `agent:cloud`.
+3. If scoped, add the label `agent:ready`. Switchboard hands it to Jules at once; when Jules cannot take the repository, switchboard swaps the label to `agent:cloud` and Unit B picks it up.
 4. If the issue carries the label `feedback`, rewrite its title to an imperative, specific title of at most 70 characters that does not copy user text verbatim.
-5. Comment, starting with `routine triage:`, in 2 to 5 sentences: what the issue is about, where in the code it lives, your hypothesis, and whether you queued it (`agent:cloud`) or why not.
+5. Comment, starting with `routine triage:`, in 2 to 5 sentences: what the issue is about, where in the code it lives, your hypothesis, and whether you queued it (`agent:ready`) or why not.
 
 ## Unit B: implement queued issues
 
