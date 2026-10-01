@@ -351,6 +351,10 @@
     "agent:cloud": {
       "color": "0052cc",
       "description": "Scoped issue queued for the nightly cloud routine"
+    },
+    "sentry": {
+      "color": "362d59",
+      "description": "Opened by switchboard from a Sentry alert"
     }
   }
 }
