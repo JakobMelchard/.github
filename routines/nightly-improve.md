@@ -44,4 +44,4 @@ Skip anything that needs a design decision, a secret, a device, a deploy, or tha
 
 Run the repository's checks and make them pass: `make check` when the Makefile has that target, else `npm run check` and `npm test` when `package.json` defines them, else `go test ./...` when `go.mod` exists, else `uv run pytest` when `pyproject.toml` exists. Commit, push the branch, open a draft pull request (`POST /repos/<owner>/<repo>/pulls` with `"draft": true` and the base branch as `base`) with a one paragraph body on the change and why, a line on what checks ran, and the label from the list above when one applies.
 
-End with one line: the pull request URL, or why there is none.
+Post one comment on the run log issue (`POST /repos/JakobMelchard/.github/issues/70/comments`), first line `nightly-improve <date>`, then the repository you picked and the pull request URL, or why there is none. End your run with the same line. On a dry run, post nothing and only print it.

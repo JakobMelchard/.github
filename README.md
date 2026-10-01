@@ -25,9 +25,9 @@ alternative: it follows the latest 1.x release of this repo (see *Releases of th
 ## Starter workflows
 
 `workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
-`terraform` `xcode` `android`), plus `feedback`: triage of issues labeled `feedback` (filed by
-switchboard from observe's in-app form) with opencode's read-only agent in `actions/feedback-triage`,
-which needs the repo secret `OPENCODE_API_KEY_GHA`.
+`terraform` `xcode` `android`). Issues labeled `feedback` (filed from an app's in-app form)
+are triaged by the nightly cloud routine (see Routines), which retitles them and queues
+scoped ones with `agent:cloud`; the former opencode action is gone.
 
 `actions/docs` builds a repo's markdown docs (`docs/`, nav from `SUMMARY.md`) into static pages in the
 docs.melchard.org shell: `tokens.css` + `style.css` loaded from the `assets` input (default

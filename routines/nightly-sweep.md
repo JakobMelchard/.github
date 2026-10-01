@@ -59,4 +59,4 @@ For each pull request, read the diff (`GET .../pulls/<n>/files`) and the check s
 
 ## Finishing
 
-End with a short list of what you did, one line per issue or pull request touched, with URLs. If you did nothing, say why in one line.
+Write a short list of what you did, one line per issue or pull request touched, with URLs; if you did nothing, one line on why. Post it as a comment on the run log issue (`POST /repos/JakobMelchard/.github/issues/70/comments`), first line `nightly-sweep <date>`, and end your run with the same list. On a dry run, post nothing and only print it.
