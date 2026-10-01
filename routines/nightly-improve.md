@@ -33,7 +33,7 @@ If the run carries a `routine-fire-payload` block whose text starts with `DRY RU
 
 Look at the repository with fresh eyes and pick the first item on this list that applies. One item, one pull request.
 
-1. Red CI on the base branch: `GET /repos/<owner>/<repo>/actions/runs?branch=<base>&per_page=10`. If the latest run of a workflow failed for a reason inside the repository, fix that. Label the pull request `fleet/ci-red`.
+1. Red CI on the base branch: `GET /repos/<owner>/<repo>/actions/runs?branch=<base>&per_page=10`. If the latest run of a workflow failed for a reason inside the repository, fix that. A job whose check-run annotations (`GET .../check-runs/<id>/annotations`) say it was not started (failed payments, spending limit, no runner) did not fail inside the repository; skip it. Label the pull request `fleet/ci-red`.
 2. A test gap: an exported function or endpoint with a clear contract and no test. Add the test, and only fix the code if the test shows a real bug. Label `fleet/test-gap`.
 3. Docs drift: a statement in `AGENTS.md` or `README.md` that no longer matches the code or layout. Fix the doc. Label `fleet/docs-drift`.
 4. Dead code, an unused export, a stale TODO that is done, or a lint warning the repository's own checks report. Remove or fix it.
