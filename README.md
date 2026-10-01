@@ -29,9 +29,9 @@ a repo declares in `infra/settings.json` (`collaborators_only`, `contributors_on
 GitHub caps these at six months, the workflow makes them permanent.
 
 `workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
-`terraform` `xcode` `android`), plus `feedback`: triage of issues labeled `feedback` (filed by
-switchboard from observe's in-app form) with opencode's read-only agent in `actions/feedback-triage`,
-which needs the repo secret `OPENCODE_API_KEY_GHA`.
+`terraform` `xcode` `android`). Issues labeled `feedback` (filed from an app's in-app form)
+are triaged by the nightly cloud routine (see Routines), which retitles them and queues
+scoped ones with `agent:cloud`; the former opencode action is gone.
 
 `actions/docs` builds a repo's markdown docs (`docs/`, nav from `SUMMARY.md`) into static pages in the
 docs.melchard.org shell: `tokens.css` + `style.css` loaded from the `assets` input (default
@@ -261,6 +261,25 @@ already carries (config-sync groups whose file exists, `.githooks/` when hooks a
 and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet/deps`.
 Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the diffs, or run
 `fleet-sync --dry-run` locally with your own gh auth.
+
+## Routines
+
+Two Claude Code cloud routines (claude.ai/code/routines, account of the org owner, Max
+subscription) work the org at night, Europe/Vienna: `nightly-sweep` at 03:07
+triages new issues, implements issues labelled `agent:cloud` as draft PRs on `claude/issue-*`
+branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
+one draft PR on a `claude/improve-*` branch, one repo per night in rotation. Both stay
+inside the repos named in their prompts (every live org repo plus lilfeelz workspaces,
+bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; attach, keyboard
+and gb-vitals get reading-only changes since their checks cannot run in the cloud), never
+merge, never touch base branches, workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
+file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
+The repos must be selected on each routine in the web form (menu next to the routine
+name, Edit, "Select a repository"): a run only reaches the repos attached to it (GitHub
+API calls for any other repo get a 403 from the gateway), and the picker only offers
+repos the Claude GitHub App is installed on.
+Label `agent:cloud` queues an issue for the sweep; `agent:ready` still goes to switchboard
+(Jules or the mini). Every write shows up on GitHub, so the Telegram `github` topic sees it.
 
 ## Template repository
 
