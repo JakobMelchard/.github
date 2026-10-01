@@ -278,8 +278,16 @@ The repos must be selected on each routine in the web form (menu next to the rou
 name, Edit, "Select a repository"): a run only reaches the repos attached to it (GitHub
 API calls for any other repo get a 403 from the gateway), and the picker only offers
 repos the Claude GitHub App is installed on.
-Label `agent:cloud` queues an issue for the sweep; `agent:ready` still goes to switchboard
-(Jules or the mini). Every write shows up on GitHub, so the Telegram `github` topic sees it.
+The sweep's triage applies `agent:ready`, which switchboard hands to Jules; switchboard swaps it
+for `agent:cloud` when Jules cannot take the repo, and that is the sweep's own queue. Every write
+shows up on GitHub, so the Telegram `github` topic sees it. Each run appends one comment to the
+pinned issue #70.
+
+Fallback without the Max subscription: `.github/workflows/routines-fallback.yml` runs the same
+`routines/*.md` prompts with opencode (`opencode-go/mimo-v2.5` by default) on the org app token,
+org repos only. It is dormant: `workflow_dispatch` runs it once (dry run by default); set the repo
+variable `ROUTINES_FALLBACK` to `on` and the nightly schedule takes over. Needs the repo secret
+`OPENCODE_API_KEY` next to the `APP_*` secrets.
 
 ## Template repository
 

@@ -1,0 +1,104 @@
+name: routines-fallback
+
+# Dormant stand-in for the Claude cloud routines (README "Routines"): runs the same prompts
+# from routines/*.md with opencode on an org-app token, for the day the Max subscription is
+# gone. Off by default: the schedule only runs when the repo variable ROUTINES_FALLBACK is
+# "on"; workflow_dispatch always runs (dry run by default). Org repos only, the app token
+# cannot reach lilfeelz/*; the prompts treat those as "repository folder missing".
+# Needs the repo secrets APP_CLIENT_ID, APP_PRIVATE_KEY (see README "GitHub App") and
+# OPENCODE_API_KEY (OpenCode Zen or Go key, same as the mini's pi provider).
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      routine:
+        description: Which prompt to run.
+        type: choice
+        options: [nightly-sweep, nightly-improve]
+        default: nightly-sweep
+      dry_run:
+        description: Read-only; print the plan, change nothing on GitHub.
+        type: boolean
+        default: true
+      model:
+        description: opencode model as provider/model.
+        type: string
+        default: opencode-go/mimo-v2.5
+  schedule:
+    - cron: "7 1 * * *" # nightly-sweep, 03:07 Vienna in summer time
+    - cron: "37 2 * * *" # nightly-improve, 04:37 Vienna in summer time
+
+env:
+  REPOS: flatplan interviews lists hx workouts-hx workouts-go cf switchboard monitor observe workline bin agenx attach gb-vitals content template .github .githooks .config .agents
+
+jobs:
+  run:
+    if: github.event_name == 'workflow_dispatch' || vars.ROUTINES_FALLBACK == 'on'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    concurrency:
+      group: routines-fallback
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: pick the routine
+        id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT: ${{ inputs.routine }}
+          CRON: ${{ github.event.schedule }}
+        run: |
+          r=$INPUT
+          if [ "$EVENT" = schedule ]; then
+            if [ "$CRON" = "37 2 * * *" ]; then r=nightly-improve; else r=nightly-sweep; fi
+          fi
+          echo "routine=$r" >> "$GITHUB_OUTPUT"
+          echo "list=$(echo "$REPOS" | tr ' ' ',')" >> "$GITHUB_OUTPUT"
+
+      - name: mint app token
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ steps.pick.outputs.list }}
+          permission-contents: write
+          permission-issues: write
+          permission-pull-requests: write
+
+      - name: clone the repos in scope
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          mkdir work && cd work
+          for r in $REPOS; do
+            git clone -q "https://x-access-token:${GH_TOKEN}@github.com/$OWNER/$r" "$r" || echo "skipped $r"
+          done
+          git config --global user.name "$OWNER routine"
+          git config --global user.email "routine@users.noreply.github.com"
+
+      - name: install opencode
+        run: npm install -g opencode-ai@1.18.33 --no-audit --no-fund
+
+      - name: run the routine
+        working-directory: work
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          MODEL: ${{ inputs.model || 'opencode-go/mimo-v2.5' }}
+          PROMPT: ${{ github.workspace }}/routines/${{ steps.pick.outputs.routine }}.md
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          p=$(cat "$PROMPT")
+          if [ "$DRY" = true ]; then
+            p="$p
+
+routine-fire-payload: DRY RUN. Print the plan and change nothing on GitHub."
+          fi
+          opencode run --model "$MODEL" "$p"
