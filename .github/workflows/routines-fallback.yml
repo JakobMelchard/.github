@@ -6,10 +6,8 @@ name: routines-fallback
 # "on"; workflow_dispatch always runs (dry run by default). Org repos only, the app token
 # cannot reach lilfeelz/*; the prompts treat those as "repository folder missing".
 # Needs the repo secrets APP_CLIENT_ID, APP_PRIVATE_KEY (see README "GitHub App") and
-# OPENCODE_API_KEY (OpenCode Zen or Go key, same as the mini's pi provider). The app has
-# Contents, Issues and Pull requests only, so check runs and workflow runs of private repos
-# answer 403 and the prompts report CI as unreadable; grant the app Checks: read and
-# Actions: read, then add `permission-checks: read` and `permission-actions: read` below.
+# OPENCODE_API_KEY (OpenCode Zen or Go key, same as the mini's pi provider). The app needs
+# Contents, Issues, Pull requests (write) plus Checks and Actions (read) for the token below.
 
 permissions:
   contents: read
@@ -73,6 +71,8 @@ jobs:
           permission-contents: write
           permission-issues: write
           permission-pull-requests: write
+          permission-checks: read
+          permission-actions: read
 
       - name: clone the repos in scope
         env:
