@@ -9,7 +9,9 @@ see `JakobMelchard/.agents/PLATFORM.md` for the map.
 Actions are pinned by commit SHA with the version in a trailing comment; Renovate
 keeps the pins fresh through the org preset in `renovate/default.json`, which every
 repo extends (`github>JakobMelchard/.github//renovate/default`). Digest and patch
-bumps automerge once CI is green; everything else waits for a review. The CI workflows declare
+bumps automerge once CI is green; everything else waits for a review. Updates arrive weekly (Monday before 4am, Vienna)
+as grouped PRs per repo: one for patch and digest, one for minor, plus the `hx`, `github actions` and `pre-commit hooks`
+groups for their packages; majors and security fixes come on their own. The CI workflows declare
 `permissions: contents: read` at the top (`release.yml` needs `contents: write` +
 `pull-requests: write`), checkouts do not persist credentials, and caller-supplied
 `*-cmd` inputs reach the shell through `env`, never by template expansion.
