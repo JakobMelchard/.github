@@ -24,6 +24,10 @@ alternative: it follows the latest 1.x release of this repo (see *Releases of th
 
 ## Starter workflows
 
+`.github/workflows/interaction-limits.yml` re-applies, monthly and on change, the `interaction_limit`
+a repo declares in `infra/settings.json` (`collaborators_only`, `contributors_only`, `existing_users`):
+GitHub caps these at six months, the workflow makes them permanent.
+
 `workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
 `terraform` `xcode` `android`). Issues labeled `feedback` (filed from an app's in-app form)
 are triaged by the nightly cloud routine (see Routines), which retitles them and queues

@@ -123,6 +123,7 @@
     "flatplan": {
       "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
       "visibility": "public",
+      "interaction_limit": "collaborators_only",
       "private_vulnerability_reporting": true,
       "checks": [
         "ci / ci",
@@ -158,8 +159,7 @@
       ]
     },
     "infra": {
-      "description": "OpenTofu root modules for the tailnet policy and Cloudflare, plus the Forgejo setup on mimi; moved into monitor",
-      "archived": true
+      "description": "OpenTofu root modules for the tailnet policy and Cloudflare, plus the Forgejo setup on mimi"
     },
     "interviews": {
       "description": "Local transcription, audio-linked editing, and qualitative analysis of interview data"

@@ -16,6 +16,13 @@ locals {
   }
 }
 
+# Adopt variables that already exist (a repo coming back from archive keeps
+# its old copy), same pattern as the repo import in repos.tf.
+import {
+  for_each = local.runner_vars
+  to       = github_actions_variable.runner[each.key]
+  id       = "${each.value.repo}:${each.value.name}"
+}
 resource "github_actions_variable" "runner" {
   for_each = local.runner_vars
 
