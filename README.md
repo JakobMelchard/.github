@@ -270,8 +270,8 @@ triages new issues, implements issues labelled `agent:cloud` as draft PRs on `cl
 branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
 one draft PR on a `claude/improve-*` branch, one repo per night in rotation. Both stay
 inside the repos named in their prompts (every live org repo plus lilfeelz workspaces,
-bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; attach, keyboard
-and gb-vitals get reading-only changes since their checks cannot run in the cloud), never
+bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; attach and keyboard
+get reading-only changes since their checks cannot run in the cloud), never
 merge, never touch base branches, workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
 file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
 The repos must be selected on each routine in the web form (menu next to the routine
