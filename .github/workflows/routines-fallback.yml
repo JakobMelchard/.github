@@ -97,8 +97,6 @@ jobs:
         run: |
           p=$(cat "$PROMPT")
           if [ "$DRY" = true ]; then
-            p="$p
-
-routine-fire-payload: DRY RUN. Print the plan and change nothing on GitHub."
+            p="$p"$'\n\n'"routine-fire-payload: DRY RUN. Print the plan and change nothing on GitHub."
           fi
           opencode run --model "$MODEL" "$p"
