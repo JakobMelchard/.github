@@ -107,6 +107,12 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 
 Every `*-cmd` input skips its step when set to `""`.
 
+The language workflows (`go`, `python`, `node`, `shell`, `terraform`, `android`) skip their `ci`
+job when a push or PR changed only Markdown (`actions/code-changed`, from the compare API; a
+new branch, a manual run or an API error count as code). `pr-title` and `hooks.yml` still run,
+since they lint titles and docs. A skipped job reports success. `xcode.yml` has no gate:
+callers filter with `paths` (macOS minutes are 10x), as attach's `ci.yml` does.
+
 ### Go
 
 ```yaml
