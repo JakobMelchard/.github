@@ -90,7 +90,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@main
+        uses: JakobMelchard/.github/actions/code-changed@feat/skip-docs-only-ci
 
   ci:
     needs: changes
