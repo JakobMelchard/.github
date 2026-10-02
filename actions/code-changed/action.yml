@@ -1,0 +1,36 @@
+name: code-changed
+description: >
+  Whether this push or pull request changed anything besides Markdown, from the GitHub compare
+  API (no checkout). The language workflows skip their ci job when it is "false"; hooks.yml
+  and pr-title still run, since they lint docs and titles. Errs to "true": a new branch, a
+  manual or scheduled run, or an API failure all count as code.
+
+outputs:
+  code:
+    description: '"true" unless every changed file is Markdown.'
+    value: ${{ steps.diff.outputs.code }}
+
+runs:
+  using: composite
+  steps:
+    - id: diff
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        EVENT: ${{ github.event_name }}
+        BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+      run: |
+        code=true
+        # compare lists at most 300 files: at that size the list may be cut, so count it as
+        # code. A rename counts by both names (foo.py -> foo.md removes code).
+        if [[ "$EVENT" =~ ^(push|pull_request)$ && -n "$BASE" && ! "$BASE" =~ ^0+$ ]] &&
+          files=$(gh api "repos/$REPO/compare/$BASE...$HEAD" --jq '
+            if (.files | length) >= 300 then "truncated"
+            else .files[] | .filename, (.previous_filename // empty) end') &&
+          [ -n "$files" ] && ! grep -qv '\.md$' <<<"$files"; then
+          code=false
+        fi
+        echo "code=$code" >> "$GITHUB_OUTPUT"
+        echo "changed besides Markdown: $code"
