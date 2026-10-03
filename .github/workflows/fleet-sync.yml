@@ -3,8 +3,8 @@ name: fleet-sync
 # Weekly: refresh the vendored org config and hooks in every repo that carries
 # them and open one PR per changed repo. The work is bin/fleet-sync
 # (JakobMelchard/bin, public); this job fetches it with the org app token,
-# which also clones and pushes the consumers. Without the APP_* secrets the job
-# says so and exits green. Run locally: `fleet-sync --dry-run`.
+# which also clones and pushes the consumers. APP_* come from Infisical (project
+# gha, identity gha-org, OIDC). Run locally: `fleet-sync --dry-run`.
 
 permissions:
   contents: read
@@ -26,8 +26,9 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    env:
-      HAS_APP: ${{ secrets.APP_PRIVATE_KEY != '' }}
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -37,20 +38,26 @@ jobs:
         shell: bash
         run: echo "list=$(jq -r '.repos | to_entries[] | select(.value.archived != true) | .key' infra/settings.json | paste -sd, -)" >> "$GITHUB_OUTPUT"
 
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
       - name: mint app token
         id: app
-        if: env.HAS_APP == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ steps.repos.outputs.list }}
           permission-contents: write
           permission-pull-requests: write
 
       - name: fetch org tooling
-        if: env.HAS_APP == 'true'
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
         shell: bash
@@ -60,7 +67,6 @@ jobs:
           ls "$RUNNER_TEMP/bin"
 
       - name: fleet-sync
-        if: env.HAS_APP == 'true'
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           DRY: ${{ inputs.dry-run }}
@@ -71,9 +77,3 @@ jobs:
           set -- $REPOS
           if [ "$DRY" = true ]; then set -- --dry-run "$@"; fi
           "$RUNNER_TEMP/bin/fleet-sync" "$@" | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - name: no app credentials
-        if: env.HAS_APP != 'true'
-        run: |
-          echo "APP_CLIENT_ID / APP_PRIVATE_KEY are not set on this repo; nothing synced."
-          echo "Run 'fleet-sync --dry-run' locally, or install the org app (README, section 'GitHub App')."
