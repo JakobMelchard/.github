@@ -86,11 +86,13 @@ jobs:
       paths: infra
       severity: warning
 
-  # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the
-  # generate/lint plumbing on a bare checkout.
+  # macOS minutes cost 10x and every hosted macOS job bills a full minute: these two smokes alone used
+  # most of the org's included minutes in the first days of October 2026. They run on the self-hosted
+  # macOS runner on mimi (the org variable RUNNER_MACOS is not visible to this repo's own workflows).
   smoke-xcode:
     uses: ./.github/workflows/xcode.yml
     with:
+      runs-on: '["self-hosted","macOS"]'
       scheme: ""
       generate-cmd: ""
       lint-cmd: ""
@@ -99,6 +101,7 @@ jobs:
   smoke-simulator:
     uses: ./.github/workflows/xcode.yml
     with:
+      runs-on: '["self-hosted","macOS"]'
       generate-cmd: ""
       lint-cmd: ""
       test-cmd: "echo 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' && xcrun simctl list devices available | grep -F 'iPad Air 11-inch (M4) ('"
