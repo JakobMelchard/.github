@@ -17,16 +17,10 @@ locals {
   }
 }
 
-# Adopt variables that already exist (a repo coming back from archive keeps
-# its old copy), same pattern as the repo import in repos.tf. An import of a
-# missing variable fails the plan, so only names that existed before they were
-# managed are adopted; a newly added name is created. Repos added to settings.json
-# after that never had a copy, so theirs is created too.
-import {
-  for_each = { for k, v in local.runner_vars : k => v if v.name == "RUNNER_MACOS" && !contains(["agenx", "content", "drill"], v.repo) }
-  to       = github_actions_variable.runner[each.key]
-  id       = "${each.value.repo}:${each.value.name}"
-}
+# Every variable that existed before this was managed is in state now, so there
+# is no import: a newly listed repo gets its copy created. A repo restored from
+# archive with an old copy fails the apply with "already exists"; import it once
+# by hand (tofu import 'github_actions_variable.runner["<repo>/<name>"]' <repo>:<name>).
 resource "github_actions_variable" "runner" {
   for_each = local.runner_vars
 
