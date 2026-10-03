@@ -132,3 +132,15 @@ resource "github_repository_ruleset" "personal" {
     }
   }
 }
+
+# chrome-extensions moved from the personal account to the org (2026-10-03): carry its
+# state over to the org resources instead of destroying and re-importing.
+moved {
+  from = github_repository.personal["chrome-extensions"]
+  to   = github_repository.this["chrome-extensions"]
+}
+
+moved {
+  from = github_repository_vulnerability_alerts.personal["chrome-extensions"]
+  to   = github_repository_vulnerability_alerts.this["chrome-extensions"]
+}
