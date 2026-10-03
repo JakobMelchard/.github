@@ -119,7 +119,8 @@
     "cf": {
       "description": "Monorepo for Cloudflare Pages sites + shared tooling.",
       "allow_merge_commit": false,
-      "allow_rebase_merge": false
+      "allow_rebase_merge": false,
+      "delete_branch_on_merge": false
     },
     "chrome-extensions": {
       "description": "MV3 browser extensions for the org workflow (Brave/Chromium, hop also Firefox), with e2e tests"
