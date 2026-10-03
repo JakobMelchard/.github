@@ -9,6 +9,7 @@
     "web_commit_signoff_required": false
   },
   "runners": {
+    "RUNNER_LINUX": "blacksmith-2vcpu-ubuntu-2404",
     "RUNNER_MACOS": [
       "self-hosted",
       "macOS"
