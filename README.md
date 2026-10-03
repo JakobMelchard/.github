@@ -13,7 +13,7 @@ bumps automerge once CI is green; everything else waits for a review. Updates ar
 as grouped PRs per repo: one for patch and digest, one for minor, plus the `hx`, `github actions` and `pre-commit hooks`
 groups for their packages; majors and security fixes come on their own. The CI workflows declare
 `permissions: contents: read` at the top (`release.yml` needs `contents: write` +
-`pull-requests: write`), checkouts do not persist credentials, and caller-supplied
+`pull-requests: write` + `id-token: write`), checkouts do not persist credentials, and caller-supplied
 `*-cmd` inputs reach the shell through `env`, never by template expansion.
 `lint.yml` gates every change here — actionlint over workflows and starter
 templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
@@ -96,7 +96,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 
 | Workflow | For | Key inputs |
 |----------|-----|------------|
-| `release.yml` | any repo using release-please | `release-type` `config-file`; secrets `app-client-id` `app-private-key` (or `token`) make the app author the release PR so CI runs on it |
+| `release.yml` | any repo using release-please | `release-type` `config-file`; the app authors the release PR so CI runs on it, credentials from Infisical, caller grants `id-token: write` |
 | `go.yml` | `health` `workouts` `gsheet` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
 | `python.yml` | `monitor` `observe` `cf` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
 | `node.yml` | `cf` `hx` `workouts-hx` `lists` `switchboard` `interviews` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
@@ -256,10 +256,9 @@ releases are enabled here, so `vX.Y.Z` release tags and their assets never chang
 publish; `v1` is a plain tag, not a release, which is why it may move. Pin `@v1` for a
 tested line, `@vX.Y.Z` for a frozen one, `@main` to follow every merge. `bootstrap-sha` in
 `release-please-config.json` keeps history before the first automated release out of the
-changelog. The release PR is authored by melchbot (the `APP_*` secrets go to `release.yml`),
-so `lint.yml` runs on it like on any PR. A consumer gets the same by passing its own
-`APP_CLIENT_ID` / `APP_PRIVATE_KEY` repository secrets to `release.yml`; with `github.token`
-alone the release PR triggers no workflows.
+changelog. The release PR is authored by melchbot (`release.yml` loads its credentials from
+Infisical), so `lint.yml` runs on it like on any PR. Every caller gets the same; its calling
+job must grant `id-token: write`, or the run fails at startup.
 
 ## Fleet sync
 
