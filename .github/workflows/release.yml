@@ -36,14 +36,6 @@ on:
           the org variable RUNNER_LINUX and falls back to ubuntu-latest.
         type: string
         default: ""
-    secrets:
-      # Ignored since the credentials come from Infisical; declared until callers stop passing them.
-      app-client-id:
-        required: false
-      app-private-key:
-        required: false
-      token:
-        required: false
     outputs:
       release_created:
         value: ${{ jobs.release-please.outputs.release_created }}
