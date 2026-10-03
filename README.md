@@ -66,8 +66,7 @@ org-repo labels [repo…]        # JakobMelchard/bin, your gh auth
 ```
 
 `.github/workflows/labels.yml` runs the same script weekly and on every change to the file,
-with a token from the org GitHub App (see below). Without the `APP_*` secrets it exits green
-and says so.
+with a token from the org GitHub App (see below).
 
 ## GitHub App
 
@@ -77,18 +76,28 @@ repositories** with Contents, Issues and Pull requests read and write, which is 
 what those jobs mint tokens for (each job requests only the permissions it names, scoped
 to the repos in `infra/settings.json`, revoked when the job ends).
 
-Its credentials live in Infisical (the project `interviews` uses, `dev` environment) as
-`MELCHBOT_CLIENT_ID` and `MELCHBOT_PRIVATE_KEY`. The workflows read them as Actions
-secrets `APP_CLIENT_ID` and `APP_PRIVATE_KEY` on this repo; copy them without echoing:
+Its credentials live in Infisical project `core` (`dev`) as `MELCHBOT_CLIENT_ID` and
+`MELCHBOT_PRIVATE_KEY`, with a copy as `APP_CLIENT_ID` and `APP_PRIVATE_KEY` in project
+`gha` (slug `gha-lfq-y`, `dev`) for CI. Rotate both. The workflows in this repo load them at
+runtime over OIDC, no Actions secret involved:
 
-```sh
-cd ~/Workspaces/JakobMelchard/interviews
-infisical secrets get MELCHBOT_CLIENT_ID --plain | gh secret set APP_CLIENT_ID -R JakobMelchard/.github
-infisical secrets get MELCHBOT_PRIVATE_KEY --plain | gh secret set APP_PRIVATE_KEY -R JakobMelchard/.github
+```yaml
+permissions:
+  id-token: write
+steps:
+  - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+    with:
+      method: oidc
+      identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org: any JakobMelchard repo
+      domain: https://eu.infisical.com
+      project-slug: gha-lfq-y
+      env-slug: dev
+  # then ${{ env.APP_CLIENT_ID }} / ${{ env.APP_PRIVATE_KEY }}
 ```
 
-A private repo that passes them to a reusable workflow (`private-deps`) needs the same
-two secrets on itself: the free plan only lets org secrets reach public repos.
+The step exports every key in `gha` to the rest of the job. New CI secrets go into `gha`,
+not into Actions secrets. The reusable workflows (`release.yml`, `private-deps`) still take
+the app credentials as `secrets:` from their callers until those are migrated.
 
 ## Reusable workflows
 

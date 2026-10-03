@@ -5,8 +5,8 @@ name: routines-fallback
 # gone. Off by default: the schedule only runs when the repo variable ROUTINES_FALLBACK is
 # "on"; workflow_dispatch always runs (dry run by default). Org repos only, the app token
 # cannot reach lilfeelz/*; the prompts treat those as "repository folder missing".
-# Needs the repo secrets APP_CLIENT_ID, APP_PRIVATE_KEY (see README "GitHub App") and
-# OPENCODE_API_KEY (OpenCode Zen or Go key, same as the mini's pi provider). The app needs
+# Loads APP_CLIENT_ID, APP_PRIVATE_KEY (see README "GitHub App") and OPENCODE_API_KEY
+# (OpenCode Zen or Go key) from Infisical (project gha, identity gha-org, OIDC). The app needs
 # Contents, Issues, Pull requests (write) plus Checks and Actions (read) for the token below.
 
 permissions:
@@ -40,6 +40,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || vars.ROUTINES_FALLBACK == 'on'
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
     concurrency:
       group: routines-fallback
     steps:
@@ -60,12 +63,20 @@ jobs:
           echo "routine=$r" >> "$GITHUB_OUTPUT"
           echo "list=$(echo "$REPOS" | tr ' ' ',')" >> "$GITHUB_OUTPUT"
 
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
       - name: mint app token
         id: app
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ steps.pick.outputs.list }}
           permission-contents: write
@@ -93,7 +104,6 @@ jobs:
         working-directory: work
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           MODEL: ${{ inputs.model || 'opencode-go/mimo-v2.5' }}
           PROMPT: ${{ github.workspace }}/routines/${{ steps.pick.outputs.routine }}.md
           DRY: ${{ inputs.dry_run }}

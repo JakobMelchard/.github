@@ -15,7 +15,8 @@ name: infra
 # Auth: an installation token of the org app (melchbot): repository
 # administration + variables, read and write, on all org repos. github.token
 # cannot manage repo settings. State encryption: encryption.tofu, passphrase
-# in secret TOFU_STATE_PASSPHRASE (Infisical core/dev has the same value).
+# TOFU_STATE_PASSPHRASE. App credentials and passphrase come from Infisical
+# (project gha, identity gha-org, OIDC); core/dev holds the same values.
 
 on:
   pull_request:
@@ -46,12 +47,11 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     defaults:
       run:
         working-directory: infra
         shell: bash
-    env:
-      TF_VAR_state_passphrase: ${{ secrets.TOFU_STATE_PASSPHRASE }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -78,6 +78,15 @@ jobs:
         with:
           tofu_wrapper: false
 
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        if: steps.changed.outputs.run != 'false'
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
       # Unscoped on purpose: the action has no `permission-*` input for
       # Variables (actions.tf), and naming any permission drops the rest.
       # The install itself is scoped to what infra needs.
@@ -86,8 +95,8 @@ jobs:
         if: steps.changed.outputs.run != 'false'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
       # personal.tf: an installation token is per account, so the same app,
@@ -98,21 +107,26 @@ jobs:
         if: steps.changed.outputs.run != 'false'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: lilfeelz
 
       - if: steps.changed.outputs.run != 'false'
         run: tofu fmt -check -recursive
       - if: steps.changed.outputs.run != 'false'
+        env:
+          TF_VAR_state_passphrase: ${{ env.TOFU_STATE_PASSPHRASE }}
         run: tofu init -input=false
       - if: steps.changed.outputs.run != 'false'
+        env:
+          TF_VAR_state_passphrase: ${{ env.TOFU_STATE_PASSPHRASE }}
         run: tofu validate
 
       - name: tofu plan
         id: plan
         if: steps.changed.outputs.run != 'false'
         env:
+          TF_VAR_state_passphrase: ${{ env.TOFU_STATE_PASSPHRASE }}
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
           TF_VAR_personal_token: ${{ steps.app-personal.outputs.token }}
         run: |
@@ -159,12 +173,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read # the state commit is pushed with the app token, not github.token
+      id-token: write
     defaults:
       run:
         working-directory: infra
         shell: bash
     env:
-      TF_VAR_state_passphrase: ${{ secrets.TOFU_STATE_PASSPHRASE }}
       STATE: state/terraform.tfstate
     steps:
       # The branch head, not github.sha: a run queued behind another apply
@@ -178,27 +192,38 @@ jobs:
         with:
           tofu_wrapper: false
 
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
       - name: mint app token # unscoped: see the plan job
         id: app
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
       - name: mint app token (personal) # see the plan job
         id: app-personal
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
         with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: lilfeelz
 
       - run: tofu init -input=false
+        env:
+          TF_VAR_state_passphrase: ${{ env.TOFU_STATE_PASSPHRASE }}
 
       - name: tofu apply
         id: apply
         env:
+          TF_VAR_state_passphrase: ${{ env.TOFU_STATE_PASSPHRASE }}
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
           TF_VAR_personal_token: ${{ steps.app-personal.outputs.token }}
         run: |
