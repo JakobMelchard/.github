@@ -69,5 +69,5 @@ of token scope, not a platform limit: every checkout here is bare, none takes a
 `repository` input, and `github.token` only reads the calling repo. Pointing one
 at another repo would need both a new input and a token passed in. That is why
 `hx`'s `consumers-e2e.yml` inlines its steps instead of calling `node.yml`,
-and why it mints an app token (falling back to `CONSUMERS_TOKEN`) to read a
+and why it mints an app token (credentials from Infisical) to read a
 private consumer.
