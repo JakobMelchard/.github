@@ -60,10 +60,10 @@ on:
         default: app-debug
       runs-on:
         description: >
-          Stays on hosted ubuntu-latest by default: the self-hosted Linux runners are
-          arm64 and Android build-tools (aapt2) ship x86_64 only.
+          Empty picks the variable RUNNER_LINUX (Blacksmith, x86_64, which Android
+          build-tools need for aapt2) and falls back to ubuntu-latest.
         type: string
-        default: ubuntu-latest
+        default: ""
 
 jobs:
   # The PR title becomes the squash-commit subject that release-please reads.
@@ -98,7 +98,7 @@ jobs:
   ci:
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }

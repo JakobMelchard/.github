@@ -101,6 +101,9 @@
       "has_wiki": true,
       "private_vulnerability_reporting": true
     },
+    "agenx": {
+      "description": "Board of pi agent sessions on mimi"
+    },
     "assets": {
       "description": "Shared image assets for org projects"
     },
@@ -124,6 +127,12 @@
     },
     "chrome-extensions": {
       "description": "MV3 browser extensions for the org workflow (Brave/Chromium, hop also Firefox), with e2e tests"
+    },
+    "content": {
+      "description": "Content generator: brief, notes and workout data to post, social and narrated video, reviewed by PR"
+    },
+    "drill": {
+      "description": "Spaced repetition over card blocks in Markdown notes, FSRS, served on the tailnet"
     },
     "flatplan": {
       "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
