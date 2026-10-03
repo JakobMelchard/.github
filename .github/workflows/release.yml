@@ -1,14 +1,16 @@
 name: release
 
-# Shared release-please. With the org app's credentials the release PR and the
-# release are authored by the app, so `pull_request` workflows run on the release
-# PR (github.token-created PRs trigger nothing). Without them it falls back to
-# github.token. Callers that need to publish assets read the outputs:
+# Shared release-please. The release PR and the release are authored by the org
+# app, so `pull_request` workflows run on the release PR (github.token-created PRs
+# trigger nothing). Its credentials come from Infisical (project gha, identity
+# gha-org, OIDC), so the calling job must grant id-token: write. Callers that need
+# to publish assets read the outputs:
 #
 #   jobs:
 #     release:
 #       uses: JakobMelchard/.github/.github/workflows/release.yml@main
 #       with: { release-type: go }
+#       permissions: { contents: write, pull-requests: write, id-token: write }
 #     publish:
 #       needs: release
 #       if: needs.release.outputs.release_created == 'true'
@@ -35,14 +37,12 @@ on:
         type: string
         default: ""
     secrets:
+      # Ignored since the credentials come from Infisical; declared until callers stop passing them.
       app-client-id:
-        description: GitHub App client ID. With app-private-key, the app authors the release PR.
         required: false
       app-private-key:
-        description: GitHub App private key. Presence of this selects the app path.
         required: false
       token:
-        description: PAT fallback, used when no app private key is supplied.
         required: false
     outputs:
       release_created:
@@ -55,13 +55,11 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   release-please:
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
-    env:
-      # `secrets` is not available in a step-level `if`; only the boolean lands in env.
-      HAS_APP: ${{ secrets.app-private-key != '' }}
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -80,13 +78,20 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
       - name: mint app token
         id: app
-        if: env.HAS_APP == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          client-id: ${{ secrets.app-client-id }}
-          private-key: ${{ secrets.app-private-key }}
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           repositories: ${{ github.event.repository.name }}
           permission-contents: write
@@ -95,7 +100,7 @@ jobs:
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
-          token: ${{ steps.app.outputs.token || secrets.token || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app.outputs.token }}
           release-type: ${{ inputs.release-type }}
           config-file: ${{ inputs.config-file }}
           manifest-file: ${{ inputs.manifest-file }}
