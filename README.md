@@ -339,7 +339,7 @@ fallback (`make plan`, `make apply`).
 ```
 .github/workflows/    reusable workflows + this repo's own lint.yml, labels.yml, self-release.yml, fleet-sync.yml
 .github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
-actions/              composite actions (gitleaks, hooks)
+actions/              composite actions (code-changed, docs, gitleaks, tokens-check)
 infra/                opentofu: org + repo settings, settings.json, labels script
 renovate/             org Renovate preset
 release-please-config.json  this repo's own releases (self-release.yml)
