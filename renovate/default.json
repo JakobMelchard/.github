@@ -5,6 +5,13 @@
   "rebaseWhen": "conflicted",
   "automergeType": "pr",
   "platformAutomerge": false,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "description": "Fix PRs for Dependabot (and OSV) alerts. Dependabot security updates are off org-wide (infra), so these are the only fix PRs. Explicit schedule: they skip schedule:weekly. baseBranchPatterns per repo still applies.",
+    "enabled": true,
+    "labels": ["security"],
+    "schedule": ["at any time"]
+  },
   "packageRules": [
     {
       "description": "Actions minutes are scarce: at most one weekly PR per repo for automergeable updates and one for minors. Named groups below still win for their packages; majors stay separate.",
