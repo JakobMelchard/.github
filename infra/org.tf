@@ -12,6 +12,11 @@ resource "github_organization_settings" "this" {
   members_can_create_pages                = local.settings.org.members_can_create_pages
   web_commit_signoff_required             = local.settings.org.web_commit_signoff_required
 
+  # New repos: alerts on, automated fix PRs off (Renovate opens them).
+  dependency_graph_enabled_for_new_repositories            = local.settings.org.dependency_graph_enabled_for_new_repositories
+  dependabot_alerts_enabled_for_new_repositories           = local.settings.org.dependabot_alerts_enabled_for_new_repositories
+  dependabot_security_updates_enabled_for_new_repositories = local.settings.org.dependabot_security_updates_enabled_for_new_repositories
+
   lifecycle {
     precondition {
       condition     = var.billing_email != null

@@ -6,7 +6,10 @@
     "members_can_create_public_repositories": false,
     "members_can_create_private_repositories": false,
     "members_can_create_pages": true,
-    "web_commit_signoff_required": false
+    "web_commit_signoff_required": false,
+    "dependency_graph_enabled_for_new_repositories": true,
+    "dependabot_alerts_enabled_for_new_repositories": true,
+    "dependabot_security_updates_enabled_for_new_repositories": false
   },
   "runners": {
     "RUNNER_LINUX": "blacksmith-2vcpu-ubuntu-2404",
@@ -369,6 +372,10 @@
     "sentry": {
       "color": "362d59",
       "description": "Opened by switchboard from a Sentry alert"
+    },
+    "security": {
+      "color": "b60205",
+      "description": "Vulnerability fix, opened by Renovate from a Dependabot or OSV alert"
     }
   }
 }

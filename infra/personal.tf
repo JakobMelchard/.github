@@ -76,6 +76,14 @@ resource "github_repository_vulnerability_alerts" "personal" {
   repository = github_repository.personal[each.key].name
 }
 
+# Same as repos.tf: Renovate opens the fix PRs, not Dependabot.
+resource "github_repository_dependabot_security_updates" "personal" {
+  for_each   = local.personal_repos
+  provider   = github.personal
+  repository = github_repository.personal[each.key].name
+  enabled    = false
+}
+
 # actions_can_approve_prs: let github.token open and approve PRs, which the
 # shared release.yml needs where the org app secrets are not available (they
 # are org-only, so every personal repo running release-please). The token's
