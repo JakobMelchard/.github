@@ -62,6 +62,7 @@
     {
       "description": "Docker images: never automerge, digest and patch included. Kept after the automerge rules above, since later rules win.",
       "matchDatasources": ["docker"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
       "automerge": false
     },
     {
