@@ -14,7 +14,7 @@ repos:
         args: [--severity=warning]
         exclude_types: [zsh]
   - repo: https://github.com/JakobMelchard/.githooks
-    rev: v1.0.0
+    rev: v1.0.1
     hooks:
       - id: conventional-commit
       - id: shell-syntax
