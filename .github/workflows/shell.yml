@@ -118,7 +118,10 @@ jobs:
         env:
           SEVERITY: ${{ inputs.severity }}
         run: |
-          command -v shellcheck >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; }
+          if ! command -v shellcheck >/dev/null; then
+            if [ "$(uname)" = Darwin ]; then brew install shellcheck
+            else sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; fi
+          fi
           # zsh is out of shellcheck's scope; skip those.
           rc=0
           while IFS= read -r f; do
