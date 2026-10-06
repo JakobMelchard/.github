@@ -189,6 +189,9 @@
       "description": "Lil Peep lyrics API worker (moved to cf/workers/lyrics)",
       "archived": true
     },
+    "mealrot": {
+      "description": "Weekly one-pot meal-prep recipe rotator (Cloudflare Worker, Telegram)"
+    },
     "monitor": {
       "description": "Local monitoring for mimi: Uptime Kuma, Prometheus and Grafana behind Caddy, plus the bio health data pipeline"
     },
