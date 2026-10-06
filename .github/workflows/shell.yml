@@ -20,8 +20,9 @@ on:
         default: warning
       runs-on:
         description: >
-          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
-          private repos only) and falls back to ubuntu-latest.
+          Runner for every job, as JSON ('"ubuntu-latest"' or '["self-hosted","macOS"]').
+          Empty picks the repo variable RUNNER_LINUX (Blacksmith on private org repos)
+          and falls back to ubuntu-latest. Personal repos get no Blacksmith: pass mimi.
         type: string
         default: ""
 
@@ -30,7 +31,7 @@ jobs:
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - name: conventional title
         env:
@@ -48,7 +49,7 @@ jobs:
   # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
   # still run, since they lint titles and docs.
   changes:
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
     steps:
@@ -58,7 +59,7 @@ jobs:
   ci:
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
@@ -117,7 +118,10 @@ jobs:
         env:
           SEVERITY: ${{ inputs.severity }}
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+          if ! command -v shellcheck >/dev/null; then
+            if [ "$(uname)" = Darwin ]; then brew install shellcheck
+            else sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; fi
+          fi
           # zsh is out of shellcheck's scope; skip those.
           rc=0
           while IFS= read -r f; do
