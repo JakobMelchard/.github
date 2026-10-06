@@ -3,6 +3,7 @@
   "description": "Org preset. Every repo: { \"extends\": [\"github>JakobMelchard/.github//renovate/default\"] }. Public here so private and public consumers read the same file.",
   "extends": ["config:best-practices", ":enablePreCommit", ":timezone(Europe/Vienna)", "schedule:weekly"],
   "rebaseWhen": "conflicted",
+  "minimumReleaseAge": "3 days",
   "automergeType": "pr",
   "platformAutomerge": false,
   "osvVulnerabilityAlerts": true,
@@ -10,9 +11,15 @@
     "description": "Fix PRs for Dependabot (and OSV) alerts. Dependabot security updates are off org-wide (infra), so these are the only fix PRs. Explicit schedule: they skip schedule:weekly. baseBranchPatterns per repo still applies.",
     "enabled": true,
     "labels": ["security"],
+    "automerge": false,
     "schedule": ["at any time"]
   },
   "packageRules": [
+    {
+      "description": "npm releases get a longer quarantine: registry compromises are usually caught within days.",
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "7 days"
+    },
     {
       "description": "Actions minutes are scarce: at most one weekly PR per repo for automergeable updates and one for minors. Named groups below still win for their packages; majors stay separate.",
       "matchUpdateTypes": ["digest", "pin", "pinDigest", "patch"],
@@ -39,6 +46,24 @@
       "description": "Low-risk updates merge on their own once CI is green. Renovate's own automerge, not GitHub's: native auto-merge needs branch protection, which the free plan does not enforce on private repos. A repo with no passing check never automerges. Kept above the automerge: false exceptions below, since later rules win.",
       "matchUpdateTypes": ["digest", "pin", "pinDigest", "patch"],
       "automerge": true
+    },
+    {
+      "description": "devDependencies never ship to prod: minor and patch automerge once CI is green. Majors stay manual.",
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "description": "GitHub Actions: minor, patch and digest automerge once CI is green. Majors stay manual.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Docker images: never automerge, digest and patch included. Kept after the automerge rules above, since later rules win.",
+      "matchDatasources": ["docker"],
+      "minimumReleaseAgeBehaviour": "timestamp-optional",
+      "automerge": false
     },
     {
       "description": "setup-gradle v6+ must keep cache-provider: basic (the default caching is proprietary); a major bump needs review, never automerge.",
