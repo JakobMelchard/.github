@@ -379,6 +379,10 @@
     "security": {
       "color": "b60205",
       "description": "Vulnerability fix, opened by Renovate from a Dependabot or OSV alert"
+    },
+    "ai-review": {
+      "color": "fbca04",
+      "description": "Run one PR-Agent review on mimi (needs the ai-review workflow in the repo)"
     }
   }
 }
