@@ -144,6 +144,38 @@ resource "github_repository_ruleset" "personal" {
   }
 }
 
+# required_review_thread_resolution → a pull-request ruleset on the default branch. GitHub Pro
+# enforces rulesets on private personal repos. The rule also requires a PR for every change to
+# that branch, so these repos work on `dev` and promote it to `main` through a PR.
+resource "github_repository_ruleset" "personal_threads" {
+  for_each = {
+    for k, v in local.personal_repos : k => v
+    if try(v.required_review_thread_resolution, false)
+  }
+  provider    = github.personal
+  name        = "default branch: pull request, threads resolved"
+  repository  = github_repository.personal[each.key].name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
+  }
+
+  rules {
+    pull_request {
+      required_approving_review_count   = 0
+      dismiss_stale_reviews_on_push     = false
+      require_code_owner_review         = false
+      require_last_push_approval        = false
+      required_review_thread_resolution = true
+    }
+  }
+}
+
 # chrome-extensions moved from the personal account to the org (2026-10-03): carry its
 # state over to the org resources instead of destroying and re-importing.
 moved {
