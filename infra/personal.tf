@@ -78,12 +78,12 @@ resource "github_repository_vulnerability_alerts" "personal" {
 
 # Same as repos.tf: Renovate opens the fix PRs, not Dependabot.
 resource "github_repository_dependabot_security_updates" "personal" {
-  for_each   = local.personal_repos
+  for_each   = { for k, v in local.personal_repos : k => v if v.vulnerability_alerts }
   provider   = github.personal
   repository = github_repository.personal[each.key].name
   enabled    = false
 
-  # GitHub rejects this call (422) until alerts are on: create the alerts first.
+  # GitHub rejects this call (422) unless alerts are on: only where they are, after them.
   depends_on = [github_repository_vulnerability_alerts.personal]
 }
 
