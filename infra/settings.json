@@ -233,6 +233,9 @@
       "bin": {
         "description": "Personal CLI tools"
       },
+      "fz": {
+        "description": "Fuzzy-search Android launcher"
+      },
       "keyboard": {
         "description": "Keyboard layout as firmware and software: ZMK config, kanata iOS keyboard extension",
         "visibility": "public",
