@@ -73,7 +73,10 @@ resource "github_repository_vulnerability_alerts" "this" {
 # Dependabot security updates (automated fix PRs) off everywhere: Renovate opens
 # the fix PRs (renovate/default.json vulnerabilityAlerts), reading the alerts above.
 resource "github_repository_dependabot_security_updates" "this" {
-  for_each   = local.repos
+  for_each   = { for k, v in local.repos : k => v if v.vulnerability_alerts }
   repository = github_repository.this[each.key].name
   enabled    = false
+
+  # GitHub rejects this call (422) unless alerts are on: only where they are, after them.
+  depends_on = [github_repository_vulnerability_alerts.this]
 }
