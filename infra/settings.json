@@ -225,7 +225,8 @@
         "description": "Personal agent rules and skill definitions for OpenCode and Pi"
       },
       ".config": {
-        "description": "Dotfiles"
+        "description": "Dotfiles",
+        "required_review_thread_resolution": true
       },
       ".config.local": {
         "description": "Per-machine overrides for the .config dotfiles"
@@ -257,7 +258,8 @@
         "description": "TU Wien coursework"
       },
       "workspaces": {
-        "description": "Terminal stack: zsh, nvim, zmx workspace management"
+        "description": "Terminal stack: zsh, nvim, zmx workspace management",
+        "required_review_thread_resolution": true
       }
     }
   },
