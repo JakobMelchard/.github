@@ -42,6 +42,10 @@ Skip anything that needs a design decision, a secret, a device, a deploy, or tha
 
 ## Delivering
 
-Run the repository's checks and make them pass: `make check` when the Makefile has that target, else `npm run check` and `npm test` when `package.json` defines them, else `go test ./...` when `go.mod` exists, else `uv run pytest` when `pyproject.toml` exists. Commit, push the branch, open a draft pull request (`POST /repos/<owner>/<repo>/pulls` with `"draft": true` and the base branch as `base`) with a one paragraph body on the change and why, a line on what checks ran, and the label from the list above when one applies.
+Before touching anything, find out what the repository's own CI actually runs for its check/lint job (read the workflow under `.github/workflows/`, or the `ci`/`lint`/`check` script in `package.json`, `Makefile`, `pyproject.toml` or `go.mod`) so you run the same gate it will be judged against, not a guess.
+
+Run the repository's checks and make them pass, in this order where each applies: `make check` when the Makefile has that target; else, when `package.json` defines them, `npm run check`, then any separate formatting check the repo's CI runs (for example `npm run format:check` or `prettier --check .`, even when it is not bundled into `check`), then `npm run lint` when that script exists, then `npm test`; else `go test ./...` when `go.mod` exists; else `uv run pytest` when `pyproject.toml` exists. A change is not green until every one of these the repository actually has, including the formatting check, passes locally. Fix what you broke.
+
+Commit, push the branch, open a draft pull request (`POST /repos/<owner>/<repo>/pulls` with `"draft": true` and the base branch as `base`) with a one paragraph body on the change and why, a line on what checks ran, and the label from the list above when one applies.
 
 Post one comment on the run log issue (`POST /repos/JakobMelchard/.github/issues/70/comments`), first line `nightly-improve <date>`, then one line per repository tonight: its name and the pull request URL, or why there is none. End your run with the same line. On a dry run, post nothing and only print it.
