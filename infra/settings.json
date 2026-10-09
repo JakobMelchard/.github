@@ -226,7 +226,8 @@
       },
       ".config": {
         "description": "Dotfiles",
-        "required_review_thread_resolution": true
+        "required_review_thread_resolution": true,
+        "protect_dev_branch": true
       },
       ".config.local": {
         "description": "Per-machine overrides for the .config dotfiles"
@@ -259,7 +260,8 @@
       },
       "workspaces": {
         "description": "Terminal stack: zsh, nvim, zmx workspace management",
-        "required_review_thread_resolution": true
+        "required_review_thread_resolution": true,
+        "protect_dev_branch": true
       }
     }
   },
