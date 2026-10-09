@@ -2,11 +2,11 @@ name: bot-threads
 
 # Reusable gate: fails while a review thread opened by a bot is unresolved, so every bot
 # finding is answered (fix, or reply with why not) and the thread resolved before merge.
-# The caller triggers it on pull_request, pull_request_review, pull_request_review_comment
-# and pull_request_review_thread so resolving a thread re-runs it. Bot findings that are
-# not review threads (a walkthrough comment, a review body) are not covered.
+# The caller triggers it on pull_request, pull_request_review and pull_request_review_comment.
+# GitHub Actions has no trigger for resolving a thread, so after resolving, re-run the check
+# (or push) to clear it. Bot findings that are not review threads (a walkthrough comment, a review body) are not covered.
 # Resolution is the signal: a thread resolved without a reply passes, since the gate cannot judge
-# an answer. A thread a bot opens in the seconds before the event-triggered rerun can slip past;
+# an answer. A thread a bot opens between the last run and the merge can slip past;
 # only a merge queue closes that window.
 
 permissions:
