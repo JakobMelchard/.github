@@ -288,7 +288,7 @@ three draft PRs on `claude/improve-*` branches, three repos per night in rotatio
 inside the repos named in their prompts (every live org repo plus lilfeelz workspaces,
 bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; keyboard
 gets reading-only changes since its checks cannot run in the cloud), never
-merge, never touch base branches, workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
+merge, never touch base branches, workflows or infra. A repo's own checks run with `GH_TOKEN` and `GITHUB_TOKEN` removed from their environment (`env -u`). `routines/*.md` are the prompts, copied verbatim into the routine; edit the
 file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
 The repos must be selected on each routine in the web form (menu next to the routine
 name, Edit, "Select a repository"): a run only reaches the repos attached to it (GitHub
