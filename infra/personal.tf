@@ -183,6 +183,33 @@ resource "github_repository_ruleset" "personal_threads" {
   }
 }
 
+# protect_dev_branch → a ruleset that stops `dev` from being deleted. These repos work on `dev`
+# and promote it to the default branch by PR; with delete_branch_on_merge on, GitHub would
+# delete `dev` after every such merge. A protected branch is skipped by that auto-delete, and
+# every other head branch is still deleted. Force-pushes to `dev` stay allowed (rebases).
+resource "github_repository_ruleset" "personal_dev" {
+  for_each = {
+    for k, v in local.personal_repos : k => v
+    if try(v.protect_dev_branch, false)
+  }
+  provider    = github.personal
+  name        = "dev: no deletion"
+  repository  = github_repository.personal[each.key].name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["refs/heads/dev"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion = true
+  }
+}
+
 # chrome-extensions moved from the personal account to the org (2026-10-03): carry its
 # state over to the org resources instead of destroying and re-importing.
 moved {
