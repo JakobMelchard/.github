@@ -28,7 +28,7 @@ Archived repos are not managed: the provider refuses to read or update an archiv
 
 ## What is not
 
-- **Rulesets on private repos.** Unavailable under the free plan; org and personal alike. Governance there is hooks + CI + convention.
+- **Rulesets on private repos.** Unavailable under the free plan, so JakobMelchard org repos get none: governance there is hooks + CI + convention. The personal account is on GitHub Pro, which enforces them: `personal.tf` creates one for each personal repo with `required_review_thread_resolution`.
 - **App installations.** Read them with `org-repo apps`. `github_app_installation_repositories` needs per-app installation ids and can't express "all repositories"; not worth the state.
 - **Labels.** `settings.json` `labels` is applied by `infra/labels` (`org-repo labels`, `labels.yml`), not by tofu: the provider's label resource fails on a label that already exists and importing needs every label to exist first.
 - **Private vulnerability reporting, `is_template`.** Own endpoint / plain PATCH attribute; `org-repo sync` applies them, tofu ignores `is_template`.
