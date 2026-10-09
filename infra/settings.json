@@ -108,9 +108,6 @@
     "assets": {
       "description": "Shared image assets for org projects"
     },
-    "attach": {
-      "description": "iPad client for zmx sessions: workspaces, scrollback, input, Blink hand-off"
-    },
     "bin": {
       "description": "Org tooling",
       "visibility": "public",
