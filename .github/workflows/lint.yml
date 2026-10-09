@@ -86,14 +86,6 @@ jobs:
       paths: infra
       severity: warning
 
-  smoke-bot-threads:
-    uses: ./.github/workflows/bot-threads.yml
-    permissions:
-      contents: read
-      pull-requests: read
-    with:
-      warn-only: true
-
   # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the
   # generate/lint plumbing on a bare checkout.
   smoke-xcode:
