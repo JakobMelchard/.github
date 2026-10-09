@@ -111,7 +111,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `node.yml` | `cf` `hx` `workouts-hx` `lists` `switchboard` `interviews` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `template` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `validate` |
-| `xcode.yml` | `attach` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
+| `xcode.yml` | `zmxapp` `zmxkit` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 | `android.yml` | `zmxdroid` `lift` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
 
 Every `*-cmd` input skips its step when set to `""`.
@@ -120,7 +120,7 @@ The language workflows (`go`, `python`, `node`, `shell`, `terraform`, `android`)
 job when a push or PR changed only Markdown (`actions/code-changed`, from the compare API; a
 new branch, a manual run or an API error count as code). `pr-title` and `hooks.yml` still run,
 since they lint titles and docs. A skipped job reports success. `xcode.yml` has no gate:
-callers filter with `paths` (macOS minutes are 10x), as attach's `ci.yml` does.
+callers filter with `paths` (macOS minutes are 10x).
 
 ### Go
 
@@ -286,8 +286,8 @@ triages new issues, implements issues labelled `agent:cloud` as draft PRs on `cl
 branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
 three draft PRs on `claude/improve-*` branches, three repos per night in rotation. Both stay
 inside the repos named in their prompts (every live org repo plus lilfeelz workspaces,
-bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; attach and keyboard
-get reading-only changes since their checks cannot run in the cloud), never
+bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; keyboard
+gets reading-only changes since its checks cannot run in the cloud), never
 merge, never touch base branches, workflows or infra. `routines/*.md` are the prompts, copied verbatim into the routine; edit the
 file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
 The repos must be selected on each routine in the web form (menu next to the routine

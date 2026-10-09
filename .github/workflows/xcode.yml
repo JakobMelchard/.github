@@ -1,6 +1,6 @@
 name: xcode
 
-# Reusable Xcode CI for Apple apps and packages. Callers: attach, zmxapp, zmxkit.
+# Reusable Xcode CI for Apple apps and packages. Callers: zmxapp, zmxkit.
 #
 #   jobs:
 #     ci:
