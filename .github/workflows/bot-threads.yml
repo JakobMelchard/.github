@@ -1,0 +1,61 @@
+name: bot-threads
+
+# Reusable gate: fails while a review thread opened by a bot is unresolved, so every bot
+# finding is answered (fix, or reply with why not) and the thread resolved before merge.
+# The caller triggers it on pull_request, pull_request_review, pull_request_review_comment
+# and pull_request_review_thread so resolving a thread re-runs it. Bot findings that are
+# not review threads (a walkthrough comment, a review body) are not covered.
+# Resolution is the signal: a thread resolved without a reply passes, since the gate cannot judge
+# an answer. A thread a bot opens in the seconds before the event-triggered rerun can slip past;
+# only a merge queue closes that window.
+
+permissions:
+  contents: read
+  pull-requests: read
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: >
+          Runner, as JSON ('"ubuntu-latest"' or '["self-hosted","macOS"]'). Empty picks the
+          repo variable RUNNER_LINUX and falls back to ubuntu-latest.
+        type: string
+        default: ""
+      warn-only:
+        description: Report open bot threads as a warning instead of failing (smoke calls).
+        type: boolean
+        default: false
+
+jobs:
+  threads:
+    if: github.event.pull_request.number != ''
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    steps:
+      - name: open bot threads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          WARN_ONLY: ${{ inputs.warn-only }}
+        shell: bash
+        run: |
+          # shellcheck disable=SC2016 # GraphQL variables, not shell expansions
+          # first 100 threads; a PR with more has bigger problems
+          open=$(gh api graphql -F o="${REPO%/*}" -F r="${REPO#*/}" -F n="$PR" -f query='
+            query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){
+              reviewThreads(first:100){nodes{isResolved comments(first:1){nodes{author{__typename login} url}}}}}}}' \
+            --jq '.data.repository.pullRequest.reviewThreads.nodes[]
+                  | select(.isResolved | not)
+                  | .comments.nodes[0] | select(.author.__typename == "Bot")
+                  | "\(.author.login) \(.url)"')
+          if [ -z "$open" ]; then
+            echo "no unresolved bot threads"
+            exit 0
+          fi
+          kind=error
+          [ "$WARN_ONLY" = true ] && kind=warning
+          while IFS= read -r line; do
+            echo "::$kind title=Unresolved bot thread::$line"
+          done <<<"$open"
+          [ "$WARN_ONLY" = true ] || exit 1
