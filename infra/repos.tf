@@ -11,10 +11,11 @@ import {
 resource "github_repository" "this" {
   for_each = local.repos
 
-  name        = each.key
-  description = try(each.value.description, null)
-  visibility  = each.value.visibility
-  archived    = each.value.archived
+  name         = each.key
+  description  = try(each.value.description, null)
+  homepage_url = try(each.value.homepage_url, null)
+  visibility   = each.value.visibility
+  archived     = each.value.archived
 
   has_issues   = each.value.has_issues
   has_wiki     = each.value.has_wiki
@@ -50,7 +51,7 @@ resource "github_repository" "this" {
     prevent_destroy = true
     ignore_changes = [
       auto_init, gitignore_template, license_template, template,
-      homepage_url, topics, pages,
+      topics, pages,
       has_downloads, has_discussions, is_template, archive_on_destroy,
       vulnerability_alerts, # deprecated attribute; managed by the resource below
     ]
