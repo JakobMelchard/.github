@@ -165,6 +165,13 @@ resource "github_repository_ruleset" "personal_threads" {
     }
   }
 
+  # The repo admin (the owner), for a PR with an unresolved thread; never a direct push.
+  bypass_actors {
+    actor_id    = 5 # RepositoryRole admin
+    actor_type  = "RepositoryRole"
+    bypass_mode = "pull_request"
+  }
+
   rules {
     pull_request {
       required_approving_review_count   = 0
