@@ -76,4 +76,7 @@ resource "github_repository_dependabot_security_updates" "this" {
   for_each   = local.repos
   repository = github_repository.this[each.key].name
   enabled    = false
+
+  # GitHub rejects this call (422) until alerts are on: create the alerts first.
+  depends_on = [github_repository_vulnerability_alerts.this]
 }

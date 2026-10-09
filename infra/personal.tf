@@ -82,6 +82,9 @@ resource "github_repository_dependabot_security_updates" "personal" {
   provider   = github.personal
   repository = github_repository.personal[each.key].name
   enabled    = false
+
+  # GitHub rejects this call (422) until alerts are on: create the alerts first.
+  depends_on = [github_repository_vulnerability_alerts.personal]
 }
 
 # actions_can_approve_prs: let github.token open and approve PRs, which the
