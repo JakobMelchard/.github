@@ -24,7 +24,8 @@ with no Gradle tasks (toolchain setup only). `release.yml` and `terraform.yml` a
 `bot-threads.yml` is a merge gate, not a toolchain: a caller job that fails while a review thread
 opened by a bot is unresolved. The caller triggers it on `pull_request`, `pull_request_review`,
 `pull_request_review_comment` and `pull_request_review_thread`, so resolving a thread re-runs it; it only
-blocks merge once a ruleset requires the check.
+blocks merge once a ruleset requires the check. The caller job must grant `pull-requests: read`;
+a reusable workflow cannot raise the caller's token.
 
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
