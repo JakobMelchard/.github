@@ -1,7 +1,0 @@
-{
-  "name": "python",
-  "description": "Python: uv or pip, ruff, pytest (python.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["Python"],
-  "filePatterns": ["pyproject.toml$"]
-}

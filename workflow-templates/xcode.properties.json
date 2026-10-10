@@ -1,7 +1,0 @@
-{
-  "name": "xcode",
-  "description": "Xcode: generate, swift-format lint, build and test on a simulator (JakobMelchard/.github xcode.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["Swift"],
-  "filePatterns": ["project.yml$", "\\.xcodeproj$", "Package.swift$"]
-}

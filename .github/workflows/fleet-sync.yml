@@ -1,10 +1,11 @@
 name: fleet-sync
 
-# Weekly: refresh the vendored org config and hooks in every repo that carries
-# them and open one PR per changed repo. The work is bin/fleet-sync
-# (JakobMelchard/bin, public); this job fetches it with the org app token,
-# which also clones and pushes the consumers. APP_* come from Infisical (project
-# gha, identity gha-org, OIDC). Run locally: `fleet-sync --dry-run`.
+# Weekly: refresh the vendored org config in every repo that carries it and open
+# one PR per changed repo. The work is scripts/fleet-sync in JakobMelchard/.config
+# (public), which sources this repo's scripts/lib; the org app token also clones
+# and pushes the consumers. APP_CLIENT_ID and APP_PRIVATE_KEY come from Infisical
+# (project gha, identity gha-org, OIDC), fetched by name so no other secret of the
+# project reaches the job. Run locally: `~/Workspaces/JakobMelchard/.config/scripts/fleet-sync --dry-run`.
 
 permissions:
   contents: read
@@ -38,6 +39,7 @@ jobs:
         shell: bash
         run: echo "list=$(jq -r '.repos | to_entries[] | select(.value.archived != true) | .key' infra/settings.json | paste -sd, -)" >> "$GITHUB_OUTPUT"
 
+      # secret-name: one secret per step, so the project's other secrets stay out of the job env
       - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
@@ -45,6 +47,16 @@ jobs:
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+          secret-name: APP_CLIENT_ID
+
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
 
       - name: mint app token
         id: app
@@ -57,23 +69,22 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
-      - name: fetch org tooling
-        env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-        shell: bash
-        run: |
-          mkdir -p "$RUNNER_TEMP/bin"
-          gh api "repos/$GITHUB_REPOSITORY_OWNER/bin/tarball/main" | tar -xz -C "$RUNNER_TEMP/bin" --strip-components=1
-          ls "$RUNNER_TEMP/bin"
+      - name: fetch fleet-sync
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/.config
+          path: .org-config
+          persist-credentials: false
 
       - name: fleet-sync
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           DRY: ${{ inputs.dry-run }}
           REPOS: ${{ inputs.repos }}
+          JM_LIB: ${{ github.workspace }}/scripts/lib
         shell: bash
         run: |
           # shellcheck disable=SC2086 # space-separated repo names by contract
           set -- $REPOS
           if [ "$DRY" = true ]; then set -- --dry-run "$@"; fi
-          "$RUNNER_TEMP/bin/fleet-sync" "$@" | tee -a "$GITHUB_STEP_SUMMARY"
+          .org-config/scripts/fleet-sync "$@" | tee -a "$GITHUB_STEP_SUMMARY"

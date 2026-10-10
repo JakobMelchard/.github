@@ -15,8 +15,7 @@ groups for their packages; majors and security fixes come on their own. The CI w
 `permissions: contents: read` at the top (`release.yml` needs `contents: write` +
 `pull-requests: write` + `id-token: write`), checkouts do not persist credentials, and caller-supplied
 `*-cmd` inputs reach the shell through `env`, never by template expansion.
-`lint.yml` gates every change here — actionlint over workflows and starter
-templates, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
+`lint.yml` gates every change here — actionlint over workflows, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
 validate, and smoke calls of `go` `python` `node` (including the Chromium path)
 and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
 with no Gradle tasks (toolchain setup only). `release.yml` and `terraform.yml` are not smoke-called.
@@ -24,27 +23,23 @@ with no Gradle tasks (toolchain setup only). `release.yml` and `terraform.yml` a
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
 
-## Starter workflows
+## Other workflows
 
 `.github/workflows/interaction-limits.yml` re-applies, monthly and on change, the `interaction_limit`
 a repo declares in `infra/settings.json` (`collaborators_only`, `contributors_only`, `existing_users`):
 GitHub caps these at six months, the workflow makes them permanent.
 
-`workflow-templates/` holds a one-job caller per toolchain (`go` `python` `node` `shell`
-`terraform` `xcode` `android`). Issues labeled `feedback` (filed from an app's in-app form)
+Issues labeled `feedback` (filed from an app's in-app form)
 are triaged by the nightly cloud routine (see Routines), which retitles them and queues
 scoped ones with `agent:cloud`; the former opencode action is gone.
 
 `actions/docs` builds a repo's markdown docs (`docs/`, nav from `SUMMARY.md`) into static pages in the
 docs.melchard.org shell: `tokens.css` + `style.css` loaded from the `assets` input (default
 `https://docs.melchard.org/assets`, the docs root's files), one centred mono column, no HonKit.
-Callers: flatplan, lilfeelz/keyboard. They are offered under **Actions → New workflow** in every org repo —
-suggested by `filePatterns` where one applies (`go.mod`, `pyproject.toml`, `package.json`,
-`.tf`, `gradlew`; `shell` has none) — so a repo that skips `org-repo new` can pick the shared
-pipeline in one click. Nothing is installed automatically. `auto` is the toolchain-free
-starter: it detects `go.mod`, `pyproject.toml`, `package.json` and `*.tf` at run time and
-calls the matching workflow, shell always. It is the same file as `ci.yml` in the template
-repository.
+Callers: flatplan, lilfeelz/keyboard.
+
+There are no starter workflows (`workflow-templates/` was removed): a new repo gets its CI caller from
+`JakobMelchard/template`, rendered by `scripts/org-repo new` in that repo.
 
 ## Community files
 
@@ -62,7 +57,7 @@ GitHub defaults, `fleet/*` for agent-driven work, and release-please's `autorele
 it does not know; it never deletes. Two callers, one script:
 
 ```sh
-org-repo labels [repo…]        # JakobMelchard/bin, your gh auth
+infra/labels [repo…]           # your gh auth, from a clone of this repo
 ```
 
 `.github/workflows/labels.yml` runs the same script weekly and on every change to the file,
@@ -271,12 +266,14 @@ job must grant `id-token: write`, or the run fails at startup.
 
 ## Fleet sync
 
-`fleet-sync.yml` runs `fleet-sync` (JakobMelchard/bin) weekly with the org app token: for
-every non-archived repo in `infra/settings.json` it refreshes the vendored copies the repo
-already carries (config-sync groups whose file exists, `.githooks/` when hooks are vendored),
-and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet/deps`.
-Nothing is added to a repo that lacks it. Dispatch it with `dry-run` to see the diffs, or run
-`fleet-sync --dry-run` locally with your own gh auth.
+`fleet-sync.yml` checks out `JakobMelchard/.config` and runs its `scripts/fleet-sync` weekly with the org app
+token: for every non-archived repo in `infra/settings.json` it refreshes the vendored copies the repo
+already carries (config-sync groups whose file exists, opt-in tokens), from the latest `.config` release
+tag, and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet/deps`. A copy whose
+only change is its `VENDORED` header opens no PR. Nothing is added to a repo that lacks it. Only
+`APP_CLIENT_ID` and `APP_PRIVATE_KEY` are fetched from Infisical, one step each. Dispatch it with `dry-run`
+to see the diffs, or run `~/Workspaces/JakobMelchard/.config/scripts/fleet-sync --dry-run` locally with your own
+gh auth.
 
 ## Routines
 
@@ -308,7 +305,7 @@ variable `ROUTINES_FALLBACK` to `on` and the nightly schedule takes over. Needs 
 ## Template repository
 
 `JakobMelchard/template` is a [copier](https://copier.readthedocs.io) template (tags `v*`), not a
-GitHub template repository. `org-repo new <name> --template <t>` (JakobMelchard/bin) renders it
+GitHub template repository. `scripts/org-repo new <name> --template <t>` (in `JakobMelchard/template`) renders it
 and does the GitHub side; templates are `hx-app` `cf` `go` `py` `c-cpp` `infra` `ios` `macos`.
 Each rendered repo records its answers in `.copier-answers.yml`; Renovate's copier manager opens a PR
 when the template gets a new tag, and `uvx copier update --defaults` does the same by hand. The
@@ -320,9 +317,10 @@ template's CI callers point at the workflows here, so change a workflow here fir
 adopted (import blocks) and kept at the shared settings — merge strategies,
 branch deletion, auto-merge, visibility, archived, Dependabot alerts. Org-level
 settings apply only with `-var manage_org=true` and an `admin:org` token.
-`bin/org-repo sync` applies the same document imperatively when tofu is not at hand.
-Labels (`labels`) and private vulnerability reporting are applied by `org-repo` and the
-workflows, not by tofu: the provider's label resource fails on labels that already exist.
+`org-repo new` applies the repo-level defaults once to a repo it creates, before it is listed here.
+Labels (`labels`) are applied by `labels.yml`, not by tofu: the provider's label resource fails on labels
+that already exist. Private vulnerability reporting and `is_template` are applied by `org-repo new` only;
+tofu ignores them.
 
 Every public repo gets a branch ruleset on `main` (`rulesets.tf`): PR only, no
 force push or deletion, linear history, and the repo's `checks` from `settings.json`

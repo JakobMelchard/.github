@@ -1,7 +1,7 @@
 name: labels
 
 # Keep every org repo's labels at what infra/settings.json declares (infra/labels
-# does the work; `org-repo labels` runs the same script locally). github.token
+# does the work; run it by hand from a clone for a single repo). github.token
 # only reaches this repo, so cross-repo writes need the org GitHub App — see
 # README "GitHub App". APP_* come from Infisical (project gha, identity gha-org, OIDC).
 

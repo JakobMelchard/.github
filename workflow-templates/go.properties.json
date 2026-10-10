@@ -1,7 +1,0 @@
-{
-  "name": "go",
-  "description": "Go: vet, test, build (JakobMelchard/.github go.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["Go"],
-  "filePatterns": ["go.mod$"]
-}
