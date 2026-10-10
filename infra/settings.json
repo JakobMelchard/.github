@@ -1,5 +1,5 @@
 {
-  "$comment": "Single source of truth for org + repo settings. Read by .github/infra (tofu) and by bin/org-repo (gh api). Keys under repo_defaults are github_repository / PATCH /repos attributes. Per-repo entries override. `labels` is applied to every non-archived repo by infra/labels (org-repo labels, labels.yml); undeclared labels are left alone.",
+  "$comment": "Single source of truth for org + repo settings. Read by .github/infra (tofu) and by org-repo new in JakobMelchard/template (gh api). Keys under repo_defaults are github_repository / PATCH /repos attributes. Per-repo entries override. `labels` is applied to every non-archived repo by infra/labels (labels.yml); undeclared labels are left alone.",
   "org": {
     "default_repository_permission": "read",
     "members_can_create_repositories": false,
@@ -109,13 +109,9 @@
       "description": "Shared image assets for org projects"
     },
     "bin": {
-      "description": "Org tooling",
+      "description": "Org tooling, dissolved 2026-10-10: ci and lib moved to .github, config-sync and fleet-sync to .config, org-repo to template, ios to lilfeelz/workspaces",
       "visibility": "public",
-      "checks": [
-        "shell / ci",
-        "shell / pr-title",
-        "hooks / prek"
-      ]
+      "archived": true
     },
     "cf": {
       "description": "Monorepo for Cloudflare Workers sites + shared tooling.",
