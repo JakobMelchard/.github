@@ -35,7 +35,7 @@ jobs:
       CONFIG__MODEL: openai/mimo-v2.6-pro
       # OpenRouter (reads OPENROUTER_API_KEY) is the independent path; then a different
       # upstream on OpenCode Go, in case OpenRouter is out of credit
-      CONFIG__FALLBACK_MODELS: '["openrouter/google/gemini-3.8-flash", "openai/deepseek-v4-pro"]'
+      CONFIG__FALLBACK_MODELS: '["openrouter/google/gemini-3.8-flash", "openai/glm-5.3"]'
       # litellm does not know the model; a guess, raise it once the real window is known
       CONFIG__CUSTOM_MODEL_MAX_TOKENS: '64000'
       # Per attempt. No hidden client retries and no same-model retry on timeout, so a
