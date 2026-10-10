@@ -1,0 +1,81 @@
+name: ai-review
+
+# Reusable PR-Agent review. A repo's caller runs it on `pull_request: labeled`; labelling a
+# ready PR "ai-review" gets one review. Runs on mimi (self-hosted, macOS): PR-Agent's own
+# action is a Docker action, which macOS runners cannot run. The model keys come from
+# Infisical over OIDC, like the other org workflows. The caller grants pull-requests: write,
+# issues: write and id-token: write.
+# Callers: assets, content, interviews, lists, mealrot, monitor, template, workouts-go,
+# workouts-hx, .agents.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+
+jobs:
+  review:
+    if: >-
+      github.event.label.name == 'ai-review' && !github.event.pull_request.draft &&
+      github.event.sender.type != 'Bot' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, macOS, mimi]
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+    env:
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_NUM: ${{ github.event.pull_request.number }}
+      GITHUB__USER_TOKEN: ${{ github.token }}
+      OPENAI__API_BASE: https://opencode.ai/zen/go/v1
+      CONFIG__MODEL: openai/mimo-v2.6-pro
+      # OpenRouter (reads OPENROUTER_API_KEY) is the independent path; then a different
+      # upstream on OpenCode Go, in case OpenRouter is out of credit
+      CONFIG__FALLBACK_MODELS: '["openrouter/google/gemini-3.8-flash", "openai/glm-5.3"]'
+      # litellm does not know the model; a guess, raise it once the real window is known
+      CONFIG__CUSTOM_MODEL_MAX_TOKENS: '64000'
+      # Per attempt. No hidden client retries and no same-model retry on timeout, so a
+      # stalled model costs one timeout before the next: 3 x 300s fits the job limit.
+      CONFIG__AI_TIMEOUT: '300'
+      CONFIG__NUM_RETRIES: '0'
+      CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
+    steps:
+      # secret-name: one secret per step, so the project's other secrets stay out of the job env
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: OPENCODE_API_KEY
+
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: OPENROUTER_API_KEY
+
+      - name: review
+        shell: bash
+        env:
+          OPENAI__KEY: ${{ env.OPENCODE_API_KEY }}
+        run: |
+          set -o pipefail
+          # OpenCode Go rejects requests without a session id and wants a custom agent
+          export OPENAI_CUSTOM_HEADERS="x-opencode-session: pr-review-${GITHUB_REPOSITORY##*/}-${PR_NUM}
+          User-Agent: mimi-pr-review/1.0"
+          log="$RUNNER_TEMP/pr-agent.log"
+          /opt/homebrew/bin/uv run --python 3.12 --with pr-agent==0.47.0 python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
+          # PR-Agent exits 0 after posting "Failed to review PR" as a comment
+          if grep -q "Failed to review PR" "$log"; then
+            echo "::error::PR-Agent failed to review the PR"
+            exit 1
+          fi
