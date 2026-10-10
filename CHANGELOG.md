@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.4.0](https://github.com/JakobMelchard/.github/compare/v1.3.0...v1.4.0) (2026-10-09)
+
+
+### Features
+
+* bot-threads gate fails while a bot review thread is unresolved ([#97](https://github.com/JakobMelchard/.github/issues/97)) ([e928afe](https://github.com/JakobMelchard/.github/commit/e928afe9859291830c8751de9d2c21d562038cdb))
+* **infra:** adopt tu, drop deleted repos, manage homepages ([#100](https://github.com/JakobMelchard/.github/issues/100)) ([0a0c690](https://github.com/JakobMelchard/.github/commit/0a0c6905dd390d72d5d45151c0f517c9bf559efd))
+* **infra:** declare the ai-review label ([#96](https://github.com/JakobMelchard/.github/issues/96)) ([04d5b56](https://github.com/JakobMelchard/.github/commit/04d5b56b43fdf67bc6154f590a284cc8325e8a9c))
+* **infra:** manage lilfeelz/fz ([#101](https://github.com/JakobMelchard/.github/issues/101)) ([119acb4](https://github.com/JakobMelchard/.github/commit/119acb4b9b0c5addba9af6a95ffc6cbf7be38d27))
+* **infra:** thread-resolution ruleset for private personal repos ([#103](https://github.com/JakobMelchard/.github/issues/103)) ([1c430a9](https://github.com/JakobMelchard/.github/commit/1c430a967651d0d019d9b9254fb2e8922046a822))
+* **renovate:** automerge devDependencies and Actions minors, add release age ([#92](https://github.com/JakobMelchard/.github/issues/92)) ([df992a8](https://github.com/JakobMelchard/.github/commit/df992a886b29337a09252fcd3674dded77033913))
+* **shell:** runs-on input picks the runner for every job ([#93](https://github.com/JakobMelchard/.github/issues/93)) ([52b4ca4](https://github.com/JakobMelchard/.github/commit/52b4ca48121805fe15a0a7fccc604fb2c6797a5f))
+
+
+### Bug Fixes
+
+* **hooks:** prettier and eslint skip with a notice when the repo has no ([d719f4a](https://github.com/JakobMelchard/.github/commit/d719f4a1773498b9e015b4bc5017baee043d5316))
+* **infra:** protect dev from deletion in workspaces and .config ([#104](https://github.com/JakobMelchard/.github/issues/104)) ([be874d2](https://github.com/JakobMelchard/.github/commit/be874d2d33bd4f7f8921855b5541487b1e6a72c8))
+* **infra:** turn on vulnerability alerts before dependabot security updates ([#102](https://github.com/JakobMelchard/.github/issues/102)) ([3f5c6de](https://github.com/JakobMelchard/.github/commit/3f5c6de7e17cfa5107a7f004189b99540b99c2aa))
+* **routines:** run repository checks without GH_TOKEN ([#109](https://github.com/JakobMelchard/.github/issues/109)) ([fb10e85](https://github.com/JakobMelchard/.github/commit/fb10e85bafde86b4c524303e0454753c2bdb1578))
+
 ## [1.3.0](https://github.com/JakobMelchard/.github/compare/v1.2.0...v1.3.0) (2026-10-04)
 
 
