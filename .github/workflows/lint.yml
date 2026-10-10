@@ -45,6 +45,19 @@ jobs:
         working-directory: infra
       - run: jq -e . infra/settings.json >/dev/null
 
+  bats:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: bats-core/bats-core
+          ref: eb7f42f8d608ac693d7a4b67474f6714ea68cfc5 # v1.14.0
+          path: .bats
+          persist-credentials: false
+      - run: .bats/bin/bats scripts/test
+
   # Integration smoke: actually call each reusable workflow with its emptiest
   # viable inputs. A previous bug — an empty `${{ inputs.install-cmd }}` left an
   # empty if-body and broke every caller — passed actionlint but died at runtime.
@@ -83,7 +96,7 @@ jobs:
   smoke-shell:
     uses: ./.github/workflows/shell.yml
     with:
-      paths: infra
+      paths: infra scripts
       severity: warning
 
   # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the

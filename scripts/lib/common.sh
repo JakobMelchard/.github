@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# Shared helpers for JakobMelchard/bin. Sourced, not executed. bash 3.2.
+# Shared helpers for the JakobMelchard shell tools (ci here, config-sync and fleet-sync in .config,
+# org-repo in template, ios in lilfeelz/workspaces). Sourced, not executed. bash 3.2.
+# A tool sources it as: . "${JM_LIB:-$HOME/Workspaces/JakobMelchard/.github/scripts/lib}/common.sh"
+# It does not know where the tool lives: a tool that needs its own directory computes it.
 ORG="${ORG:-JakobMelchard}"
-# absolute path of this bin dir, resolved before any tool cd's away — a relative
-# $(dirname "$0") stops working after `cd` (org-repo new bit this)
-# shellcheck disable=SC2034 # used by every tool that sources this
-BIN=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 WS="${WORKSPACES_ROOT:-$HOME/Workspaces}/$ORG"
 
 die()  { echo "${0##*/}: $*" >&2; exit 1; }
