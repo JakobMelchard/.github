@@ -78,10 +78,13 @@ resource "github_repository_vulnerability_alerts" "personal" {
 
 # Same as repos.tf: Renovate opens the fix PRs, not Dependabot.
 resource "github_repository_dependabot_security_updates" "personal" {
-  for_each   = local.personal_repos
+  for_each   = { for k, v in local.personal_repos : k => v if v.vulnerability_alerts }
   provider   = github.personal
   repository = github_repository.personal[each.key].name
   enabled    = false
+
+  # GitHub rejects this call (422) unless alerts are on: only where they are, after them.
+  depends_on = [github_repository_vulnerability_alerts.personal]
 }
 
 # actions_can_approve_prs: let github.token open and approve PRs, which the
@@ -138,6 +141,72 @@ resource "github_repository_ruleset" "personal" {
         }
       }
     }
+  }
+}
+
+# required_review_thread_resolution → a pull-request ruleset on the default branch. GitHub Pro
+# enforces rulesets on private personal repos. The rule also requires a PR for every change to
+# that branch, so these repos work on `dev` and promote it to `main` through a PR.
+resource "github_repository_ruleset" "personal_threads" {
+  for_each = {
+    for k, v in local.personal_repos : k => v
+    if try(v.required_review_thread_resolution, false)
+  }
+  provider    = github.personal
+  name        = "default branch: pull request, threads resolved"
+  repository  = github_repository.personal[each.key].name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
+  }
+
+  # The repo admin (the owner), for a PR with an unresolved thread; never a direct push.
+  bypass_actors {
+    actor_id    = 5 # RepositoryRole admin
+    actor_type  = "RepositoryRole"
+    bypass_mode = "pull_request"
+  }
+
+  rules {
+    pull_request {
+      required_approving_review_count   = 0
+      dismiss_stale_reviews_on_push     = false
+      require_code_owner_review         = false
+      require_last_push_approval        = false
+      required_review_thread_resolution = true
+    }
+  }
+}
+
+# protect_dev_branch → a ruleset that stops `dev` from being deleted. These repos work on `dev`
+# and promote it to the default branch by PR; with delete_branch_on_merge on, GitHub would
+# delete `dev` after every such merge. A protected branch is skipped by that auto-delete, and
+# every other head branch is still deleted. Force-pushes to `dev` stay allowed (rebases).
+resource "github_repository_ruleset" "personal_dev" {
+  for_each = {
+    for k, v in local.personal_repos : k => v
+    if try(v.protect_dev_branch, false)
+  }
+  provider    = github.personal
+  name        = "dev: no deletion"
+  repository  = github_repository.personal[each.key].name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["refs/heads/dev"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion = true
   }
 }
 

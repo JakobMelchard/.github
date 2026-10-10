@@ -11,10 +11,11 @@ import {
 resource "github_repository" "this" {
   for_each = local.repos
 
-  name        = each.key
-  description = try(each.value.description, null)
-  visibility  = each.value.visibility
-  archived    = each.value.archived
+  name         = each.key
+  description  = try(each.value.description, null)
+  homepage_url = try(each.value.homepage_url, null)
+  visibility   = each.value.visibility
+  archived     = each.value.archived
 
   has_issues   = each.value.has_issues
   has_wiki     = each.value.has_wiki
@@ -50,7 +51,7 @@ resource "github_repository" "this" {
     prevent_destroy = true
     ignore_changes = [
       auto_init, gitignore_template, license_template, template,
-      homepage_url, topics, pages,
+      topics, pages,
       has_downloads, has_discussions, is_template, archive_on_destroy,
       vulnerability_alerts, # deprecated attribute; managed by the resource below
     ]
@@ -72,7 +73,10 @@ resource "github_repository_vulnerability_alerts" "this" {
 # Dependabot security updates (automated fix PRs) off everywhere: Renovate opens
 # the fix PRs (renovate/default.json vulnerabilityAlerts), reading the alerts above.
 resource "github_repository_dependabot_security_updates" "this" {
-  for_each   = local.repos
+  for_each   = { for k, v in local.repos : k => v if v.vulnerability_alerts }
   repository = github_repository.this[each.key].name
   enabled    = false
+
+  # GitHub rejects this call (422) unless alerts are on: only where they are, after them.
+  depends_on = [github_repository_vulnerability_alerts.this]
 }

@@ -64,9 +64,6 @@
         "hooks / prek"
       ]
     },
-    ".devcontainer": {
-      "archived": true
-    },
     ".githooks": {
       "description": "Shared git hooks",
       "visibility": "public",
@@ -102,16 +99,14 @@
       "description": "docs.melchard.org — GitHub Pages docs site",
       "visibility": "public",
       "has_wiki": true,
-      "private_vulnerability_reporting": true
+      "private_vulnerability_reporting": true,
+      "homepage_url": "https://docs.melchard.org/"
     },
     "agenx": {
       "description": "Board of pi agent sessions on mimi"
     },
     "assets": {
       "description": "Shared image assets for org projects"
-    },
-    "attach": {
-      "description": "iPad client for zmx sessions: workspaces, scrollback, input, Blink hand-off"
     },
     "bin": {
       "description": "Org tooling",
@@ -145,25 +140,8 @@
         "ci / ci",
         "ci / pr-title",
         "hooks / prek"
-      ]
-    },
-    "forgejo": {
-      "archived": true
-    },
-    "gb-vitals": {
-      "description": "Gadgetbridge vitals alerts for Amazfit Helio Strap (Health Connect + sqlite export)",
-      "archived": true
-    },
-    "gsheet": {
-      "description": "Go client + CLI for the Google Sheets API (shared module, nvim lua plugin)",
-      "visibility": "public",
-      "private_vulnerability_reporting": true,
-      "checks": [
-        "ci / ci",
-        "ci / pr-title",
-        "hooks / prek"
       ],
-      "archived": true
+      "homepage_url": "https://docs.melchard.org/flatplan/"
     },
     "hx": {
       "visibility": "public",
@@ -184,9 +162,8 @@
     "lists": {
       "description": "Generic todo and grocery lists"
     },
-    "lyrics": {
-      "description": "Lil Peep lyrics API worker (moved to cf/workers/lyrics)",
-      "archived": true
+    "mealrot": {
+      "description": "Weekly one-pot meal-prep recipe rotator (Cloudflare Worker, Telegram)"
     },
     "monitor": {
       "description": "Local monitoring for mimi: Uptime Kuma, Prometheus and Grafana behind Caddy, plus the bio health data pipeline"
@@ -201,12 +178,6 @@
         "hooks / prek"
       ]
     },
-    "swiftkit": {
-      "description": "Shared Swift package and XcodeGen base for the org iOS apps",
-      "visibility": "public",
-      "private_vulnerability_reporting": true,
-      "archived": true
-    },
     "switchboard": {
       "description": "event -> handler -> output hub on Workers + Mac mini runner"
     },
@@ -214,9 +185,14 @@
       "description": "Copier template for every org stack (hx-app, cf, go, py, c-cpp, infra, macos); org-repo new renders it. Dev environments: base image, features, devcontainer templates",
       "is_template": false
     },
-    "transcriber": {
-      "allow_merge_commit": false,
-      "archived": true
+    "tu": {
+      "description": "TU Wien study wiki: notes, sources and code for TU Wien master courses",
+      "homepage_url": "https://docs.melchard.org/tu/",
+      "visibility": "public",
+      "checks": [
+        "check",
+        "tests"
+      ]
     },
     "workline": {
       "description": "Text notation for strength sets: tree-sitter grammar, JS semantics, Go/Swift bindings",
@@ -235,17 +211,6 @@
     },
     "workouts-hx": {
       "description": "Workout log PWA on hx: htmx front end, file store"
-    },
-    "zmxkit": {
-      "description": "Shared Swift package for the zmx clients: session naming, zmx/ws parsers, host config, OSC title scanner",
-      "visibility": "public",
-      "private_vulnerability_reporting": true,
-      "checks": [
-        "ci / ci",
-        "ci / pr-title",
-        "hooks / prek"
-      ],
-      "archived": true
     }
   },
   "personal": {
@@ -256,7 +221,9 @@
         "description": "Personal agent rules and skill definitions for OpenCode and Pi"
       },
       ".config": {
-        "description": "Dotfiles"
+        "description": "Dotfiles",
+        "required_review_thread_resolution": true,
+        "protect_dev_branch": true
       },
       ".config.local": {
         "description": "Per-machine overrides for the .config dotfiles"
@@ -264,10 +231,8 @@
       "bin": {
         "description": "Personal CLI tools"
       },
-      "kanata-ios": {
-        "description": "kanata-configured SwiftUI keyboard extension for iOS",
-        "visibility": "public",
-        "archived": true
+      "fz": {
+        "description": "Fuzzy-search Android launcher"
       },
       "keyboard": {
         "description": "Keyboard layout as firmware and software: ZMK config, kanata iOS keyboard extension",
@@ -290,12 +255,9 @@
         "description": "TU Wien coursework"
       },
       "workspaces": {
-        "description": "Terminal stack: zsh, nvim, zmx workspace management"
-      },
-      "zmk": {
-        "description": "ZMK keyboard firmware configuration",
-        "visibility": "public",
-        "archived": true
+        "description": "Terminal stack: zsh, nvim, zmx workspace management",
+        "required_review_thread_resolution": true,
+        "protect_dev_branch": true
       }
     }
   },
@@ -375,6 +337,10 @@
     "security": {
       "color": "b60205",
       "description": "Vulnerability fix, opened by Renovate from a Dependabot or OSV alert"
+    },
+    "ai-review": {
+      "color": "fbca04",
+      "description": "Run one PR-Agent review on mimi (needs the ai-review workflow in the repo)"
     }
   }
 }
