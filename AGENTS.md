@@ -20,6 +20,8 @@ a second hook set.
   design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
   `hooks.yml` and `node.yml`, a no-op for repos that did not opt in
 - `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
+- `scripts/` `ci` and `lib/common.sh`, the helpers the org's shell tools source (`config-sync`, `fleet-sync`
+  in `.config`, `org-repo` in `template`, `ios` in `lilfeelz/workspaces`) via `JM_LIB`; bats in `scripts/test`
 - `renovate/default.json` the org Renovate preset every repo extends
 - `profile/README.md` the org profile page
 

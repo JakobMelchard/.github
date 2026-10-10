@@ -18,4 +18,5 @@ repos:
     hooks:
       - id: conventional-commit
       - id: shell-syntax
+        exclude: \.bats$ # @test blocks are not bash; bats checks them when it runs
       - id: tofu-fmt

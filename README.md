@@ -341,6 +341,9 @@ fallback (`make plan`, `make apply`).
 .github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
 actions/              composite actions (code-changed, docs, gitleaks, tokens-check)
 infra/                opentofu: org + repo settings, settings.json, labels script
+scripts/              shell tools: `ci` (latest CI conclusion per repo) and `lib/common.sh`, the helpers
+                      config-sync, fleet-sync, org-repo and ios source (`JM_LIB`, default
+                      `~/Workspaces/JakobMelchard/.github/scripts/lib`); bats tests in `scripts/test`
 renovate/             org Renovate preset
 release-please-config.json  this repo's own releases (self-release.yml)
 profile/              org profile README
