@@ -1,7 +1,0 @@
-{
-  "name": "terraform",
-  "description": "OpenTofu: fmt, init, validate (terraform.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["HCL"],
-  "filePatterns": ["\\.tf$"]
-}

@@ -19,6 +19,8 @@ runs:
       env:
         # config-sync --ref downloads the .config tarball through gh; .config is public.
         GH_TOKEN: ${{ github.token }}
+        # config-sync sources the shared lib of this repo, checked out with the action
+        JM_LIB: ${{ github.action_path }}/../../scripts/lib
       run: |
         if [ ! -f .config/tokens.path ]; then
           echo "no .config/tokens.path: not opted in to tokens, skipped"
@@ -31,5 +33,5 @@ runs:
           echo "::error file=$dest::no VENDORED header naming a .config ref; run config-sync tokens --ref <tag>"
           exit 1
         fi
-        git clone -q --depth 1 https://github.com/JakobMelchard/bin.git "$RUNNER_TEMP/org-bin"
-        "$RUNNER_TEMP/org-bin/config-sync" --check --ref "$ref" tokens
+        git clone -q --depth 1 https://github.com/JakobMelchard/.config.git "$RUNNER_TEMP/org-config"
+        "$RUNNER_TEMP/org-config/scripts/config-sync" --check --ref "$ref" tokens

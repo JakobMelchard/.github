@@ -1,6 +1,6 @@
 name: shell
 
-# Reusable shell CI. Callers: bin, lilfeelz/bin, monitor, .githooks, template.
+# Reusable shell CI. Callers: lilfeelz/bin, monitor, .githooks, template.
 # bin/ scripts are extensionless with shebangs, so globbing on *.sh is not enough —
 # detect by shebang instead.
 

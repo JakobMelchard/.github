@@ -1,7 +1,0 @@
-{
-  "name": "hooks",
-  "description": "Hooks: prek over the repo's .pre-commit-config.yaml, all files (hooks.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["Shell"],
-  "filePatterns": ["^\\.pre-commit-config\\.yaml$"]
-}

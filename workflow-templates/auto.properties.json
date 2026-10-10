@@ -1,7 +1,0 @@
-{
-  "name": "auto",
-  "description": "Detects go.mod / pyproject.toml / package.json / *.tf and calls the matching JakobMelchard/.github workflow; shell always",
-  "iconName": "octicon check-circle",
-  "categories": ["Automation"],
-  "filePatterns": []
-}

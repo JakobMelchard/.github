@@ -1,7 +1,0 @@
-{
-  "name": "android",
-  "description": "Android: Gradle unit tests and a debug build on Linux (JakobMelchard/.github android.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["Kotlin", "Java"],
-  "filePatterns": ["gradlew$", "build.gradle.kts$", "build.gradle$"]
-}

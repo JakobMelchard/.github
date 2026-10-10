@@ -16,8 +16,8 @@ a second hook set.
 - `.github/workflows/` `release go python node shell terraform xcode android hooks lint labels self-release fleet-sync`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
-- `actions/tokens-check/` composite action: `config-sync --check` of a repo's vendored
-  design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
+- `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's
+  vendored design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
   `hooks.yml` and `node.yml`, a no-op for repos that did not opt in
 - `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
 - `scripts/` `ci` and `lib/common.sh`, the helpers the org's shell tools source (`config-sync`, `fleet-sync`
@@ -56,9 +56,8 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
 - Callers reference `@main`, so a mistake here reaches every repo immediately.
   `v1` follows the latest 1.x release and is moved only by `self-release.yml`;
   release tags are immutable. Never move a tag by hand.
-- `workflow-templates/auto.yml` is mirrored into `JakobMelchard/template`. Change the
-  source here first, then the template. Devcontainer templates live in
-  `JakobMelchard/template` itself (`devcontainer/`, formerly the `.devcontainer` repo).
+- There are no starter workflows: a repo's CI caller comes from `JakobMelchard/template`. Devcontainer
+  templates live there too (`devcontainer/`, formerly the `.devcontainer` repo).
 - `github.token` is scoped to the calling repo. A cross-repo private module needs
   a PAT or app token mapped explicitly as `secrets.token`, not `secrets: inherit`,
   so only that one secret crosses the boundary.

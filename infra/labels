@@ -2,7 +2,7 @@
 # labels [repo…] — create or update every label declared in settings.json `labels` on each repo.
 # No args: every non-archived repo in settings.json. Only declared labels are touched; other
 # labels on a repo are listed, never deleted (release-please and Renovate add their own).
-# Called by `org-repo labels` (JakobMelchard/bin) and by .github/workflows/labels.yml.
+# Called by .github/workflows/labels.yml, or by hand from a clone of this repo.
 # bash 3.2 compatible.
 set -euo pipefail
 

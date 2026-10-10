@@ -1,7 +1,0 @@
-{
-  "name": "shell",
-  "description": "Shell: shebang-detected bash/zsh syntax + shellcheck (shell.yml)",
-  "iconName": "octicon check-circle",
-  "categories": ["Shell"],
-  "filePatterns": []
-}

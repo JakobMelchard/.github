@@ -1,6 +1,6 @@
 # infra — GitHub as code
 
-OpenTofu for the `JakobMelchard` org and the `lilfeelz` personal repos. `settings.json` is the single settings document; `bin/org-repo` reads the same file for the imperative path.
+OpenTofu for the `JakobMelchard` org and the `lilfeelz` personal repos. `settings.json` is the single settings document; `scripts/org-repo new` in `JakobMelchard/template` reads the same file to set up a new repo.
 
 CI does the work: `infra.yml` plans every PR (comment on the PR, required check `plan`) and applies on push to `main`, then commits the encrypted state back. Local apply is the fallback:
 
@@ -29,9 +29,9 @@ Archived repos are not managed: the provider refuses to read or update an archiv
 ## What is not
 
 - **Rulesets on private repos.** Unavailable under the free plan, so JakobMelchard org repos get none: governance there is hooks + CI + convention. The personal account is on GitHub Pro, which enforces them: `personal.tf` creates one for each personal repo with `required_review_thread_resolution`.
-- **App installations.** Read them with `org-repo apps`. `github_app_installation_repositories` needs per-app installation ids and can't express "all repositories"; not worth the state.
-- **Labels.** `settings.json` `labels` is applied by `infra/labels` (`org-repo labels`, `labels.yml`), not by tofu: the provider's label resource fails on a label that already exists and importing needs every label to exist first.
-- **Private vulnerability reporting, `is_template`.** Own endpoint / plain PATCH attribute; `org-repo sync` applies them, tofu ignores `is_template`.
+- **App installations.** Read them with `gh api orgs/JakobMelchard/installations`. `github_app_installation_repositories` needs per-app installation ids and can't express "all repositories"; not worth the state.
+- **Labels.** `settings.json` `labels` is applied by `infra/labels` (`labels.yml`, or by hand), not by tofu: the provider's label resource fails on a label that already exists and importing needs every label to exist first.
+- **Private vulnerability reporting, `is_template`.** Own endpoint / plain PATCH attribute; `org-repo new` applies them to the repo it creates, tofu ignores `is_template`.
 - **Secrets.** Set through the UI or `gh secret set --org`; never in tofu state.
 
 ## State
