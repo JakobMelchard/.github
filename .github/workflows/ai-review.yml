@@ -44,6 +44,7 @@ jobs:
       CONFIG__NUM_RETRIES: '0'
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
+      # secret-name: one secret per step, so the project's other secrets stay out of the job env
       - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
@@ -51,6 +52,16 @@ jobs:
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+          secret-name: OPENCODE_API_KEY
+
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: OPENROUTER_API_KEY
 
       - name: review
         shell: bash
@@ -62,7 +73,7 @@ jobs:
           export OPENAI_CUSTOM_HEADERS="x-opencode-session: pr-review-${GITHUB_REPOSITORY##*/}-${PR_NUM}
           User-Agent: mimi-pr-review/1.0"
           log="$RUNNER_TEMP/pr-agent.log"
-          /opt/homebrew/bin/uv run --python 3.12 --with pr-agent python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
+          /opt/homebrew/bin/uv run --python 3.12 --with pr-agent==0.47.0 python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
           # PR-Agent exits 0 after posting "Failed to review PR" as a comment
           if grep -q "Failed to review PR" "$log"; then
             echo "::error::PR-Agent failed to review the PR"
