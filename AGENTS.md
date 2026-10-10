@@ -13,7 +13,7 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform xcode android hooks lint labels self-release fleet-sync`
+- `.github/workflows/` `release go python node shell terraform xcode android hooks lint labels self-release fleet-sync ai-review`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
 - `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's
@@ -50,9 +50,9 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
   bash 3.2 portability check, and a smoke call of `go.yml` `python.yml`
   `node.yml` `shell.yml` with empty inputs. A new workflow of that kind must
   survive being called with nothing set — add a `smoke-<name>` job for it.
-  `release.yml` and `terraform.yml` are deliberately not smoked: release-please
+  `release.yml`, `terraform.yml` and `ai-review.yml` are deliberately not smoked: release-please
   holds `contents: write` and would open real release PRs, and terraform needs
-  a config directory to act on.
+  a config directory to act on, and ai-review needs mimi and a labelled PR.
 - Callers reference `@main`, so a mistake here reaches every repo immediately.
   `v1` follows the latest 1.x release and is moved only by `self-release.yml`;
   release tags are immutable. Never move a tag by hand.
