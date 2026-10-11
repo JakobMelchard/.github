@@ -32,19 +32,6 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - run: uvx zizmor==1.30.1 --no-online-audits --min-severity low .
 
-  infra:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
-      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with: { tofu_wrapper: false }
-      - run: tofu fmt -check -recursive
-        working-directory: infra
-      - run: tofu init -backend=false -input=false && tofu validate
-        working-directory: infra
-      - run: jq -e . infra/settings.json >/dev/null
-
   bats:
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +51,7 @@ jobs:
   smoke-hooks:
     uses: ./.github/workflows/hooks.yml
     with:
-      # the infra job runs tofu fmt; ubuntu-latest has no tofu
+      # ubuntu-latest has no tofu
       skip: tofu-fmt
 
   smoke-python:
@@ -96,7 +83,7 @@ jobs:
   smoke-shell:
     uses: ./.github/workflows/shell.yml
     with:
-      paths: infra scripts
+      paths: scripts
       severity: warning
 
   # plan and apply need Infisical and a state, so both stay off: both jobs skip, which still
@@ -108,7 +95,6 @@ jobs:
       id-token: write
       pull-requests: write
     with:
-      working-directory: infra
       plan: false
       apply: false
       state-commit: false

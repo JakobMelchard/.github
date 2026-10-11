@@ -13,13 +13,13 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform tofu xcode android hooks lint labels self-release fleet-sync ai-review review-label`
+- `.github/workflows/` `release go python node shell terraform tofu xcode android hooks lint self-release ai-review review-label`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
 - `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's
   vendored design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
   `hooks.yml` and `node.yml`, a no-op for repos that did not opt in
-- `infra/` settings.json (repo settings **and** labels), tofu, `infra/labels`
+- repo settings, labels and tofu live in `JakobMelchard/infra` (`terraform/github`), not here
 - `scripts/` `ci` and `lib/common.sh`, the helpers the org's shell tools source (`config-sync`, `fleet-sync`
   in `.config`, `org-repo` in `template`, `ios` in `lilfeelz/workspaces`) via `JM_LIB`; bats in `scripts/test`
 - `renovate/default.json` the org Renovate preset every repo extends
@@ -44,8 +44,8 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
   `package-manager: none`.
 - Actions are pinned by commit SHA with the version in a trailing comment. Bump
   deliberately.
-- Labels are declared in `infra/settings.json` and written only by `infra/labels`.
-  Never `gh label create` by hand in a repo; add it to the document.
+- Labels are declared in `JakobMelchard/infra` `terraform/github/settings.json` and written only by
+  its `labels` script. Never `gh label create` by hand in a repo; add it to the document.
 - `lint.yml` gates every change here: actionlint, shellcheck over the hooks, a
   bash 3.2 portability check, and a smoke call of `go.yml` `python.yml`
   `node.yml` `shell.yml` with empty inputs. A new workflow of that kind must
