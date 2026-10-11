@@ -108,7 +108,7 @@ its SHA with the tag in a comment). The examples below write `vX.Y.Z` for it.
 | `node.yml` | `cf` `hx` `workouts-hx` `lists` `switchboard` `interviews` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `template` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `validate` `runs-on` |
-| `tofu.yml` | `infra` | `working-directory` `runs-on` `plan` `apply` `state-commit` `state-path` `passphrase-env` `env` `app-token-owner` `app-token-env` `app-token-owner-2` `app-token-env-2` (see *Tofu*) |
+| `tofu.yml` | `infra` | `working-directory` `runs-on` `plan` `apply` `state-commit` `state-path` `passphrase-env` `env` `app-token-owner` `app-token-env` `app-token-owner-2` `app-token-env-2` `extra-infisical-project` `extra-infisical-identity` `env-map` (see *Tofu*) |
 | `cf.yml` | `switchboard` `mealrot` | `working-directory` `environment` `wrangler-version` `dry-run` `account-id` `node-version` `install-cmd` (`wrangler deploy` for a Worker with a Durable Object; credentials from Infisical project `cloudflare` over OIDC; caller grants `id-token: write`) |
 | `xcode.yml` | `zmxapp` `zmxkit` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 | `android.yml` | `workouts-go` `workouts-hx` `fz` `template` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
@@ -275,6 +275,28 @@ commit is `chore(<dir>): update encrypted state (serial N) [skip ci]`. The calle
 paths and excludes the state directory. Plans and applies of one directory share the concurrency
 group `tofu-state-<dir>`, queued and never cancelled. The caller grants `id-token: write` and
 `pull-requests: write`.
+
+Secrets that live in another Infisical project (for example the Cloudflare tokens in project
+`cloudflare`) are read in place instead of copied into `gha`. Optional, all default empty:
+
+```yaml
+    with:
+      extra-infisical-project: cloudflare-a1s-e   # second project, env dev, root path
+      extra-infisical-identity: <identity id>     # must trust this repo's OIDC subject
+      env-map: |
+        TF_VAR_cloudflare_dns_key=CLOUDFLARE_DNS_KEY
+        TF_VAR_cloudflare_zone_key=CLOUDFLARE_ZONE_TOKEN
+```
+
+Each `TARGET=SOURCE` line sets `TARGET` from the env var `SOURCE` (masked) in the plan and apply jobs;
+an empty `SOURCE` fails the job. The second project exports all its secrets under their own names as
+well, so a provider that reads such a variable by default (`CLOUDFLARE_API_TOKEN`) sees it; a name
+that collides with `TOFU_STATE_PASSPHRASE` or `APP_*` from `gha` fails the job. A `pull_request` run
+presents the subject `repo:OWNER/REPO:pull_request` (ref claim `refs/pull/N/merge`); push and
+`workflow_dispatch` runs present `repo:OWNER/REPO:ref:refs/heads/<branch>`. The identity must accept
+all that apply, so one bound to `main` and `dev` refs only (gha-deploy) rejects the plan job. PR plans
+execute the PR's tofu code with these secrets in the environment: use this only where PR authors are
+trusted (fork PRs get no `id-token`, hence no login).
 
 ## Composite actions
 

@@ -27,6 +27,21 @@ name: tofu
 #   app-token-owner-2  a second token, exported as app-token-env-2 (for example a provider
 #                      alias on another account)
 #
+#   extra-infisical-project   slug of a second Infisical project (env dev, root path) loaded after
+#                             gha in the plan and apply jobs, for example cloudflare-a1s-e (default "")
+#   extra-infisical-identity  identity id for that OIDC login (default ""). The identity must trust
+#                             the caller's OIDC subject: pull_request runs carry sub
+#                             repo:OWNER/REPO:pull_request (ref claim refs/pull/N/merge), push and
+#                             workflow_dispatch runs repo:OWNER/REPO:ref:refs/heads/<branch>
+#   env-map                   TARGET=SOURCE per line, blank lines allowed: after both projects are
+#                             loaded, TARGET is set to the value of env var SOURCE (masked); an empty
+#                             SOURCE fails the job. Sets only what is listed, but the second project
+#                             exports every secret it holds under its own name too. A name that
+#                             collides with a gha secret (TOFU_STATE_PASSPHRASE, APP_*) fails the job.
+#                             PR plans run the PR's tofu code with these secrets in the environment:
+#                             use it only for repos whose PR authors are trusted (fork PRs get no
+#                             id-token, so no login)
+#
 # Credentials: Infisical (project gha, identity gha-org, OIDC) supplies TOFU_STATE_PASSPHRASE,
 # APP_CLIENT_ID and APP_PRIVATE_KEY. No Actions secrets. The caller grants `id-token: write`
 # and `pull-requests: write`.
@@ -74,6 +89,22 @@ on:
         default: TF_VAR_state_passphrase
       env:
         description: Extra non-secret env for plan and apply, one KEY=VALUE per line.
+        type: string
+        default: ""
+      extra-infisical-project:
+        description: >
+          Slug of a second Infisical project (env dev, root path) to load after gha, for
+          example cloudflare-a1s-e. Empty loads none.
+        type: string
+        default: ""
+      extra-infisical-identity:
+        description: Identity id for the OIDC login to extra-infisical-project.
+        type: string
+        default: ""
+      env-map:
+        description: >
+          Rename env vars loaded from Infisical, one TARGET=SOURCE per line. Each TARGET is
+          set to the value of SOURCE (masked); an empty SOURCE fails the job.
         type: string
         default: ""
       app-token-owner:
@@ -145,6 +176,45 @@ jobs:
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+
+      - name: snapshot gha credentials
+        if: steps.changed.outputs.run != 'false' && inputs.extra-infisical-project != ''
+        run: |
+          echo "GHA_GUARD=$(printf '%s|%s|%s' "$TOFU_STATE_PASSPHRASE" "$APP_CLIENT_ID" "$APP_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: extra secrets
+        if: steps.changed.outputs.run != 'false' && inputs.extra-infisical-project != ''
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: ${{ inputs.extra-infisical-identity }}
+          domain: https://eu.infisical.com
+          project-slug: ${{ inputs.extra-infisical-project }}
+          env-slug: dev
+
+      - name: guard gha credentials
+        if: steps.changed.outputs.run != 'false' && inputs.extra-infisical-project != ''
+        run: |
+          now=$(printf '%s|%s|%s' "$TOFU_STATE_PASSPHRASE" "$APP_CLIENT_ID" "$APP_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)
+          [ "$now" = "$GHA_GUARD" ] || { echo "::error::the extra Infisical project overrides TOFU_STATE_PASSPHRASE, APP_CLIENT_ID or APP_PRIVATE_KEY"; exit 1; }
+
+      - name: env map
+        if: steps.changed.outputs.run != 'false' && inputs.env-map != ''
+        env:
+          MAP: ${{ inputs.env-map }}
+        run: |
+          while IFS= read -r line; do
+            [ -n "${line//[[:space:]]/}" ] || continue
+            [[ "$line" == *=* ]] || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
+            t=${line%%=*}; src=${line#*=}
+            [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*$ && "$src" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] \
+              || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
+            v=${!src-}
+            [ -n "$v" ] || { echo "::error::env-map: $src is empty or not loaded from Infisical"; exit 1; }
+            echo "::add-mask::$v"
+            d="EOF_$(openssl rand -hex 8)"
+            printf '%s<<%s\n%s\n%s\n' "$t" "$d" "$v" "$d" >> "$GITHUB_ENV"
+          done <<<"$MAP"
 
       - name: tofu env
         if: steps.changed.outputs.run != 'false'
@@ -277,6 +347,45 @@ jobs:
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+
+      - name: snapshot gha credentials
+        if: inputs.extra-infisical-project != ''
+        run: |
+          echo "GHA_GUARD=$(printf '%s|%s|%s' "$TOFU_STATE_PASSPHRASE" "$APP_CLIENT_ID" "$APP_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
+      - name: extra secrets
+        if: inputs.extra-infisical-project != ''
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: ${{ inputs.extra-infisical-identity }}
+          domain: https://eu.infisical.com
+          project-slug: ${{ inputs.extra-infisical-project }}
+          env-slug: dev
+
+      - name: guard gha credentials
+        if: inputs.extra-infisical-project != ''
+        run: |
+          now=$(printf '%s|%s|%s' "$TOFU_STATE_PASSPHRASE" "$APP_CLIENT_ID" "$APP_PRIVATE_KEY" | sha256sum | cut -d' ' -f1)
+          [ "$now" = "$GHA_GUARD" ] || { echo "::error::the extra Infisical project overrides TOFU_STATE_PASSPHRASE, APP_CLIENT_ID or APP_PRIVATE_KEY"; exit 1; }
+
+      - name: env map
+        if: inputs.env-map != ''
+        env:
+          MAP: ${{ inputs.env-map }}
+        run: |
+          while IFS= read -r line; do
+            [ -n "${line//[[:space:]]/}" ] || continue
+            [[ "$line" == *=* ]] || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
+            t=${line%%=*}; src=${line#*=}
+            [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*$ && "$src" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] \
+              || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
+            v=${!src-}
+            [ -n "$v" ] || { echo "::error::env-map: $src is empty or not loaded from Infisical"; exit 1; }
+            echo "::add-mask::$v"
+            d="EOF_$(openssl rand -hex 8)"
+            printf '%s<<%s\n%s\n%s\n' "$t" "$d" "$v" "$d" >> "$GITHUB_ENV"
+          done <<<"$MAP"
 
       - name: tofu env
         env:
