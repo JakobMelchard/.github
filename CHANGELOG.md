@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/JakobMelchard/.github/compare/v2.0.0...v2.0.1) (2026-10-11)
+
+
+### Bug Fixes
+
+* **tofu:** retry the state push so parallel roots do not lose state ([#143](https://github.com/JakobMelchard/.github/issues/143)) ([ee42cf3](https://github.com/JakobMelchard/.github/commit/ee42cf3be7ed0f801907f86989f19280e5f2ad1a))
+
 ## [2.0.0](https://github.com/JakobMelchard/.github/compare/v1.6.0...v2.0.0) (2026-10-11)
 
 
