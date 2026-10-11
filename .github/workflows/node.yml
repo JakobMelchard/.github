@@ -1,52 +1,12 @@
 name: node
 
-# Reusable Node CI.
-# Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
-#
-# Repos with no committed lockfile must pass install-cmd: npm install.
+# Reusable Node CI: install, check, lint, test, e2e. Skips ci for Markdown-only changes.
+# Repos without a committed lockfile must pass install-cmd: npm install.
 #
 #   jobs:
 #     ci:
-#       uses: JakobMelchard/.github/.github/workflows/node.yml@v1.6.0
-#       with:
-#         check-cmd: npx tsc
-#         test-cmd: npm test
-#       secrets: inherit          # only if the repo needs private dependencies
-#
-# Inputs (all optional). Steps run in this order: install, browsers, check, lint, test, e2e. Every
-# *-cmd runs through eval in bash and "" skips its step.
-#   node-version      string,  default "22"           Node for actions/setup-node.
-#   working-directory string,  default "."            Directory every run step executes in; also
-#                                                      where tokens-check looks for .config/tokens.path.
-#   install-cmd       string,  default "npm ci"       "" skips install (static sites with no deps).
-#   check-cmd         string,  default ""             Formatting/type check, e.g. "make check",
-#                                                      "npx tsc" or "npx prettier --check .".
-#   lint-cmd          string,  default "npx eslint ." Lint.
-#   test-cmd          string,  default ""             Unit tests.
-#   e2e-cmd           string,  default ""             Runs after test-cmd, with Chromium available when
-#                                                      browsers is true.
-#   browsers          boolean, default false          Cache ~/.cache/ms-playwright and, on Linux runners,
-#                                                      run `playwright-core install --with-deps chromium`.
-#   runs-on           string,  default ""             Runner label for the ci job only (pr-title and
-#                                                      changes always use RUNNER_LINUX). Empty picks the
-#                                                      org variable RUNNER_LINUX (self-hosted on mimi,
-#                                                      private repos only) and falls back to ubuntu-latest.
-#   private-deps      boolean, default false          Wire a token into git (https, ssh and git+ forms of
-#                                                      github.com) so private JakobMelchard repos
-#                                                      referenced as github:owner/repo#ref resolve.
-#   private-repos     string,  default ""             Comma/newline-separated repos the minted app token
-#                                                      may read, e.g. "observe". Only with app secrets.
-#
-# Secrets (all optional, only read when private-deps is true): app-client-id and app-private-key
-# (GitHub App, preferred), else token (PAT), else the job's github.token.
-#
-# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
-# diffs), ci. The ci job starts with the tokens-check action, a no-op unless the repo has
-# .config/tokens.path.
-#
-# Callers: agenx, cf, chrome-extensions, hx, interviews, JakobMelchard.github.io, mealrot, switchboard,
-# workline, workouts-hx, lilfeelz/lilfeelz.github.io. Inputs passed: install-cmd, check-cmd, lint-cmd,
-# test-cmd, e2e-cmd, browsers.
+#       uses: JakobMelchard/.github/.github/workflows/node.yml@vX.Y.Z
+#       with: { check-cmd: npx tsc, test-cmd: npm test }
 
 permissions:
   contents: read
@@ -55,65 +15,72 @@ on:
   workflow_call:
     inputs:
       node-version:
+        description: Node version for actions/setup-node.
         type: string
         default: "22"
       working-directory:
+        description: Directory every run step executes in; also where tokens-check looks for .config/tokens.path.
         type: string
         default: "."
       install-cmd:
-        description: Empty string skips install (static sites with no deps).
+        description: Runs first. Empty skips it (static sites with no dependencies).
         type: string
         default: "npm ci"
       check-cmd:
-        description: Formatting check, e.g. "make check" or "npx prettier --check .".
+        description: Formatting or type check, e.g. "make check", "npx tsc" or "npx prettier --check .". Empty skips the step.
         type: string
         default: ""
       lint-cmd:
+        description: Empty skips the step.
         type: string
         default: "npx eslint ."
       test-cmd:
+        description: Unit tests. Empty skips the step.
         type: string
         default: ""
       e2e-cmd:
-        description: Runs after test-cmd, with a browser available when browsers is true.
+        description: Runs after test-cmd, with Chromium available when browsers is true. Empty skips the step.
         type: string
         default: ""
       browsers:
-        description: Install and cache Playwright Chromium for e2e.
+        description: >
+          Cache ~/.cache/ms-playwright and, on Linux runners, run
+          `playwright-core install --with-deps chromium`.
         type: boolean
         default: false
       runs-on:
         description: >
+          Runner label for the ci job only (pr-title and changes always use RUNNER_LINUX).
           Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
           private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
       private-deps:
         description: >
-          Authenticate git so private JakobMelchard repos referenced as
-          dependencies (github:owner/repo#ref, git+https://…) resolve.
+          Wire a token into git (the https, ssh and git+ forms of github.com) so private
+          JakobMelchard repos referenced as github:owner/repo#ref resolve. The token is the
+          minted app token, else the token secret, else github.token.
         type: boolean
         default: false
       private-repos:
         description: >
-          Comma/newline-separated repos the minted app token may read,
-          e.g. "observe". Only used with app credentials.
+          Comma or newline separated repos the minted app token may read, e.g. "observe".
+          Only used with app credentials.
         type: string
         default: ""
     secrets:
       app-client-id:
-        description: GitHub App client ID (preferred over a PAT — no expiry to babysit).
+        description: GitHub App client ID, preferred over a PAT. Only read when private-deps is true.
         required: false
       app-private-key:
-        description: GitHub App private key. Presence of this selects the app path.
+        description: GitHub App private key. Its presence selects the app path.
         required: false
       token:
         description: PAT fallback, used when no app private key is supplied.
         required: false
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push.
+  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
   pr-title:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
@@ -132,8 +99,6 @@ jobs:
             exit 1
           fi
 
-  # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
-  # still run, since they lint titles and docs.
   changes:
     timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -149,8 +114,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     env:
-      # `secrets` is not available in a step-level `if`. Evaluate the
-      # comparison here so only the boolean — never the key — is in env.
+      # `secrets` is unavailable in a step-level `if`; expose only the boolean, never the key.
       HAS_APP: ${{ secrets.app-private-key != '' }}
     defaults:
       run:
@@ -159,16 +123,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
-      # Opt-in repos (.config/tokens.path) only; a no-op everywhere else. Also in hooks.yml,
-      # for callers that run node.yml without it.
+      # A no-op unless the repo has .config/tokens.path.
       - uses: JakobMelchard/.github/actions/tokens-check@main
         with:
           working-directory: ${{ inputs.working-directory }}
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -193,14 +154,8 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # npm expands the `github:owner/repo` shorthand to git+ssh, so the ssh
-      # and scp-like forms need the token as much as https does. git cannot
-      # process a `git+` scheme on its own, so mapping those too turns a hard
-      # failure into a working fetch if a tool ever passes one through.
-      #
-      # --add on every mapping: insteadOf is multi-valued, and a plain
-      # `git config` replaces the existing value rather than appending, which
-      # would leave only the last form authenticated.
+      # npm expands `github:owner/repo` to git+ssh, so every form needs the token. `--add`
+      # because insteadOf is multi-valued and a plain `git config` would replace the earlier forms.
       - name: configure private dependency access
         if: inputs.private-deps
         env:
@@ -231,7 +186,7 @@ jobs:
           key: pw-${{ runner.os }}-${{ hashFiles('**/package-lock.json', '**/package.json') }}
 
       - name: install browsers
-        # --with-deps drives apt; only Linux runners have that path
+        # --with-deps drives apt, which only Linux runners have
         if: inputs.browsers && runner.os == 'Linux'
         run: npx playwright-core install --with-deps chromium
 

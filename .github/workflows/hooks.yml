@@ -1,34 +1,12 @@
 name: hooks
 
-# Reusable prek run: the repo's own .pre-commit-config.yaml over every tracked file. This is the
-# gate for the checks the local hooks run (local hooks can be skipped, this cannot). Hooks come
-# from the pinned revs in the caller's config, e.g. JakobMelchard/.githooks (public, no token).
+# Reusable prek run: the caller's .pre-commit-config.yaml over every tracked file. The gate for
+# checks that local hooks can skip. The required check is "<caller job> / prek".
 #
 #   jobs:
 #     hooks:
-#       uses: JakobMelchard/.github/.github/workflows/hooks.yml@v1.6.0
-#       with:
-#         skip: eslint,prettier   # optional
-#
-# Inputs (all optional):
-#   skip              string, default ""   Comma-separated hook ids to skip on this runner, passed as
-#                                          SKIP to prek (e.g. swift-format on Linux, tofu-fmt, eslint
-#                                          when node.yml lints).
-#   working-directory string, default "."  Directory holding .pre-commit-config.yaml, relative to the
-#                                          repo root. Also where tokens-check looks for
-#                                          .config/tokens.path.
-#   runs-on           string, default ""   Runner label. Empty picks the org variable RUNNER_LINUX
-#                                          (self-hosted on mimi, visible to private repos only) and
-#                                          falls back to ubuntu-latest. Unlike shell.yml this is a
-#                                          plain label, not JSON.
-#
-# Jobs: one, `prek`, so the required check is "<caller job> / prek". The tokens-check step runs
-# before prek and is a no-op unless the repo has .config/tokens.path.
-#
-# Callers: .agents, .config, JakobMelchard.github.io, agenx, cf, content, drill, hx, infra,
-# interviews, lists, mealrot, monitor, observe, switchboard, template, workline, workouts-go,
-# workouts-hx, lilfeelz/.config, lilfeelz/bin, lilfeelz/fz, lilfeelz/keyboard,
-# lilfeelz/lilfeelz.github.io, lilfeelz/workspaces (JakobMelchard org unless prefixed).
+#       uses: JakobMelchard/.github/.github/workflows/hooks.yml@vX.Y.Z
+#       with: { skip: 'eslint,prettier' }
 
 permissions:
   contents: read
@@ -37,16 +15,17 @@ on:
   workflow_call:
     inputs:
       skip:
-        description: Comma-separated hook ids to skip on this runner (e.g. swift-format on Linux).
+        description: Comma-separated hook ids to skip on this runner (SKIP for prek), e.g. swift-format on Linux.
         type: string
         default: ""
       working-directory:
+        description: Directory holding .pre-commit-config.yaml; also where tokens-check looks for .config/tokens.path.
         type: string
         default: "."
       runs-on:
         description: >
-          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
-          private repos only) and falls back to ubuntu-latest.
+          Runner label (plain, unlike shell.yml). Empty picks the org variable RUNNER_LINUX
+          (self-hosted on mimi, visible to private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
 
@@ -59,7 +38,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job (see shell.yml).
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -69,7 +48,7 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      # Opt-in repos (.config/tokens.path) only; a no-op everywhere else.
+      # A no-op unless the repo has .config/tokens.path.
       - uses: JakobMelchard/.github/actions/tokens-check@main
         with:
           working-directory: ${{ inputs.working-directory }}

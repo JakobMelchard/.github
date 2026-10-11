@@ -1,56 +1,15 @@
 name: tofu
 
-# Reusable OpenTofu plan, apply and encrypted-state commit. Separate from terraform.yml
-# (lint only) so a caller that only lints never has to grant the id-token and
-# pull-requests permissions these jobs request. Callers: infra (every root).
+# Reusable OpenTofu plan, apply and encrypted state commit, separate from terraform.yml (lint
+# only) so lint-only callers never grant its permissions. Plan comments on PRs, apply runs on a
+# push to the default branch, then the state is committed. The caller owns the triggers (filter
+# push on the root's paths, exclude the state directory) and grants id-token: write and
+# pull-requests: write. See the README for the secrets and OIDC setup.
 #
-# - plan: on pull_request and workflow_dispatch, `tofu init` and `tofu plan` against the
-#   state committed in the checkout (the PR merged into the base), posted as one PR
-#   comment per working directory. Skipped, reporting success, when a PR does not touch
-#   working-directory, so a required check never hangs.
-# - apply: on a push to the default branch, `tofu apply -auto-approve`.
-# - state-commit: after the apply, push the updated encrypted state to the default branch
-#   as the org app (only when the state serial moved; refuses a plaintext state). The
-#   app needs an `always` bypass on the branch ruleset.
-#
-# Inputs:
-#   working-directory  tofu root (default terraform)
-#   runs-on            runner label; empty picks vars.RUNNER_LINUX, then ubuntu-latest
-#   plan               run the plan job (default true)
-#   apply              run the apply job (default true)
-#   state-commit       commit the encrypted state after the apply (default true)
-#   state-path         state file relative to working-directory (default state/terraform.tfstate)
-#   passphrase-env     env var that receives TOFU_STATE_PASSPHRASE (default TF_VAR_state_passphrase)
-#   env                extra non-secret env, one KEY=VALUE per line
-#   app-token-owner    mint an org-app installation token for this account and export it
-#                      as app-token-env (default GITHUB_TOKEN); empty mints none
-#   app-token-owner-2  a second token, exported as app-token-env-2 (for example a provider
-#                      alias on another account)
-#
-#   extra-infisical-project   slug of a second Infisical project (env dev, root path) loaded after
-#                             gha in the plan and apply jobs, for example cloudflare-a1s-e (default "")
-#   extra-infisical-identity  identity id for that OIDC login (default ""). The identity must trust
-#                             the caller's OIDC subject: pull_request runs carry sub
-#                             repo:OWNER/REPO:pull_request (ref claim refs/pull/N/merge), push and
-#                             workflow_dispatch runs repo:OWNER/REPO:ref:refs/heads/<branch>
-#   env-map                   TARGET=SOURCE per line, blank lines allowed: after both projects are
-#                             loaded, TARGET is set to the value of env var SOURCE (masked); an empty
-#                             SOURCE fails the job. Sets only what is listed, but the second project
-#                             exports every secret it holds under its own name too. A name that
-#                             collides with a gha secret (TOFU_STATE_PASSPHRASE, APP_*) fails the job.
-#                             PR plans run the PR's tofu code with these secrets in the environment:
-#                             use it only for repos whose PR authors are trusted (fork PRs get no
-#                             id-token, so no login)
-#
-# Credentials: Infisical (project gha, identity gha-org, OIDC) supplies TOFU_STATE_PASSPHRASE,
-# APP_CLIENT_ID and APP_PRIVATE_KEY. No Actions secrets. The caller grants `id-token: write`
-# and `pull-requests: write`.
-#
-# Triggers belong to the caller: filter push on the root's paths and exclude the state
-# directory (`!<dir>/state/**`). The state commit carries `[skip ci]`. Plans and applies of
-# one working directory share the concurrency group tofu-state-<dir>, queued, never
-# cancelled (a cancelled apply could lose its state commit); a newer queued run replaces
-# an older one still waiting, and the apply checks out the branch head, so nothing is lost.
+#   jobs:
+#     tofu:
+#       uses: JakobMelchard/.github/.github/workflows/tofu.yml@vX.Y.Z
+#       with: { working-directory: terraform/tailscale }
 
 permissions:
   contents: read
@@ -59,6 +18,7 @@ on:
   workflow_call:
     inputs:
       working-directory:
+        description: OpenTofu root.
         type: string
         default: terraform
       runs-on:
@@ -68,7 +28,10 @@ on:
         type: string
         default: ""
       plan:
-        description: Run `tofu plan` on pull requests and manual runs and comment it on the PR.
+        description: >
+          On pull requests and manual runs, `tofu init` and `tofu plan` against the committed
+          state, posted as one PR comment per working directory. Skipped, reporting success,
+          when a PR does not touch working-directory, so a required check never hangs.
         type: boolean
         default: true
       apply:
@@ -76,7 +39,10 @@ on:
         type: boolean
         default: true
       state-commit:
-        description: After the apply, commit the encrypted state file back to the default branch.
+        description: >
+          After the apply, push the updated encrypted state to the default branch as the org
+          app, only when the state serial moved; a plaintext state is refused. The app needs an
+          `always` bypass on the branch ruleset. The commit message carries the skip-ci marker.
         type: boolean
         default: true
       state-path:
@@ -93,22 +59,29 @@ on:
         default: ""
       extra-infisical-project:
         description: >
-          Slug of a second Infisical project (env dev, root path) to load after gha, for
-          example cloudflare-a1s-e. Empty loads none.
+          Slug of a second Infisical project (env dev, root path) loaded after gha in the plan
+          and apply jobs, e.g. cloudflare-a1s-e. Empty loads none. A secret there that collides
+          with TOFU_STATE_PASSPHRASE or APP_* from gha fails the job.
         type: string
         default: ""
       extra-infisical-identity:
-        description: Identity id for the OIDC login to extra-infisical-project.
+        description: >
+          Identity id for the OIDC login to extra-infisical-project. It must trust the caller's
+          OIDC subject: repo:OWNER/REPO:pull_request for PR runs, repo:OWNER/REPO:ref:refs/heads/BRANCH
+          for push and workflow_dispatch runs.
         type: string
         default: ""
       env-map:
         description: >
-          Rename env vars loaded from Infisical, one TARGET=SOURCE per line. Each TARGET is
-          set to the value of SOURCE (masked); an empty SOURCE fails the job.
+          TARGET=SOURCE per line, blank lines allowed. After both projects are loaded, TARGET is
+          set to the value of env var SOURCE (masked); an empty SOURCE fails the job. The second
+          project also exports every secret it holds under its own name. PR plans run the PR's
+          tofu code with these secrets in the environment: use it only where PR authors are
+          trusted (fork PRs get no id-token, so no login).
         type: string
         default: ""
       app-token-owner:
-        description: Account to mint an org-app installation token for. Empty mints none.
+        description: Account to mint an org-app installation token for, exported as app-token-env. Empty mints none.
         type: string
         default: ""
       app-token-env:
@@ -116,11 +89,11 @@ on:
         type: string
         default: GITHUB_TOKEN
       app-token-owner-2:
-        description: Second account to mint an installation token for. Empty mints none.
+        description: Second account to mint an installation token for, e.g. a provider alias on another account. Empty mints none.
         type: string
         default: ""
       app-token-env-2:
-        description: Env var that receives the app-token-owner-2 token.
+        description: Env var that receives the app-token-owner-2 token. Required when app-token-owner-2 is set.
         type: string
         default: ""
 

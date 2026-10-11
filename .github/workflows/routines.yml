@@ -1,12 +1,11 @@
 name: routines
 
-# Nightly routines (README "Routines"): runs the prompts from routines/*.md with opencode on
-# an org-app token. The repo set is listed at run time: non-archived, non-fork org repos the app can reach. The schedule only runs when the repo variable ROUTINES is "on";
-# workflow_dispatch always runs (dry run by default). Org repos only, the app token
-# cannot reach lilfeelz/*; the prompts treat those as "repository folder missing".
-# Loads APP_CLIENT_ID, APP_PRIVATE_KEY (see README "GitHub App") and OPENCODE_API_KEY
-# (OpenCode Zen or Go key) from Infisical (project gha, identity gha-org, OIDC). The app needs
-# Contents, Issues, Pull requests (write) plus Checks and Actions (read) for the token below.
+# Nightly routines (see the README): runs routines/*.md with opencode on the org app token over
+# the non-archived org repos the app can reach. The schedule only runs when the repo variable
+# ROUTINES is "on"; workflow_dispatch always runs, as a dry run by default. The app token cannot
+# reach lilfeelz/*, which the prompts treat as "repository folder missing".
+# Secrets (APP_*, OPENCODE_API_KEY) come from Infisical project gha. The app needs Contents,
+# Issues and Pull requests write plus Checks and Actions read.
 
 permissions:
   contents: read

@@ -1,77 +1,47 @@
 name: release
 
-# Shared release-please. The release PR and the release are authored by the org
-# app, so `pull_request` workflows run on the release PR (github.token-created PRs
-# trigger nothing).
+# Shared release-please. The release PR and the release are authored by the org app, so
+# pull_request workflows run on the release PR (PRs created with github.token trigger nothing).
+# Credentials come from Infisical over OIDC, so the calling job must grant id-token: write or
+# the run fails at startup.
 #
 #   jobs:
 #     release:
-#       uses: JakobMelchard/.github/.github/workflows/release.yml@v1.6.0
-#       with: { release-type: go }
+#       uses: JakobMelchard/.github/.github/workflows/release.yml@vX.Y.Z
 #       permissions: { contents: read, id-token: write }
-#     publish:
-#       needs: release
-#       if: needs.release.outputs.release_created == 'true'
-#
-# Inputs (all optional):
-#   release-type  string, default ""  release-please release type (go, node, simple, ...). Empty
-#                                     infers it from the config file.
-#   config-file   string, default "release-please-config.json"
-#   manifest-file string, default ".release-please-manifest.json"
-#   runs-on       string, default ""  JSON runner spec (fromJSON), a quoted label or a label array,
-#                                     e.g. '["self-hosted","macOS"]' or a caller's vars.RUNNER_MACOS.
-#                                     Empty picks the org variable RUNNER_LINUX and falls back to
-#                                     ubuntu-latest.
-#
-# Outputs (of the release-please job, as release-please-action reports them):
-#   release_created  "true" when this run cut a release.
-#   tag_name         tag of that release, e.g. v1.4.2.
-#   version          its version, e.g. 1.4.2.
-#
-# Secrets: none declared. The app credentials (APP_CLIENT_ID, APP_PRIVATE_KEY) are read at runtime
-# from Infisical project gha-lfq-y (env dev) over OIDC as identity gha-org, so the calling job must
-# grant id-token: write or the run fails at startup. The reusable job itself asks for contents: read
-# and id-token: write only; writes go through the minted app token (contents and pull-requests
-# write, scoped to the calling repo). Callers in practice grant contents: write, pull-requests:
-# write and id-token: write, which is a superset.
-#
-# Jobs: release-please (10 min): provenance, Infisical secrets, app token, release-please-action.
-#
-# Callers (scan 2026-10-11, both accounts):
-#   JakobMelchard/.config release.yml (main), JakobMelchard/hx release.yml (v1.3.0) and
-#   JakobMelchard/workline release.yml (v1.3.0): no inputs.
-#   JakobMelchard/.githooks release.yml (v1.6.0): release-type simple.
-#   This repo: self-release.yml, called locally, no inputs; it then moves the major tag from
-#   tag_name.
-#   None passes config-file, manifest-file or runs-on.
 
 on:
   workflow_call:
     inputs:
       release-type:
-        description: release-please release type (go, node, simple, …). Empty = infer from config files.
+        description: release-please release type (go, node, simple, ...). Empty infers it from the config file.
         type: string
         default: ""
       config-file:
+        description: release-please config path.
         type: string
         default: release-please-config.json
       manifest-file:
+        description: release-please manifest path.
         type: string
         default: .release-please-manifest.json
       runs-on:
         description: >
-          JSON runner spec, a quoted label or a label array, e.g. '["self-hosted","macOS"]'
-          or a caller's vars.RUNNER_MACOS. Unlike the plain-label runs-on of the build
-          workflows, so a macOS-only private repo can reach the mimi runner. Empty picks
-          the org variable RUNNER_LINUX and falls back to ubuntu-latest.
+          JSON runner spec, a quoted label or a label array, e.g. '["self-hosted","macOS"]' or a
+          caller's vars.RUNNER_MACOS. Unlike the plain-label runs-on of the build workflows, so a
+          macOS-only private repo can reach the mimi runner. Empty picks the org variable
+          RUNNER_LINUX and falls back to ubuntu-latest.
         type: string
         default: ""
     outputs:
       release_created:
+        description: '"true" when this run cut a release.'
         value: ${{ jobs.release-please.outputs.release_created }}
       tag_name:
+        description: Tag of that release, e.g. v1.4.2.
         value: ${{ jobs.release-please.outputs.tag_name }}
       version:
+        description: Version of that release, e.g. 1.4.2.
         value: ${{ jobs.release-please.outputs.version }}
 
 permissions: {}
@@ -80,7 +50,7 @@ jobs:
   release-please:
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 10
-    # Writes go through the app token; github.token only needs OIDC for Infisical.
+    # Writes go through the app token; id-token is for Infisical.
     permissions:
       contents: read
       id-token: write
@@ -90,9 +60,7 @@ jobs:
       version: ${{ steps.release.outputs.version }}
     steps:
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash

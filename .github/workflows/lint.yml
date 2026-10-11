@@ -1,7 +1,6 @@
 name: lint
 
-# This repo's own CI: the reusable workflows here run in every other repo,
-# so a syntax error is an org-wide outage.
+# This repo's own CI. The reusable workflows run in every other repo, so a break here is org-wide.
 
 permissions:
   contents: read
@@ -45,9 +44,8 @@ jobs:
           persist-credentials: false
       - run: .bats/bin/bats scripts/test
 
-  # Integration smoke: actually call each reusable workflow with its emptiest
-  # viable inputs. A previous bug — an empty `${{ inputs.install-cmd }}` left an
-  # empty if-body and broke every caller — passed actionlint but died at runtime.
+  # Calls each reusable workflow with its emptiest inputs. An empty `${{ inputs.x }}` interpolated
+  # into a run body can break every caller at runtime while passing actionlint.
   smoke-hooks:
     uses: ./.github/workflows/hooks.yml
     with:
@@ -86,8 +84,8 @@ jobs:
       paths: scripts
       severity: warning
 
-  # plan and apply need Infisical and a state, so both stay off: both jobs skip, which still
-  # proves the file parses and the caller-side permissions resolve.
+  # Plan and apply need Infisical and a state, so both stay off: the jobs skip, which still proves
+  # the file parses and the caller-side permissions resolve.
   smoke-tofu:
     uses: ./.github/workflows/tofu.yml
     permissions:
@@ -99,9 +97,8 @@ jobs:
       apply: false
       state-commit: false
 
-  # --dry-run bundles the fixture Worker (a Durable Object and its migration) and publishes
-  # nothing, so it needs no Infisical and no secrets; the caller still grants id-token: write
-  # because the reusable job asks for it.
+  # Dry run bundles the fixture Worker (a Durable Object and its migration) and publishes nothing.
+  # The caller still grants id-token: write because the reusable job asks for it.
   smoke-cf:
     uses: ./.github/workflows/cf.yml
     permissions:
@@ -113,8 +110,7 @@ jobs:
       wrangler-version: 4.143.0
       install-cmd: ""
 
-  # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the
-  # generate/lint plumbing on a bare checkout.
+  # macOS minutes cost 10x: an empty scheme runs no xcodebuild, only the generate and lint plumbing.
   smoke-xcode:
     uses: ./.github/workflows/xcode.yml
     with:
@@ -122,7 +118,7 @@ jobs:
       generate-cmd: ""
       lint-cmd: ""
 
-  # Exercises xcode.yml's simulator step: the runner must end up with the default iPad.
+  # Exercises the simulator step: the runner must end up with the default iPad.
   smoke-simulator:
     uses: ./.github/workflows/xcode.yml
     with:
@@ -130,7 +126,7 @@ jobs:
       lint-cmd: ""
       test-cmd: "echo 'platform=iOS Simulator,name=iPad Air 11-inch (M4)' && xcrun simctl list devices available | grep -F 'iPad Air 11-inch (M4) ('"
 
-  # No Android project here: gradle-tasks "" runs only the JDK, SDK and Gradle setup.
+  # No Android project here: empty gradle-tasks runs only the JDK, SDK and Gradle setup.
   smoke-android:
     uses: ./.github/workflows/android.yml
     with:

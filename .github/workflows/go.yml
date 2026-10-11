@@ -1,38 +1,11 @@
 name: go
 
-# Reusable Go CI.
+# Reusable Go CI: vet, test, build. Skips ci for Markdown-only changes.
 #
 #   jobs:
 #     ci:
-#       uses: JakobMelchard/.github/.github/workflows/go.yml@v1.6.0
-#       with:
-#         go-version: "1.26"
-#       secrets: inherit          # only if the repo needs private modules
-#
-# Inputs (all optional):
-#   go-version        string,  default "1.25"          Go toolchain for actions/setup-go.
-#   working-directory string,  default "."            Module root; every run step executes there and
-#                                                      go.sum caching is keyed on it (off when absent).
-#   vet-cmd           string,  default "go vet ./..."  Runs first. "" skips the step.
-#   test-cmd          string,  default "go test ./..." Runs second. "" skips the step.
-#   build-cmd         string,  default "go build ./..." Runs last. "" skips the step.
-#   runs-on           string,  default ""              Runner label for the ci job only (pr-title and
-#                                                      changes always use RUNNER_LINUX). Empty picks the
-#                                                      org variable RUNNER_LINUX (self-hosted on mimi,
-#                                                      private repos only) and falls back to ubuntu-latest.
-#   private-modules   boolean, default false           Set GOPRIVATE to the owner's repos and wire a
-#                                                      token into git so private modules resolve.
-#   private-repos     string,  default ""              Comma/newline-separated repos the minted app token
-#                                                      may read, e.g. "gsheet". Only with app secrets.
-#
-# Secrets (all optional, only read when private-modules is true): app-client-id and app-private-key
-# (GitHub App, preferred), else token (PAT), else the job's github.token.
-#
-# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
-# diffs), ci. Each *-cmd runs through eval in bash.
-#
-# Callers: JakobMelchard/drill (defaults), JakobMelchard/lists and JakobMelchard/workouts-go
-# (go-version, vet-cmd, test-cmd, build-cmd), JakobMelchard/workline (defaults, pinned v1.3.0).
+#       uses: JakobMelchard/.github/.github/workflows/go.yml@vX.Y.Z
+#       with: { test-cmd: make test }
 
 permissions:
   contents: read
@@ -41,54 +14,57 @@ on:
   workflow_call:
     inputs:
       go-version:
-        description: Go toolchain version.
+        description: Go toolchain version for actions/setup-go.
         type: string
         default: "1.25"
       working-directory:
+        description: Module root. Every run step executes there; go.sum caching is keyed on it and off when absent.
         type: string
         default: "."
       vet-cmd:
-        description: Empty string skips the step.
+        description: Runs first. Empty skips the step.
         type: string
         default: "go vet ./..."
       test-cmd:
+        description: Runs second. Empty skips the step.
         type: string
         default: "go test ./..."
       build-cmd:
+        description: Runs last. Empty skips the step.
         type: string
         default: "go build ./..."
       runs-on:
         description: >
+          Runner label for the ci job only (pr-title and changes always use RUNNER_LINUX).
           Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
           private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
       private-modules:
         description: >
-          Authenticate git so private JakobMelchard modules resolve.
-          Supply either app credentials or a PAT (see secrets).
+          Set GOPRIVATE to the owner's repos and wire a token into git so private modules
+          resolve. The token is the minted app token, else the token secret, else github.token.
         type: boolean
         default: false
       private-repos:
         description: >
-          Comma/newline-separated repos the minted app token may read,
-          e.g. "gsheet". Only used with app credentials.
+          Comma or newline separated repos the minted app token may read, e.g. "gsheet".
+          Only used with app credentials.
         type: string
         default: ""
     secrets:
       app-client-id:
-        description: GitHub App client ID (preferred over a PAT — no expiry to babysit).
+        description: GitHub App client ID, preferred over a PAT. Only read when private-modules is true.
         required: false
       app-private-key:
-        description: GitHub App private key. Presence of this selects the app path.
+        description: GitHub App private key. Its presence selects the app path.
         required: false
       token:
         description: PAT fallback, used when no app private key is supplied.
         required: false
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push.
+  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
   pr-title:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
@@ -107,8 +83,6 @@ jobs:
             exit 1
           fi
 
-  # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
-  # still run, since they lint titles and docs.
   changes:
     timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -124,8 +98,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     env:
-      # `secrets` is not available in a step-level `if`. Evaluate the
-      # comparison here so only the boolean — never the key — is in env.
+      # `secrets` is unavailable in a step-level `if`; expose only the boolean, never the key.
       HAS_APP: ${{ secrets.app-private-key != '' }}
     defaults:
       run:
@@ -135,9 +108,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -151,7 +122,7 @@ jobs:
         with:
           go-version: ${{ inputs.go-version }}
           # A repo without go.sum at that path makes setup-go fail on an
-          # unresolvable cache path — turn caching off in that case.
+          # unresolvable cache path: turn caching off in that case.
           cache: ${{ hashFiles(format('{0}/go.sum', inputs.working-directory)) != '' }}
           cache-dependency-path: ${{ inputs.working-directory }}/go.sum
 
@@ -166,7 +137,7 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # GOPRIVATE alone is not enough on a runner — git needs credentials too.
+      # GOPRIVATE alone is not enough on a runner: git needs credentials too.
       - name: configure private module access
         if: inputs.private-modules
         env:

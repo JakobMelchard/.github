@@ -6,9 +6,7 @@ rules:
       policies:
         "JakobMelchard/*": ref-pin
         "*": hash-pin
-  # ./ self-references in lint.yml: actionlint does not yet parse the $/ form
-  # (GitHub, July 2026). Revisit when it does; $/ counts as pinned under the
-  # require-SHA-pinning policy, ./ does not.
+  # actionlint cannot parse the $/ self-reference form yet, and ./ does not count as pinned.
   self-repository:
     ignore:
       - lint.yml

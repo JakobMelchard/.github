@@ -1,12 +1,14 @@
 name: ai-review
 
-# Reusable PR-Agent review. A repo's caller runs it on `pull_request: labeled`; labelling a
-# ready PR "ai:pr-agent" gets one review. Runs the PR-Agent CLI via uv on a Linux runner (org
-# variable RUNNER_LINUX or ubuntu-latest), OpenCode Go only. The model key comes from
-# Infisical over OIDC, like the other org workflows. The caller grants pull-requests: write,
-# issues: write and id-token: write.
-# Callers: assets, content, interviews, lists, mealrot, monitor, template, workouts-go,
-# workouts-hx, .agents.
+# Reusable PR-Agent review. Labelling a ready PR "ai:pr-agent" gets one review through OpenCode Go.
+# The model key comes from Infisical over OIDC. The caller runs it on `pull_request: labeled` and
+# grants pull-requests: write, issues: write and id-token: write.
+#
+#   on: { pull_request: { types: [labeled] } }
+#   jobs:
+#     review:
+#       uses: JakobMelchard/.github/.github/workflows/ai-review.yml@vX.Y.Z
+#       permissions: { contents: read, pull-requests: write, issues: write, id-token: write }
 
 permissions:
   contents: read
@@ -16,9 +18,9 @@ on:
     inputs:
       runs-on:
         description: >
-          JSON runner spec, a quoted label or a label array, e.g. '["self-hosted","Linux"]'
-          or a caller's vars.RUNNER_LINUX. Empty picks the org variable RUNNER_LINUX and
-          falls back to ubuntu-latest.
+          JSON runner spec, a quoted label or a label array, e.g. '["self-hosted","Linux"]' or a
+          caller's vars.RUNNER_LINUX. Empty picks the org variable RUNNER_LINUX and falls back
+          to ubuntu-latest.
         type: string
         default: ""
 
@@ -41,17 +43,16 @@ jobs:
       GITHUB__USER_TOKEN: ${{ github.token }}
       OPENAI__API_BASE: https://opencode.ai/zen/go/v1
       CONFIG__MODEL: openai/mimo-v2.6-pro
-      # A different upstream on OpenCode Go, in case the primary model is down
+      # A different upstream, in case the primary model is down
       CONFIG__FALLBACK_MODELS: '["openai/glm-5.3"]'
-      # litellm does not know the model; a guess, raise it once the real window is known
+      # litellm does not know the model; a guess
       CONFIG__CUSTOM_MODEL_MAX_TOKENS: '64000'
-      # Per attempt. No hidden client retries and no same-model retry on timeout, so a
-      # stalled model costs one timeout before the next: 3 x 300s fits the job limit.
+      # Per attempt, with no retries, so a stalled model costs one timeout before the fallback.
       CONFIG__AI_TIMEOUT: '300'
       CONFIG__NUM_RETRIES: '0'
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
-      # secret-name: one secret per step, so the project's other secrets stay out of the job env
+      # secret-name: only this secret enters the job env
       - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
