@@ -1,8 +1,34 @@
 name: shell
 
-# Reusable shell CI. Callers: lilfeelz/bin, monitor, .githooks, template.
+# Reusable shell CI: bash -n / zsh -n syntax check and shellcheck over every script under paths.
 # bin/ scripts are extensionless with shebangs, so globbing on *.sh is not enough —
-# detect by shebang instead.
+# detect by shebang instead (bash, sh or zsh in line 1). zsh scripts get the syntax check only.
+#
+#   jobs:
+#     shell:
+#       uses: JakobMelchard/.github/.github/workflows/shell.yml@main
+#       with:
+#         paths: scripts
+#         severity: warning
+#
+# Inputs (all optional):
+#   paths    string, default "."       Space-separated roots to scan (.git, node_modules and .venv
+#                                      are skipped).
+#   severity string, default "warning" shellcheck minimum severity: error | warning | info | style.
+#   runs-on  string, default ""        Runner for EVERY job, as JSON: '"ubuntu-latest"' or
+#                                      '["self-hosted","macOS"]'. Empty picks the repo variable
+#                                      RUNNER_LINUX (Blacksmith on private org repos) and falls back
+#                                      to ubuntu-latest. Personal repos get no Blacksmith: pass mimi.
+#                                      (hooks.yml, go.yml, python.yml and node.yml take a plain label
+#                                      and apply it to the main job only.)
+#
+# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
+# diffs), ci. Missing zsh and shellcheck are installed on the runner (apt on Linux, brew shellcheck
+# on macOS).
+#
+# Callers: .config (paths, severity), .githooks (paths, severity), monitor (severity), template
+# (pinned v1.4.0), lilfeelz/.config (pinned v1.4.0), lilfeelz/bin (severity), lilfeelz/workspaces
+# (runs-on, pinned SHA).
 
 permissions:
   contents: read
@@ -30,6 +56,7 @@ jobs:
   # The PR title becomes the squash-commit subject that release-please reads.
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
@@ -49,6 +76,7 @@ jobs:
   # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
   # still run, since they lint titles and docs.
   changes:
+    timeout-minutes: 10
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
@@ -57,6 +85,7 @@ jobs:
         uses: JakobMelchard/.github/actions/code-changed@main
 
   ci:
+    timeout-minutes: 30
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
