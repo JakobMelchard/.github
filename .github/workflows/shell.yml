@@ -6,7 +6,7 @@ name: shell
 #
 #   jobs:
 #     shell:
-#       uses: JakobMelchard/.github/.github/workflows/shell.yml@main
+#       uses: JakobMelchard/.github/.github/workflows/shell.yml@v1.6.0
 #       with:
 #         paths: scripts
 #         severity: warning

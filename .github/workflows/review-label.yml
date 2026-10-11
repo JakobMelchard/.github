@@ -9,7 +9,7 @@ name: review-label
 #   on: { pull_request: { types: [labeled] } }
 #   jobs:
 #     review-label:
-#       uses: JakobMelchard/.github/.github/workflows/review-label.yml@main
+#       uses: JakobMelchard/.github/.github/workflows/review-label.yml@v1.6.0
 #       permissions: { contents: read, id-token: write }
 
 on:

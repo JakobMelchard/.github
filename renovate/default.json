@@ -76,9 +76,10 @@
       "automerge": false
     },
     {
-      "description": "Our own reusable workflows are consumed at @main on purpose; never digest-pin them.",
+      "description": "Our own reusable workflows consumed at @main are on purpose; never digest-pin them. Refs pinned to a release tag or SHA still get bumped.",
       "matchManagers": ["github-actions"],
       "matchPackageNames": ["JakobMelchard/.github"],
+      "matchCurrentValue": "/^main$/",
       "enabled": false
     }
   ]

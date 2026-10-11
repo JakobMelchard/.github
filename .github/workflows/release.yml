@@ -6,7 +6,7 @@ name: release
 #
 #   jobs:
 #     release:
-#       uses: JakobMelchard/.github/.github/workflows/release.yml@main
+#       uses: JakobMelchard/.github/.github/workflows/release.yml@v1.6.0
 #       with: { release-type: go }
 #       permissions: { contents: read, id-token: write }
 #     publish:
