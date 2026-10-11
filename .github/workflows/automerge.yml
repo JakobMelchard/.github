@@ -1,0 +1,125 @@
+name: automerge
+
+# Reusable. Squash-merges a PR labelled "automerge" as the org app once every other check on
+# its head commit has passed and no review thread is unresolved. The run waits for pending
+# checks and open threads, and stops without merging on a failed check, a draft, a missing
+# label or a new head commit. Re-label to retry after a re-run.
+#
+#   on: { pull_request: { types: [labeled, synchronize, ready_for_review] } }
+#   jobs:
+#     automerge:
+#       uses: JakobMelchard/.github/.github/workflows/automerge.yml@<sha>
+#       permissions: { contents: read, checks: read, statuses: read, pull-requests: read, id-token: write }
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  automerge:
+    if: >-
+      github.event_name == 'pull_request' && !github.event.pull_request.draft &&
+      contains(github.event.pull_request.labels.*.name, 'automerge') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      checks: read
+      statuses: read
+      pull-requests: read
+      id-token: write
+    steps:
+      - name: wait for checks
+        id: wait
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+        run: |
+          wf=${WORKFLOW_REF#"$GH_REPO"/}; wf=${wf%%@*}
+          # Own runs on this commit, including cancelled ones, are not checks to wait for.
+          own=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$SHA" --paginate \
+            --jq ".workflow_runs[] | select(.path == \"$wf\") | .id" | paste -sd'|' -)
+          stop() { echo "::notice::not merging: $1"; echo "not merging: $1" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
+          # shellcheck disable=SC2016
+          q='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){
+            reviewThreads(first:100){totalCount nodes{isResolved}}}}}'
+          # shellcheck disable=SC2016
+          for i in $(seq 90); do
+            pr=$(gh pr view "$PR_NUM" --json state,isDraft,headRefOid,labels)
+            [ "$(jq -r '.state' <<<"$pr")" = OPEN ] || stop "PR is not open"
+            [ "$(jq -r '.isDraft' <<<"$pr")" = false ] || stop "PR is a draft"
+            [ "$(jq -r '.headRefOid' <<<"$pr")" = "$SHA" ] || stop "head commit changed"
+            jq -e 'any(.labels[]; .name == "automerge")' <<<"$pr" >/dev/null || stop "label removed"
+
+            runs=$(gh api "repos/$GH_REPO/commits/$SHA/check-runs" --paginate --jq '.check_runs[]' |
+              jq -s --arg own "${own:-^$}" '[.[] | select((.details_url // "") | test("/runs/(" + $own + ")/") | not)]')
+            statuses=$(gh api "repos/$GH_REPO/commits/$SHA/status" --jq '.statuses')
+            bad=$(jq -r --argjson s "$statuses" '[.[] | select(.status == "completed" and
+              (.conclusion | IN("success", "neutral", "skipped") | not)) | .name] +
+              [$s[] | select(.state | IN("failure", "error")) | .context] | join(", ")' <<<"$runs")
+            [ -z "$bad" ] || stop "failed: $bad"
+
+            todo=$(jq -r --argjson s "$statuses" '[.[] | select(.status != "completed")] | length +
+              ($s | map(select(.state == "pending")) | length)' <<<"$runs")
+            seen=$(jq -r --argjson s "$statuses" 'length + ($s | length)' <<<"$runs")
+            threads=$(gh api graphql -F o="${GH_REPO%/*}" -F r="${GH_REPO#*/}" -F n="$PR_NUM" -f query="$q" \
+              --jq '.data.repository.pullRequest.reviewThreads | (.totalCount > 100) as $more |
+                [.nodes[] | select(.isResolved | not)] | length + ($more | if . then 1 else 0 end)')
+            # Checks register a few seconds after a push, so none yet means not started.
+            if [ "$todo" = 0 ] && [ "$threads" = 0 ] && { [ "$seen" -gt 0 ] || [ "$i" -gt 4 ]; }; then
+              echo "ready=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 30
+          done
+          stop "timed out waiting for checks or review threads"
+
+      - name: fetch APP_CLIENT_ID
+        if: steps.wait.outputs.ready == 'true'
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_CLIENT_ID
+
+      - name: fetch APP_PRIVATE_KEY
+        if: steps.wait.outputs.ready == 'true'
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
+
+      - name: mint app token
+        if: steps.wait.outputs.ready == 'true'
+        id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: squash merge
+        if: steps.wait.outputs.ready == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: gh pr merge "$PR_NUM" --squash --match-head-commit "$SHA"

@@ -25,6 +25,7 @@ Inputs and defaults are documented under `on.workflow_call.inputs` in each file,
 | [`release`](.github/workflows/release.yml) | release-please, authored by the org app so CI runs on the release PR |
 | [`ai-review`](.github/workflows/ai-review.yml) | PR-Agent review on the `ai:pr-agent` label |
 | [`review-label`](.github/workflows/review-label.yml) | requests a cubic review on the `ai:cubic` label |
+| [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` as the org app once every other check on the head commit is green and no review thread is open. It polls on `pull_request` (`labeled`, `synchronize`, `ready_for_review`), so callers need no CI workflow names. A failed check, draft, removed label or new commit ends the run without merging; re-label to retry. Not for `infra` or `.github`. |
 
 ```yaml
 jobs:
@@ -125,7 +126,7 @@ get their caller from there instead; change a workflow here first, then the temp
 ## Labels
 
 `infra` declares the label set every repo carries: the GitHub defaults, `fleet:*` for agent work
-and release-please's `autorelease: *`. Review bots run on demand by PR label:
+release-please's `autorelease: *` and `automerge`. Review bots run on demand by PR label:
 
 | Label | Bot | Notes |
 |-------|-----|-------|
