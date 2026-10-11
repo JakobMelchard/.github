@@ -1,0 +1,11 @@
+{
+  "name": "Go CI",
+  "description": "Go: vet, test and build, skipped for Markdown-only changes (JakobMelchard/.github go.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "Go"
+  ],
+  "filePatterns": [
+    "go\\.mod$"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Xcode CI",
+  "description": "Xcode: generate, swift-format lint, build and test on a simulator; macOS minutes cost 10x (JakobMelchard/.github xcode.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "Swift"
+  ],
+  "filePatterns": [
+    "project\\.yml$",
+    "\\.xcodeproj$"
+  ]
+}

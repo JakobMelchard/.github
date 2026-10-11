@@ -19,8 +19,8 @@ groups for their packages; majors and security fixes come on their own. The CI w
 and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
 with no Gradle tasks (toolchain setup only). `cf` with `dry-run` against a fixture Worker (no credentials); `release.yml` is not smoke-called; `tofu.yml` is called with plan, apply and state commit off, so its jobs skip.
 
-Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
-alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
+Callers pin a release tag (`@vX.Y.Z`), or its commit SHA with the tag in a trailing comment, never
+`@main`; Renovate bumps the pin. Tags and what they mean: *Releases of this repo*.
 
 ## Other workflows
 
@@ -35,8 +35,11 @@ docs.melchard.org shell: `tokens.css` + `style.css` loaded from the `assets` inp
 `https://docs.melchard.org/assets`, the docs root's files), one centred mono column, no HonKit.
 Callers: flatplan, lilfeelz/keyboard.
 
-There are no starter workflows (`workflow-templates/` was removed): a new repo gets its CI caller from
-`JakobMelchard/template`, rendered by `scripts/org-repo new` in that repo.
+`workflow-templates/` holds one starter workflow per reusable workflow (`go` `python` `node` `shell`
+`hooks` `terraform` `xcode` `android` `release` `ai-review` `review-label`), each a one-line caller pinned
+by SHA to the latest release tag with a `.properties.json` for the GitHub UI ("New workflow" in any org
+repo). Renovate bumps the pins. A repo born from `JakobMelchard/template` gets its caller rendered there
+instead (`scripts/org-repo new`).
 
 ## Community files
 
@@ -94,7 +97,8 @@ the app credentials as `secrets:` from their callers until those are migrated.
 
 ## Reusable workflows
 
-Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
+Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@vX.Y.Z`, the latest release tag (or
+its SHA with the tag in a comment). The examples below write `vX.Y.Z` for it.
 
 | Workflow | For | Key inputs |
 |----------|-----|------------|
@@ -124,7 +128,7 @@ name: ci
 on: { pull_request: {}, push: { branches: [main] } }
 jobs:
   ci:
-    uses: JakobMelchard/.github/.github/workflows/go.yml@main
+    uses: JakobMelchard/.github/.github/workflows/go.yml@vX.Y.Z
     with:
       test-cmd: make test
       build-cmd: make build
@@ -138,7 +142,7 @@ imports, is public since 2026-09-27 and needs neither):
 ```yaml
 jobs:
   ci:
-    uses: JakobMelchard/.github/.github/workflows/go.yml@main
+    uses: JakobMelchard/.github/.github/workflows/go.yml@vX.Y.Z
     with:
       private-modules: true
     secrets: inherit
@@ -212,7 +216,7 @@ Making `observe` public removes the need for either.
 ```yaml
 jobs:
   ci:
-    uses: JakobMelchard/.github/.github/workflows/python.yml@main
+    uses: JakobMelchard/.github/.github/workflows/python.yml@vX.Y.Z
     with:
       python-version: "3.11"
       package-manager: pip          # transcriber: venv + pip install -e ".[dev]"
@@ -231,7 +235,7 @@ which is private. Set `private-deps: true` and `secrets: inherit`, and provide a
 ```yaml
 jobs:
   ci:
-    uses: JakobMelchard/.github/.github/workflows/node.yml@main
+    uses: JakobMelchard/.github/.github/workflows/node.yml@vX.Y.Z
     with:
       check-cmd: make check
       lint-cmd: make lint
@@ -255,7 +259,7 @@ permissions:
   pull-requests: write
 jobs:
   tofu:
-    uses: JakobMelchard/.github/.github/workflows/tofu.yml@main
+    uses: JakobMelchard/.github/.github/workflows/tofu.yml@vX.Y.Z
     with:
       working-directory: terraform/tailscale
       plan: true            # default; PR: tofu plan against the committed state, one comment per directory
@@ -275,7 +279,7 @@ group `tofu-state-<dir>`, queued and never cancelled. The caller grants `id-toke
 ## Composite actions
 
 ```yaml
-- uses: JakobMelchard/.github/actions/gitleaks@main
+- uses: JakobMelchard/.github/actions/gitleaks@vX.Y.Z
   with:
     config: .gitleaks.toml     # optional
 ```
@@ -292,8 +296,8 @@ every file; its `skip` input names hooks the runner cannot run.
 `self-release.yml` runs release-please on every push to `main` (the reusable `release.yml`,
 called locally) and, once a release exists, moves the major tag (`v1`) onto it. Immutable
 releases are enabled here, so `vX.Y.Z` release tags and their assets never change after
-publish; `v1` is a plain tag, not a release, which is why it may move. Pin `@v1` for a
-tested line, `@vX.Y.Z` for a frozen one, `@main` to follow every merge. `bootstrap-sha` in
+publish; `v1` is a plain tag, not a release, which is why it may move, so callers pin
+`@vX.Y.Z` instead. `bootstrap-sha` in
 `release-please-config.json` keeps history before the first automated release out of the
 changelog. The release PR is authored by melchbot (`release.yml` loads its credentials from
 Infisical), so `lint.yml` runs on it like on any PR. Every caller gets the same; its calling
@@ -346,6 +350,7 @@ The org's GitHub settings (repos of both accounts, rulesets, runner variables, l
 ```
 .github/workflows/    reusable workflows + this repo's own lint.yml, self-release.yml
 .github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
+workflow-templates/   starter callers pinned to the latest release, one per reusable workflow
 actions/              composite actions (code-changed, docs, gitleaks, tokens-check)
 scripts/              shell tools: `ci` (latest CI conclusion per repo) and `lib/common.sh`, the helpers
                       config-sync, fleet-sync, org-repo and ios source (`JM_LIB`, default

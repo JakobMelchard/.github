@@ -4,7 +4,7 @@ name: android
 #
 #   jobs:
 #     ci:
-#       uses: JakobMelchard/.github/.github/workflows/android.yml@main
+#       uses: JakobMelchard/.github/.github/workflows/android.yml@v1.6.0
 #       with:
 #         gradle-tasks: ":app:testDebugUnitTest :app:assembleDebug"
 #         android-packages: "platforms;android-36 build-tools;36.0.0"

@@ -1,0 +1,11 @@
+{
+  "name": "Android CI",
+  "description": "Android: JDK, SDK and Gradle unit tests plus debug build (JakobMelchard/.github android.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "Kotlin"
+  ],
+  "filePatterns": [
+    "gradlew$"
+  ]
+}

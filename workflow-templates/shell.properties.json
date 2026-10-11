@@ -1,0 +1,8 @@
+{
+  "name": "Shell CI",
+  "description": "Shell: bash and zsh syntax check plus shellcheck over every script (JakobMelchard/.github shell.yml)",
+  "iconName": "octicon terminal",
+  "categories": [
+    "Shell"
+  ]
+}

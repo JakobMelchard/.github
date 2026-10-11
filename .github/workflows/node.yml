@@ -7,7 +7,7 @@ name: node
 #
 #   jobs:
 #     ci:
-#       uses: JakobMelchard/.github/.github/workflows/node.yml@main
+#       uses: JakobMelchard/.github/.github/workflows/node.yml@v1.6.0
 #       with:
 #         check-cmd: npx tsc
 #         test-cmd: npm test

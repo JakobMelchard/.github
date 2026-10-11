@@ -1,0 +1,11 @@
+{
+  "name": "Python CI",
+  "description": "Python: uv or pip install, ruff and pytest (JakobMelchard/.github python.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "Python"
+  ],
+  "filePatterns": [
+    "pyproject\\.toml$"
+  ]
+}

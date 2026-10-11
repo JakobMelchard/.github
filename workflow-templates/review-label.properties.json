@@ -1,0 +1,8 @@
+{
+  "name": "Review bot bridge (label)",
+  "description": "Labelling a ready PR ai:cubic asks cubic to review as the org app (JakobMelchard/.github review-label.yml)",
+  "iconName": "octicon comment-discussion",
+  "categories": [
+    "Automation"
+  ]
+}
