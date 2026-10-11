@@ -99,6 +99,20 @@ jobs:
       paths: infra scripts
       severity: warning
 
+  # plan and apply need Infisical and a state, so both stay off: both jobs skip, which still
+  # proves the file parses and the caller-side permissions resolve.
+  smoke-tofu:
+    uses: ./.github/workflows/tofu.yml
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    with:
+      working-directory: infra
+      plan: false
+      apply: false
+      state-commit: false
+
   # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the
   # generate/lint plumbing on a bare checkout.
   smoke-xcode:
