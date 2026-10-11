@@ -299,8 +299,9 @@ pinned issue #70.
 From 2026-10-16 (end of the Max subscription) `.github/workflows/routines.yml` is the only path: it runs the
 `routines/*.md` prompts with opencode (`opencode-go/mimo-v2.5` by default) on the org app token,
 org repos only. `workflow_dispatch` runs it once (dry run by default); set the repo variable
-`ROUTINES` to `on` and the nightly schedule takes over. Needs the repo secret
-`OPENCODE_API_KEY` next to the `APP_*` secrets and the app's Checks and Actions read permissions.
+`ROUTINES` to `on` and the nightly schedule takes over. Reads
+`OPENCODE_API_KEY` and the `APP_*` credentials from Infisical project `gha` (no repository secret)
+and needs the app's Checks and Actions read permissions.
 
 ## Template repository
 
