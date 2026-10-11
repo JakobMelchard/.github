@@ -13,7 +13,7 @@ workflow or hook set.
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `SUPPORT.md`, `CONTRIBUTING.md` org defaults
 - `workflow-templates/` starter callers (`<name>.yml` + `<name>.properties.json`)
 - `actions/` composite actions
-- `scripts/ci` and `scripts/lib/common.sh`: the helpers that `config-sync` and `fleet-sync` (`.config`), `org-repo` (`template`) and `ios` (`lilfeelz/workspaces`) source via `JM_LIB`; bats tests in `scripts/test`
+- `scripts/ci` and `scripts/lib/common.sh`: the helpers that `fleet-sync` (`.config`), `org-repo` (`template`) and `ios` (`lilfeelz/workspaces`) source via `JM_LIB`; bats tests in `scripts/test`
 - `renovate/default.json` org preset, `routines/` prompts for the nightly routines, `profile/` org profile
 - Repo settings, labels and tofu live in `JakobMelchard/infra`, not here
 

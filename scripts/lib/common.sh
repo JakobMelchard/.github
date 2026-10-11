@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Helpers shared by the org's shell tools (ci here, config-sync and fleet-sync in .config, org-repo
+# Helpers shared by the org's shell tools (ci here, fleet-sync in .config, org-repo
 # in template, ios in lilfeelz/workspaces). Sourced, not executed; bash 3.2 compatible.
 #   . "${JM_LIB:-$HOME/Workspaces/JakobMelchard/.github/scripts/lib}/common.sh"
 ORG="${ORG:-JakobMelchard}"
@@ -45,39 +45,6 @@ fetch_rev() {
   fi
   read -r ref sha < "$d/.fetch-rev" || { echo unknown; return; }
   case "$ref" in v[0-9]*) printf '%s\n' "$ref" ;; *) printf '%s\n' "${sha:-$ref}" ;; esac
-}
-
-# vendored <src> <dst> <label> [rev]: print <src> as vendor writes it, with a one-line header
-# where <dst>'s format has comments. <label> is <repo>/<path>, rev the source version.
-vendored() {
-  local src=$1 dst=$2 label=$3 rev=${4:-unknown}
-  case "$dst" in
-    *.js)   echo "// VENDORED from $ORG/$label - do not edit here; run config-sync." ;;
-    *.toml|*.yml|*.yaml|*editorconfig)
-            echo "# VENDORED from $ORG/$label - do not edit here; run config-sync." ;;
-    *.css)  echo "/* VENDORED from $ORG/${label%%/*} ${label#*/} @$rev. Do not edit; run config-sync. */" ;;
-    *.swift) echo "// VENDORED from $ORG/${label%%/*} ${label#*/} @$rev. Do not edit; run config-sync." ;;
-  esac      # json and markdown have no comment syntax: copied verbatim
-  cat "$src"
-}
-
-# vendor <src> <dst> <label> [rev]: write the vendored copy of <src> to <dst>
-vendor() {
-  mkdir -p "$(dirname "$2")"
-  vendored "$@" > "$2"
-  say "  $2"
-}
-
-# vendor_check <src> <dst> <label> [rev]: succeed when <dst> matches what vendor would write, else
-# print a diff and fail. The VENDORED header is ignored, so a version bump alone is not drift.
-vendor_check() {
-  local dst=$2 unheader='1{/VENDORED from/d;}'
-  [ -f "$dst" ] || { say "  missing $dst"; return 1; }
-  if diff -u --label "$dst" --label "$dst (expected)" <(sed "$unheader" "$dst") <(vendored "$@" | sed "$unheader"); then
-    say "  ok $dst"
-  else
-    say "  drift $dst"; return 1
-  fi
 }
 
 org_repos() { # org_repos [all]: sorted $ORG repo names; archived ones only with `all`
