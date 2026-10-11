@@ -2,7 +2,7 @@
 
 Applies to every `JakobMelchard` repository and to the `lilfeelz` personal repos that call the
 workflows in this repo. A repo's own `AGENTS.md` adds the specifics; it may narrow these rules,
-never contradict them. This file is the reference the rebuild cites instead of re-deciding.
+never contradict them.
 
 ## Accounts and placement
 
@@ -43,13 +43,11 @@ never contradict them. This file is the reference the rebuild cites instead of r
 
 - release-please only where a tag is consumed: this repo, `.githooks`, `.config`, `template`,
   `workline`, `observe`. Apps deploy from `main` and carry no version.
-- Callers pin this repo's reusable workflows by release tag (`@v2.3.1`), never `@main`.
-- Third-party actions are pinned by full commit SHA with the version in a comment.
-- Hooks pin `JakobMelchard/.githooks` by tag in `.pre-commit-config.yaml`.
-- The template is pinned by tag in `.copier-answers.yml`.
-- Renovate bumps all of the above from the org preset (`config:best-practices`,
-  `:enablePreCommit`, the copier manager); digest, pin and patch updates automerge on green CI,
-  everything else waits for review. No other mechanism touches rendered files across repos.
+- Pin everything: reusable workflows by release tag, third-party actions by commit SHA with the
+  version in a comment, `.githooks` by tag in `.pre-commit-config.yaml`, the template by tag in
+  `.copier-answers.yml`. Never `@main`.
+- Renovate bumps all of it from the org preset (see the README); nothing else touches rendered
+  files across repos.
 
 ## Files every repo has at birth
 

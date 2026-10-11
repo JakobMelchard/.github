@@ -1,383 +1,164 @@
 # .github
 
-Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos:
-reusable workflows, composite actions, and the org's GitHub settings as code.
-This repo is public so that `lilfeelz` repos can call the workflows cross-account
-and so the org profile renders; everything else on the platform is private —
-see `JakobMelchard/.agents/PLATFORM.md` for the map.
-
-Actions are pinned by commit SHA with the version in a trailing comment; Renovate
-keeps the pins fresh through the org preset in `renovate/default.json`, which every
-repo extends (`github>JakobMelchard/.github//renovate/default`). Digest and patch
-bumps automerge once CI is green; everything else waits for a review. Updates arrive weekly (Monday before 4am, Vienna)
-as grouped PRs per repo: one for patch and digest, one for minor, plus the `hx`, `github actions` and `pre-commit hooks`
-groups for their packages; majors and security fixes come on their own. The CI workflows declare
-`permissions: contents: read` at the top (`release.yml` needs `contents: write` +
-`pull-requests: write` + `id-token: write`), checkouts do not persist credentials, and caller-supplied
-`*-cmd` inputs reach the shell through `env`, never by template expansion.
-`lint.yml` gates every change here — actionlint over workflows, zizmor, shellcheck over the hooks, a bash-3.2 portability check, and smoke calls of `go` `python` `node` (including the Chromium path)
-and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
-with no Gradle tasks (toolchain setup only). `cf` with `dry-run` against a fixture Worker (no credentials); `release.yml` is not smoke-called; `tofu.yml` is called with plan, apply and state commit off, so its jobs skip.
-
-Callers pin a release tag (`@vX.Y.Z`), or its commit SHA with the tag in a trailing comment, never
-`@main`; Renovate bumps the pin. Tags and what they mean: *Releases of this repo*.
-
-## Other workflows
-
-Repo settings, labels, rulesets and interaction limits are declared in `JakobMelchard/infra` (`terraform/github`), see *Infra*.
-
-Issues labeled `feedback` (filed from an app's in-app form)
-are triaged by the nightly cloud routine (see Routines), which retitles them and queues
-scoped ones with `agent:cloud`; the former opencode action is gone.
-
-`actions/docs` builds a repo's markdown docs (`docs/`, nav from `SUMMARY.md`) into static pages in the
-docs.melchard.org shell: `tokens.css` + `style.css` loaded from the `assets` input (default
-`https://docs.melchard.org/assets`, the docs root's files), one centred mono column, no HonKit.
-Callers: flatplan, lilfeelz/keyboard.
-
-`workflow-templates/` holds one starter workflow per reusable workflow (`go` `python` `node` `shell`
-`hooks` `terraform` `xcode` `android` `release` `ai-review` `review-label`), each a one-line caller pinned
-by SHA to the latest release tag with a `.properties.json` for the GitHub UI ("New workflow" in any org
-repo). Renovate bumps the pins. A repo born from `JakobMelchard/template` gets its caller rendered there
-instead (`scripts/org-repo new`).
-
-## Community files
-
-Default community health files here apply to every org repo that has none of its own,
-private repos included: the issue forms under `.github/ISSUE_TEMPLATE/` (`Bug`, `Task`,
-blank issues off), `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md` and `CONTRIBUTING.md`.
-CODEOWNERS and LICENSE are not inheritable and stay per repo. Private vulnerability
-reporting is on for the public repos (`private_vulnerability_reporting` in `JakobMelchard/infra` `terraform/github/settings.json`).
-
-## Labels
-
-`terraform/github/settings.json` in `JakobMelchard/infra` declares the label set every non-archived repo carries
-and `terraform/github/labels` applies it (`labels.yml` there, weekly and on change). The set: the GitHub
-defaults, `fleet/*` for agent-driven work, and release-please's `autorelease: *`.
-
-Review bots run on demand, by PR label (labels above, `review-label.yml` for the bridge):
-
-| Label | Bot | Notes |
-|-------|-----|-------|
-| `ai:coderabbit` | CodeRabbit | label allowlist in its own config; free on public repos only |
-| `ai:sourcery` | Sourcery | label allowlist in its own config; free on public repos only |
-| `ai:cubic` | cubic | no allowlist: `review-label.yml` comments `@cubic-dev-ai review` as melchbot, then removes the label; 20 reviews per org per month on private repos |
-| `ai:pr-agent` | PR-Agent | `ai-review.yml`, models via OpenCode Go |
-
-## GitHub App
-
-`melchbot` is the org GitHub App behind every cross-repo job: private dependencies in
-the reusable workflows and `infra`'s `labels.yml` and `github.yml`. It is installed on **all
-repositories** with Contents, Issues and Pull requests read and write, which is exactly
-what those jobs mint tokens for (each job requests only the permissions it names, scoped
-to the repos in `infra`'s `terraform/github/settings.json`, revoked when the job ends).
-
-Its credentials live in Infisical project `core` (`dev`) as `MELCHBOT_CLIENT_ID` and
-`MELCHBOT_PRIVATE_KEY`, with a copy as `APP_CLIENT_ID` and `APP_PRIVATE_KEY` in project
-`gha` (slug `gha-lfq-y`, `dev`) for CI. Rotate both. The workflows in this repo load them at
-runtime over OIDC, no Actions secret involved:
-
-```yaml
-permissions:
-  id-token: write
-steps:
-  - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
-    with:
-      method: oidc
-      identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org: any JakobMelchard repo
-      domain: https://eu.infisical.com
-      project-slug: gha-lfq-y
-      env-slug: dev
-  # then ${{ env.APP_CLIENT_ID }} / ${{ env.APP_PRIVATE_KEY }}
-```
-
-The step exports every key in `gha` to the rest of the job. New CI secrets go into `gha`,
-not into Actions secrets. The reusable workflows (`release.yml`, `private-deps`) still take
-the app credentials as `secrets:` from their callers until those are migrated.
+Shared CI for the `JakobMelchard` org and the `lilfeelz` personal repos: reusable workflows,
+composite actions, starter workflows and the org Renovate preset. The repo is public so that
+`lilfeelz` repos can call the workflows and the org profile renders. Contributing rules are in
+[CONTRIBUTING.md](CONTRIBUTING.md), rules for agents working here in [AGENTS.md](AGENTS.md).
 
 ## Reusable workflows
 
-Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@vX.Y.Z`, the latest release tag (or
-its SHA with the tag in a comment). The examples below write `vX.Y.Z` for it.
+Inputs and defaults are documented under `on.workflow_call.inputs` in each file, secrets under
+`on.workflow_call.secrets`.
 
-| Workflow | For | Key inputs |
-|----------|-----|------------|
-| `release.yml` | any repo using release-please | `release-type` `config-file`; the app authors the release PR so CI runs on it, credentials from Infisical, caller grants `id-token: write` |
-| `go.yml` | `health` `workouts` `gsheet` | `go-version` `vet-cmd` `test-cmd` `build-cmd` `private-modules` |
-| `python.yml` | `monitor` `observe` `cf` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
-| `node.yml` | `cf` `hx` `workouts-hx` `lists` `switchboard` `interviews` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
-| `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `template` | `paths` `severity` |
-| `terraform.yml` | `infra` | `working-directory` `validate` `runs-on` |
-| `tofu.yml` | `infra` | `working-directory` `runs-on` `plan` `apply` `state-commit` `state-path` `passphrase-env` `env` `app-token-owner` `app-token-env` `app-token-owner-2` `app-token-env-2` `extra-infisical-project` `extra-infisical-identity` `env-map` (see *Tofu*) |
-| `cf.yml` | `switchboard` `mealrot` | `working-directory` `environment` `wrangler-version` `dry-run` `account-id` `node-version` `install-cmd` (`wrangler deploy` for a Worker with a Durable Object; credentials from Infisical project `cloudflare` over OIDC; caller grants `id-token: write`) |
-| `xcode.yml` | `zmxapp` `zmxkit` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
-| `android.yml` | `workouts-go` `workouts-hx` `fz` `template` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
-
-Every `*-cmd` input skips its step when set to `""`.
-
-The language workflows (`go`, `python`, `node`, `shell`, `terraform`, `android`) skip their `ci`
-job when a push or PR changed only Markdown (`actions/code-changed`, from the compare API; a
-new branch, a manual run or an API error count as code). `pr-title` and `hooks.yml` still run,
-since they lint titles and docs. A skipped job reports success. `xcode.yml` has no gate:
-callers filter with `paths` (macOS minutes are 10x).
-
-### Go
+| Workflow | What it does |
+|----------|--------------|
+| [`go`](.github/workflows/go.yml) | vet, test, build |
+| [`python`](.github/workflows/python.yml) | uv or pip install, lint, test |
+| [`node`](.github/workflows/node.yml) | install, check, lint, test, optional Playwright e2e |
+| [`shell`](.github/workflows/shell.yml) | syntax check and shellcheck over every script with a shell shebang |
+| [`hooks`](.github/workflows/hooks.yml) | the caller's prek config over all files |
+| [`terraform`](.github/workflows/terraform.yml) | OpenTofu fmt, init, validate |
+| [`tofu`](.github/workflows/tofu.yml) | OpenTofu plan on PRs, apply and encrypted state commit on the default branch |
+| [`cf`](.github/workflows/cf.yml) | `wrangler deploy` for a Worker with a Durable Object |
+| [`xcode`](.github/workflows/xcode.yml) | swift-format, xcodebuild test on a macOS runner |
+| [`android`](.github/workflows/android.yml) | Gradle build and unit tests |
+| [`release`](.github/workflows/release.yml) | release-please, authored by the org app so CI runs on the release PR |
+| [`ai-review`](.github/workflows/ai-review.yml) | PR-Agent review on the `ai:pr-agent` label |
+| [`review-label`](.github/workflows/review-label.yml) | requests a cubic review on the `ai:cubic` label |
 
 ```yaml
-name: ci
-on: { pull_request: {}, push: { branches: [main] } }
 jobs:
   ci:
     uses: JakobMelchard/.github/.github/workflows/go.yml@vX.Y.Z
     with:
       test-cmd: make test
-      build-cmd: make build
 ```
 
-A repo that depends on a private Go module in the org needs more than
-`GOPRIVATE`, which does not authenticate a runner. Set `private-modules` and
-pass a token with read access to the module repo (`gsheet`, which `workouts`
-imports, is public since 2026-09-27 and needs neither):
+Shared behaviour:
 
-```yaml
-jobs:
-  ci:
-    uses: JakobMelchard/.github/.github/workflows/go.yml@vX.Y.Z
-    with:
-      private-modules: true
-    secrets: inherit
+- Every `*-cmd` input skips its step when set to `""`, except `python`'s `install-cmd`, which
+  overrides the `package-manager` install.
+- `go`, `python`, `node`, `shell`, `terraform` and `android` skip their `ci` job when a change
+  touched only Markdown (`actions/code-changed`). A skipped job reports success. `pr-title` and
+  `hooks` still run. `xcode` has no gate, callers filter with `paths`.
+- The language workflows, `hooks`, `cf`, `xcode`, `android` and `release` write the reusable
+  workflow's ref and SHA to the step summary.
+- `runs-on` is a plain label in most workflows and JSON in `shell`, `release`, `ai-review` and
+  `review-label`. Empty uses the org variable `RUNNER_LINUX` (`RUNNER_MACOS` for `xcode`), then
+  GitHub's hosted runner.
+
+Find callers with a code search for `JakobMelchard/.github/.github/workflows/<name>.yml`.
+
+### Pinning
+
+Pin a release tag (`@vX.Y.Z`) or its commit SHA with the tag in a trailing comment, never
+`@main`. The moving `v1` tag exists for old callers; do not use it. Third-party actions are pinned
+by SHA. Renovate bumps both through the org preset, which every repo extends:
+
+```json
+{ "extends": ["github>JakobMelchard/.github//renovate/default"] }
 ```
 
-`github.token` is scoped to the calling repo only — a cross-repo private module
-needs a PAT or app token passed as `secrets.token`. Map it explicitly rather
-than using `secrets: inherit`, so only that one secret crosses the boundary:
+Updates arrive weekly (Monday, Vienna time), grouped per repo. Patch, digest and GitHub Actions
+minor updates automerge once CI is green; majors, Docker and `copier` updates wait for review.
 
-```yaml
-    secrets:
-      token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
-```
+### Private dependencies
 
-### Private dependencies: GitHub App (preferred) or PAT
+`go`, `python` and `node` read private org repos when `private-modules` (go) or `private-deps`
+(python, node) is true and `private-repos` names them. Credentials, first match wins:
 
-`transcriber` imports private `observe` and needs cross-repo read access. The
-shared workflows support two credential types and prefer the app when its
-private key is present.
+1. `app-client-id` and `app-private-key` secrets: mints a token for the listed repos, revoked when
+   the job ends.
+2. A `token` secret (fine-grained PAT, Contents read).
+3. `github.token`, which cannot read other repos, so the job fails.
 
-**GitHub App — recommended.** No expiry to babysit, and each run mints a token
-scoped to the listed repos that is revoked when the job ends.
-
-1. Org Settings → Developer settings → GitHub Apps → **New GitHub App**
-   - Name: anything (e.g. `melchbot`)
-   - Homepage URL: any valid URL; **uncheck Webhook → Active**
-   - Repository permissions: **Contents → Read-only** (Metadata follows automatically)
-   - Where can it be installed: *Only on this account*
-2. After creating it: note the **Client ID**, then **Generate a private key**
-   (downloads a `.pem`).
-3. **Install App** → Only select repositories → every repo that will be read
-   as a dependency (`observe` today). A token is only mintable for repos in the
-   installation, so `private-repos` naming one the App is not installed on
-   fails to mint.
-4. Add two secrets (Settings → Secrets and variables → Actions) on each repo
-   that calls a workflow with `private-deps` — `transcriber` today:
-   - `APP_CLIENT_ID` — the Client ID
-   - `APP_PRIVATE_KEY` — the full contents of the `.pem`, `BEGIN`/`END` lines included
-
-   **Repository secrets, not org secrets.** `JakobMelchard` is on the free
-   plan, where an org secret can only be granted to public repos, and the
-   consumers that need these are private. Org secrets become an option on Team,
-   or for a public caller.
-
-```yaml
-    with:
-      private-deps: true
-      private-repos: observe       # what the minted token may read
-    secrets:
-      app-client-id: ${{ secrets.APP_CLIENT_ID }}
-      app-private-key: ${{ secrets.APP_PRIVATE_KEY }}
-```
-
-**PAT — simpler, expires.** Fine-grained PAT, resource owner `JakobMelchard`,
-repository access limited to `observe`, permission Contents: Read-only. Store
-as a repository secret `PRIVATE_DEPS_TOKEN` on the calling repo — same free-plan
-constraint as above — and pass it instead:
-
-```yaml
-    secrets:
-      token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
-```
-
-Supplying both is fine — the app wins. Supplying neither falls back to
-`github.token`, which cannot read another repo, so the job fails closed.
-
-Making `observe` public removes the need for either.
-
-### Python
-
-```yaml
-jobs:
-  ci:
-    uses: JakobMelchard/.github/.github/workflows/python.yml@vX.Y.Z
-    with:
-      python-version: "3.11"
-      package-manager: pip          # transcriber: venv + pip install -e ".[dev]"
-      lint-cmd: ruff check src tests
-      test-cmd: python -m pytest
-```
-
-`monitor` is stdlib-only — use `package-manager: none`.
-
-`transcriber` depends on `observe` via `git+https://github.com/JakobMelchard/observe.git`,
-which is private. Set `private-deps: true` and `secrets: inherit`, and provide a
-`token` secret — same constraint as `private-modules` in `go.yml`.
-
-### Node
-
-```yaml
-jobs:
-  ci:
-    uses: JakobMelchard/.github/.github/workflows/node.yml@vX.Y.Z
-    with:
-      check-cmd: make check
-      lint-cmd: make lint
-```
+Map secrets explicitly instead of `secrets: inherit`, so only those cross the boundary.
 
 ### Tofu
 
-`terraform.yml` only lints (fmt, `init -backend=false`, validate). `tofu.yml` plans, applies and commits state; it is a separate workflow so that lint-only callers never grant its permissions. The state is OpenTofu-encrypted and
-committed in git; the passphrase `TOFU_STATE_PASSPHRASE`, `APP_CLIENT_ID` and `APP_PRIVATE_KEY` come
-from Infisical (project `gha`, identity `gha-org`, OIDC), never Actions secrets.
+`terraform` lints only. `tofu` is separate so lint-only callers never grant its permissions. It
+needs `id-token: write` and `pull-requests: write` from the caller, who also owns the triggers:
+filter push on the root's paths and exclude the state directory.
 
 ```yaml
-on:
-  pull_request:
-  push:
-    branches: [main]
-    paths: [terraform/tailscale/**, "!terraform/tailscale/state/**"]
-permissions:
-  contents: read
-  id-token: write
-  pull-requests: write
+permissions: { contents: read, id-token: write, pull-requests: write }
 jobs:
   tofu:
     uses: JakobMelchard/.github/.github/workflows/tofu.yml@vX.Y.Z
     with:
       working-directory: terraform/tailscale
-      plan: true            # default; PR: tofu plan against the committed state, one comment per directory
-      apply: true           # default; push to the default branch: tofu apply -auto-approve
-      state-commit: true    # default; then push the encrypted state back (only if the serial moved)
-      env: |
-        TAILSCALE_OAUTH_CLIENT_ID=...
-      app-token-owner: JakobMelchard   # optional: org-app token exported as GITHUB_TOKEN
 ```
 
-`state-commit` pushes as the org app, which needs an `always` bypass on the branch ruleset, and the
-commit is `chore(<dir>): update encrypted state (serial N) [skip ci]`. The caller filters its push
-paths and excludes the state directory. Plans and applies of one directory share the concurrency
-group `tofu-state-<dir>`, queued and never cancelled. The caller grants `id-token: write` and
-`pull-requests: write`.
+State is OpenTofu-encrypted and committed to git. The passphrase and app credentials come from
+Infisical. The state commit is pushed by the org app, which needs an `always` bypass on the branch
+ruleset. Plans and applies of one directory queue in the group `tofu-state-<dir>` and never cancel.
 
-Secrets that live in another Infisical project (for example the Cloudflare tokens in project
-`cloudflare`) are read in place instead of copied into `gha`. Optional, all default empty:
-
-```yaml
-    with:
-      extra-infisical-project: cloudflare-a1s-e   # second project, env dev, root path
-      extra-infisical-identity: <identity id>     # must trust this repo's OIDC subject
-      env-map: |
-        TF_VAR_cloudflare_dns_key=CLOUDFLARE_DNS_KEY
-        TF_VAR_cloudflare_zone_key=CLOUDFLARE_ZONE_TOKEN
-```
-
-Each `TARGET=SOURCE` line sets `TARGET` from the env var `SOURCE` (masked) in the plan and apply jobs;
-an empty `SOURCE` fails the job. The second project exports all its secrets under their own names as
-well, so a provider that reads such a variable by default (`CLOUDFLARE_API_TOKEN`) sees it; a name
-that collides with `TOFU_STATE_PASSPHRASE` or `APP_*` from `gha` fails the job. A `pull_request` run
-presents the subject `repo:OWNER/REPO:pull_request` (ref claim `refs/pull/N/merge`); push and
-`workflow_dispatch` runs present `repo:OWNER/REPO:ref:refs/heads/<branch>`. The identity must accept
-all that apply, so one bound to `main` and `dev` refs only (gha-deploy) rejects the plan job. PR plans
-execute the PR's tofu code with these secrets in the environment: use this only where PR authors are
-trusted (fork PRs get no `id-token`, hence no login).
+Secrets from a second Infisical project (for example Cloudflare tokens) are read in place with
+`extra-infisical-project` and `extra-infisical-identity`, and renamed with `env-map`. The identity
+must trust every OIDC subject the caller presents (`repo:OWNER/REPO:pull_request` for PR plans,
+`repo:OWNER/REPO:ref:refs/heads/<branch>` for pushes and manual runs). PR plans run the PR's code
+with these secrets loaded, so use them only where PR authors are trusted.
 
 ## Composite actions
 
-```yaml
-- uses: JakobMelchard/.github/actions/gitleaks@vX.Y.Z
-  with:
-    config: .gitleaks.toml     # optional
-```
+Call with `uses: JakobMelchard/.github/actions/<name>@vX.Y.Z`.
 
-## Git hooks
+| Action | What it does |
+|--------|--------------|
+| [`code-changed`](actions/code-changed/action.yml) | whether a push or PR changed more than Markdown |
+| [`docs`](actions/docs/action.yml) | builds a repo's `docs/` into static pages in the docs.melchard.org shell |
+| [`gitleaks`](actions/gitleaks/action.yml) | scans the checkout for committed secrets |
+| [`tokens-check`](actions/tokens-check/action.yml) | fails when vendored design tokens drift from `JakobMelchard/.config` |
 
-The hooks live in the public repo **`JakobMelchard/.githooks`** as a prek / pre-commit hook
-repository. Each repo pins it by tag in `.pre-commit-config.yaml` (Renovate bumps the pin) and
-runs `prek install` once per clone. In CI, the reusable `hooks.yml` runs the same config over
-every file; its `skip` input names hooks the runner cannot run.
+## Starter workflows
 
-## Releases of this repo
+[`workflow-templates/`](workflow-templates) has a one-line caller for each reusable workflow except `cf` and
+`tofu`, pinned to the latest release, for "New workflow" in any org repo. Repos created from `JakobMelchard/template`
+get their caller from there instead; change a workflow here first, then the template.
 
-`self-release.yml` runs release-please on every push to `main` (the reusable `release.yml`,
-called locally) and, once a release exists, moves the major tag (`v1`) onto it. Immutable
-releases are enabled here, so `vX.Y.Z` release tags and their assets never change after
-publish; `v1` is a plain tag, not a release, which is why it may move, so callers pin
-`@vX.Y.Z` instead. `bootstrap-sha` in
-`release-please-config.json` keeps history before the first automated release out of the
-changelog. The release PR is authored by melchbot (`release.yml` loads its credentials from
-Infisical), so `lint.yml` runs on it like on any PR. Every caller gets the same; its calling
-job must grant `id-token: write`, or the run fails at startup.
+## Hooks, community files, settings
+
+- Git hooks live in the public `JakobMelchard/.githooks`. Each repo pins it by tag in
+  `.pre-commit-config.yaml` and runs `prek install` once per clone.
+- Issue forms, the PR template, `SECURITY.md`, `SUPPORT.md` and `CONTRIBUTING.md` here are the
+  defaults for every org repo without its own. `CODEOWNERS` and `LICENSE` are not inherited.
+- Repo settings, rulesets and labels are OpenTofu in the private `JakobMelchard/infra`
+  (`terraform/github`).
+
+## Labels
+
+`infra` declares the label set every repo carries: the GitHub defaults, `fleet/*` for agent work
+and release-please's `autorelease: *`. Review bots run on demand by PR label:
+
+| Label | Bot | Notes |
+|-------|-----|-------|
+| `ai:coderabbit` | CodeRabbit | label allowlist in its own config; free on public repos only |
+| `ai:sourcery` | Sourcery | label allowlist in its own config; free on public repos only |
+| `ai:cubic` | cubic | `review-label` comments `@cubic-dev-ai review` and removes the label |
+| `ai:pr-agent` | PR-Agent | `ai-review` |
+
+Bots skip draft PRs.
 
 ## Routines
 
-Two Claude Code cloud routines (claude.ai/code/routines, account of the org owner, Max
-subscription) work the org at night, Europe/Vienna: `nightly-sweep` at 03:07
-triages new issues, implements issues labelled `agent:cloud` as draft PRs on `claude/issue-*`
-branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
-three draft PRs on `claude/improve-*` branches, three repos per night in rotation. Both stay
-inside the repos present in the run (the non-archived, non-fork org repos at run time, listed by `gh repo list`, plus whatever lilfeelz repos a hosted routine has attached; the personal dotfiles use `dev` as base; keyboard
-gets reading-only changes since its checks cannot run in the cloud), never
-merge, never touch base branches, workflows or infra. A repo's own checks run with `GH_TOKEN` and `GITHUB_TOKEN` removed from their environment (`env -u`). `routines/*.md` are the prompts, copied verbatim into the routine; edit the
-file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
-The repos must be selected on each routine in the web form (menu next to the routine
-name, Edit, "Select a repository"): a run only reaches the repos attached to it (GitHub
-API calls for any other repo get a 403 from the gateway), and the picker only offers
-repos the Claude GitHub App is installed on.
-The sweep's triage applies `agent:ready`, which switchboard hands to Jules; switchboard swaps it
-for `agent:cloud` when Jules cannot take the repo, and that is the sweep's own queue. Every write
-shows up on GitHub, so the Telegram `github` topic sees it. Each run appends one comment to the
-pinned issue #70.
+Two nightly routines run the prompts in [`routines/`](routines) against the org: `nightly-sweep`
+triages issues, implements `agent:cloud` issues as draft PRs and comments a verdict on Renovate
+PRs; `nightly-improve` opens at most three draft PRs per night. Neither merges nor touches base
+branches, workflows or infra. Each non-dry run appends a comment to issue #70.
 
-From 2026-10-16 (end of the Max subscription) `.github/workflows/routines.yml` is the only path: it runs the
-`routines/*.md` prompts with opencode (`opencode-go/mimo-v2.5` by default) on the org app token,
-org repos only. `workflow_dispatch` runs it once (dry run by default); set the repo variable
-`ROUTINES` to `on` and the nightly schedule takes over. Reads
-`OPENCODE_API_KEY` and the `APP_*` credentials from Infisical project `gha` (no repository secret)
-and needs the app's Checks and Actions read permissions.
+[`routines.yml`](.github/workflows/routines.yml) runs them with opencode on the org app token.
+`workflow_dispatch` is a dry run by default; the nightly schedule only runs when the repo variable
+`ROUTINES` is `on`.
 
-## Template repository
+## Secrets
 
-`JakobMelchard/template` is a [copier](https://copier.readthedocs.io) template (tags `v*`), not a
-GitHub template repository. `scripts/org-repo new <name> --template <t>` (in `JakobMelchard/template`) renders it
-and does the GitHub side; templates are `hx-app` `cf` `go` `py` `c-cpp` `infra` `ios` `macos`.
-Each rendered repo records its answers in `.copier-answers.yml`; Renovate's copier manager opens a PR
-when the template gets a new tag, and `uvx copier update --defaults` does the same by hand. The
-template's CI callers point at the workflows here, so change a workflow here first, then the template.
+No Actions secrets. CI loads secrets from Infisical over OIDC with the `Infisical/secrets-action`
+step (project `gha`, identity `gha-org`). The org GitHub App `melchbot` is installed on all repos
+with Contents, Issues and Pull requests read and write; its credentials are `APP_CLIENT_ID` and
+`APP_PRIVATE_KEY` in that project, and every job mints a token scoped to what it needs. Any job
+using this needs `id-token: write`. Add new CI secrets to `gha`.
 
-## Infra
+## Releases
 
-The org's GitHub settings (repos of both accounts, rulesets, runner variables, labels) are OpenTofu in
-`JakobMelchard/infra`, `terraform/github`, applied by that repo's CI through `tofu.yml`. They were here in
-`infra/` until the move; `settings.json` and the encrypted state moved there; the history of the old directory stays here.
-
-## Layout
-
-```
-.github/workflows/    reusable workflows + this repo's own lint.yml, self-release.yml
-.github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
-workflow-templates/   starter callers pinned to the latest release, one per reusable workflow
-actions/              composite actions (code-changed, docs, gitleaks, tokens-check)
-scripts/              shell tools: `ci` (latest CI conclusion per repo) and `lib/common.sh`, the helpers
-                      config-sync, fleet-sync, org-repo and ios source (`JM_LIB`, default
-                      `~/Workspaces/JakobMelchard/.github/scripts/lib`); bats tests in `scripts/test`
-renovate/             org Renovate preset
-release-please-config.json  this repo's own releases (self-release.yml)
-profile/              org profile README
-```
+`self-release.yml` runs release-please on every push to `main` and moves the major tag onto the
+new release. `vX.Y.Z` releases are immutable.
