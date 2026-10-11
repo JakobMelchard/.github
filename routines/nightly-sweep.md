@@ -28,31 +28,17 @@ If the run carries a `routine-fire-payload` block whose text starts with `DRY RU
 
 ## Unit A: triage new issues
 
-Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:cloud`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:opus`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
+Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:opus`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
 
 For each issue: read it, look at the code it touches, then:
 
 1. Add exactly one kind label: `bug`, `enhancement`, `question` or `documentation`.
 2. Decide whether it is scoped: one concrete change with an obvious definition of done that an unattended agent can finish without asking anything. Vague wishes, design questions, anything needing a human decision, a real device, secrets or a deploy is not scoped.
-3. If scoped, add the label `agent:ready`. Switchboard hands it to Jules at once; when Jules cannot take the repository, switchboard swaps the label to `agent:cloud` and Unit B picks it up.
+3. If scoped, add the label `agent:ready`. Switchboard hands it to Jules.
 4. If the issue carries the label `feedback`, rewrite its title to an imperative, specific title of at most 70 characters that does not copy user text verbatim.
 5. Comment, starting with `routine triage:`, in 2 to 5 sentences: what the issue is about, where in the code it lives, your hypothesis, and whether you queued it (`agent:ready`) or why not.
 
-## Unit B: implement queued issues
-
-Across the repositories in scope, list open issues labelled `agent:cloud`, oldest first. Skip an issue when an open pull request in that repository references it with `Closes #<n>` in its body, or when a branch `claude/issue-<n>-*` already exists on origin. Take at most 2. Each issue is one unit.
-
-For each issue:
-
-1. In the repository's clone, create branch `claude/issue-<n>-<short-slug>` from the base branch.
-2. Implement the smallest change that resolves the issue. No unrelated refactors, no new dependencies unless the issue asks for one.
-3. Run the repository's checks with the token variables removed (see the hard rules) and make them pass: `make check` when the Makefile has that target, else `npm run check` and `npm test` when `package.json` defines them, else `go test ./...` when `go.mod` exists, else `uv run pytest` when `pyproject.toml` exists. Fix what you broke. Give up after two fix attempts.
-4. Commit with a body that ends in `Closes #<n>`. Push the branch. Open a draft pull request (`POST /repos/<owner>/<repo>/pulls` with `"draft": true` and the base branch as `base`) titled as a conventional commit, body: one paragraph on the change and why, a line on what checks ran, the line `Closes #<n>`.
-5. Remove the label `agent:cloud` from the issue and comment `routine: opened <pull request url>`.
-
-When the issue turns out ambiguous in a way that changes the work: do not commit. Comment one concise question starting with `routine question:`, remove `agent:cloud`, add `question`. When checks cannot be made green or the change would break one of the hard rules: do not push. Comment `routine: blocked` with the reason and the last 30 lines of the failing output, remove `agent:cloud`, add `fleet:blocked`.
-
-## Unit C: review Renovate pull requests
+## Unit B: review Renovate pull requests
 
 Across the repositories in scope, list open pull requests authored by `renovate[bot]`. Skip a pull request that has a comment starting with `routine review:` newer than its last commit. Prefer minor and major updates over patch and digest bumps, since those automerge on their own. Take at most 4. Reviewing counts as one unit in total.
 
