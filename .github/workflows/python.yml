@@ -1,11 +1,50 @@
 name: python
 
-# Reusable Python CI. Callers: monitor, observe, cf.
+# Reusable Python CI.
 #
-# package-manager:
-#   uv    -> uv sync (observe)
-#   pip   -> python -m venv .venv && .venv/bin/pip install -e ".[dev]"
-#   none  -> stdlib only, no install step (monitor)
+#   jobs:
+#     python:
+#       uses: JakobMelchard/.github/.github/workflows/python.yml@main
+#       with:
+#         package-manager: uv
+#       secrets: inherit          # only if the repo needs private dependencies
+#
+# Inputs (all optional):
+#   python-version    string,  default "3.12"        Interpreter for actions/setup-python.
+#   working-directory string,  default "."           Directory every run step executes in.
+#   package-manager   string,  default "uv"          uv | pip | none. Picks the default install and
+#                                                     how lint-cmd and test-cmd are invoked:
+#                                                       uv   -> uv sync --all-extras; commands run as
+#                                                               `uv run <cmd>`
+#                                                       pip  -> python -m venv .venv && .venv/bin/pip
+#                                                               install -e ".[dev]"; commands run as
+#                                                               `.venv/bin/<cmd>`
+#                                                       none -> stdlib only, no install; commands run bare
+#                                                     Any other value fails the install step.
+#   install-cmd       string,  default ""            When set, replaces the package-manager install.
+#   lint-cmd          string,  default "ruff check ." "" skips the step. Only the start of the string gets
+#                                                     the uv/pip prefix: write
+#                                                     "ruff check . && uv run mypy" for several commands.
+#   test-cmd          string,  default "pytest"      "" skips the step. Same prefix rule as lint-cmd.
+#   runs-on           string,  default ""            Runner label for the ci job only (pr-title and
+#                                                     changes always use RUNNER_LINUX). Empty picks the
+#                                                     org variable RUNNER_LINUX (self-hosted on mimi,
+#                                                     private repos only) and falls back to ubuntu-latest.
+#   private-deps      boolean, default false         Wire a token into git so private JakobMelchard
+#                                                     repos referenced as git+https:// dependencies
+#                                                     resolve.
+#   private-repos     string,  default ""            Comma/newline-separated repos the minted app token
+#                                                     may read, e.g. "observe". Only with app secrets.
+#
+# Secrets (all optional, only read when private-deps is true): app-client-id and app-private-key
+# (GitHub App, preferred), else token (PAT), else the job's github.token.
+#
+# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
+# diffs), ci. Commands run through eval.
+#
+# Callers: content (lint-cmd; pinned v1.3.0), infra (python-version, package-manager, install-cmd, lint-cmd,
+# test-cmd; pinned v1.3.0), monitor (python-version, package-manager none, install-cmd, lint-cmd,
+# test-cmd), observe (python-version, package-manager, lint-cmd; pinned v1.3.0).
 
 permissions:
   contents: read
@@ -66,6 +105,7 @@ jobs:
   # The PR title becomes the squash-commit subject that release-please reads.
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
@@ -85,6 +125,7 @@ jobs:
   # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
   # still run, since they lint titles and docs.
   changes:
+    timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
@@ -93,6 +134,7 @@ jobs:
         uses: JakobMelchard/.github/actions/code-changed@main
 
   ci:
+    timeout-minutes: 60
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
