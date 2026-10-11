@@ -63,6 +63,15 @@ infra/labels [repo…]           # your gh auth, from a clone of this repo
 `.github/workflows/labels.yml` runs the same script weekly and on every change to the file,
 with a token from the org GitHub App (see below).
 
+Review bots run on demand, by PR label (labels above, `review-label.yml` for the bridge):
+
+| Label | Bot | Notes |
+|-------|-----|-------|
+| `ai:coderabbit` | CodeRabbit | label allowlist in its own config; free on public repos only |
+| `ai:sourcery` | Sourcery | label allowlist in its own config; free on public repos only |
+| `ai:cubic` | cubic | no allowlist: `review-label.yml` comments `@cubic-dev-ai review` as melchbot, then removes the label; 20 reviews per org per month on private repos |
+| `ai:pr-agent` | PR-Agent | `ai-review.yml`, models via OpenCode Go |
+
 ## GitHub App
 
 `melchbot` is the org GitHub App behind every cross-repo job: private dependencies in
