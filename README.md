@@ -106,7 +106,6 @@ Call with `uses: JakobMelchard/.github/actions/<name>@vX.Y.Z`.
 | [`code-changed`](actions/code-changed/action.yml) | whether a push or PR changed more than Markdown |
 | [`docs`](actions/docs/action.yml) | builds a repo's `docs/` into static pages in the docs.melchard.org shell |
 | [`gitleaks`](actions/gitleaks/action.yml) | scans the checkout for committed secrets |
-| [`tokens-check`](actions/tokens-check/action.yml) | fails when vendored design tokens drift from `JakobMelchard/.config` |
 
 ## Starter workflows
 

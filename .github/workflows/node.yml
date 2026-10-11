@@ -19,7 +19,7 @@ on:
         type: string
         default: "22"
       working-directory:
-        description: Directory every run step executes in; also where tokens-check looks for .config/tokens.path.
+        description: Directory every run step executes in.
         type: string
         default: "."
       install-cmd:
@@ -119,11 +119,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
-
-      # A no-op unless the repo has .config/tokens.path.
-      - uses: JakobMelchard/.github/actions/tokens-check@main
-        with:
-          working-directory: ${{ inputs.working-directory }}
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.

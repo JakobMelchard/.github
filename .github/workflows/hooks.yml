@@ -19,7 +19,7 @@ on:
         type: string
         default: ""
       working-directory:
-        description: Directory holding .pre-commit-config.yaml; also where tokens-check looks for .config/tokens.path.
+        description: Directory holding .pre-commit-config.yaml.
         type: string
         default: "."
       runs-on:
@@ -47,11 +47,6 @@ jobs:
           sha=$(jq -r '.workflow_sha // "unknown"' <<<"$JOB")
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
-
-      # A no-op unless the repo has .config/tokens.path.
-      - uses: JakobMelchard/.github/actions/tokens-check@main
-        with:
-          working-directory: ${{ inputs.working-directory }}
 
       - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
         env:
