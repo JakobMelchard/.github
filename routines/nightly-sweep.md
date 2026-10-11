@@ -28,7 +28,7 @@ If the run carries a `routine-fire-payload` block whose text starts with `DRY RU
 
 ## Unit A: triage new issues
 
-Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:cloud`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:opus`, `fleet/blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
+Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:cloud`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:opus`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
 
 For each issue: read it, look at the code it touches, then:
 
@@ -50,7 +50,7 @@ For each issue:
 4. Commit with a body that ends in `Closes #<n>`. Push the branch. Open a draft pull request (`POST /repos/<owner>/<repo>/pulls` with `"draft": true` and the base branch as `base`) titled as a conventional commit, body: one paragraph on the change and why, a line on what checks ran, the line `Closes #<n>`.
 5. Remove the label `agent:cloud` from the issue and comment `routine: opened <pull request url>`.
 
-When the issue turns out ambiguous in a way that changes the work: do not commit. Comment one concise question starting with `routine question:`, remove `agent:cloud`, add `question`. When checks cannot be made green or the change would break one of the hard rules: do not push. Comment `routine: blocked` with the reason and the last 30 lines of the failing output, remove `agent:cloud`, add `fleet/blocked`.
+When the issue turns out ambiguous in a way that changes the work: do not commit. Comment one concise question starting with `routine question:`, remove `agent:cloud`, add `question`. When checks cannot be made green or the change would break one of the hard rules: do not push. Comment `routine: blocked` with the reason and the last 30 lines of the failing output, remove `agent:cloud`, add `fleet:blocked`.
 
 ## Unit C: review Renovate pull requests
 
