@@ -40,8 +40,8 @@ prek run --all-files   # same as the CI hooks job
   `smoke-<name>` job. Not smoked on purpose: `release` (opens real release PRs), `ai-review` and
   `review-label` (need a labelled PR and secrets). `cf` runs with `dry-run`, `tofu` with plan,
   apply and state commit off.
-- `github.token` reads only the calling repo. A cross-repo private dependency needs an app token
-  or PAT mapped explicitly as `secrets.token`, not `secrets: inherit`.
+- `github.token` reads only the calling repo. A cross-repo private dependency needs credentials
+  mapped explicitly (`app-client-id` and `app-private-key`, or `token`), not `secrets: inherit`.
 
 ## Gotcha
 

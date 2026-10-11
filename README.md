@@ -7,7 +7,8 @@ composite actions, starter workflows and the org Renovate preset. The repo is pu
 
 ## Reusable workflows
 
-Inputs, defaults and secrets are documented in each file's `inputs:` block.
+Inputs and defaults are documented under `on.workflow_call.inputs` in each file, secrets under
+`on.workflow_call.secrets`.
 
 | Workflow | What it does |
 |----------|--------------|
@@ -35,11 +36,13 @@ jobs:
 
 Shared behaviour:
 
-- Every `*-cmd` input skips its step when set to `""`.
+- Every `*-cmd` input skips its step when set to `""`, except `python`'s `install-cmd`, which
+  overrides the `package-manager` install.
 - `go`, `python`, `node`, `shell`, `terraform` and `android` skip their `ci` job when a change
   touched only Markdown (`actions/code-changed`). A skipped job reports success. `pr-title` and
   `hooks` still run. `xcode` has no gate, callers filter with `paths`.
-- Each `ci` job writes the reusable workflow's ref and SHA to the step summary.
+- The language workflows, `hooks`, `cf`, `xcode`, `android` and `release` write the reusable
+  workflow's ref and SHA to the step summary.
 - `runs-on` is a plain label in most workflows and JSON in `shell`, `release`, `ai-review` and
   `review-label`. Empty uses the org variable `RUNNER_LINUX` (`RUNNER_MACOS` for `xcode`), then
   GitHub's hosted runner.
@@ -109,8 +112,8 @@ Call with `uses: JakobMelchard/.github/actions/<name>@vX.Y.Z`.
 
 ## Starter workflows
 
-[`workflow-templates/`](workflow-templates) has a one-line caller per reusable workflow, pinned to
-the latest release, for "New workflow" in any org repo. Repos created from `JakobMelchard/template`
+[`workflow-templates/`](workflow-templates) has a one-line caller for each reusable workflow except `cf` and
+`tofu`, pinned to the latest release, for "New workflow" in any org repo. Repos created from `JakobMelchard/template`
 get their caller from there instead; change a workflow here first, then the template.
 
 ## Hooks, community files, settings
@@ -141,7 +144,7 @@ Bots skip draft PRs.
 Two nightly routines run the prompts in [`routines/`](routines) against the org: `nightly-sweep`
 triages issues, implements `agent:cloud` issues as draft PRs and comments a verdict on Renovate
 PRs; `nightly-improve` opens at most three draft PRs per night. Neither merges nor touches base
-branches, workflows or infra. Each run appends a comment to issue #70.
+branches, workflows or infra. Each non-dry run appends a comment to issue #70.
 
 [`routines.yml`](.github/workflows/routines.yml) runs them with opencode on the org app token.
 `workflow_dispatch` is a dry run by default; the nightly schedule only runs when the repo variable
