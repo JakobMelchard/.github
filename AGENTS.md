@@ -52,7 +52,7 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
   survive being called with nothing set — add a `smoke-<name>` job for it.
   `release.yml`, `terraform.yml` and `ai-review.yml` are deliberately not smoked: release-please
   holds `contents: write` and would open real release PRs, and terraform needs
-  a config directory to act on, and ai-review needs mimi and a labelled PR.
+  a config directory to act on, and ai-review needs a labelled PR and the model key.
 - Callers reference `@main`, so a mistake here reaches every repo immediately.
   `v1` follows the latest 1.x release and is moved only by `self-release.yml`;
   release tags are immutable. Never move a tag by hand.
