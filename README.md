@@ -67,10 +67,10 @@ Review bots run on demand, by PR label (labels above, `review-label.yml` for the
 
 | Label | Bot | Notes |
 |-------|-----|-------|
-| `coderabbit` | CodeRabbit | label allowlist in its own config; free on public repos only |
-| `sourcery` | Sourcery | label allowlist in its own config; free on public repos only |
-| `cubic` | cubic | no allowlist: `review-label.yml` comments `@cubic-dev-ai review` as melchbot, then removes the label; 20 reviews per org per month on private repos |
-| `ai-review` | PR-Agent | `ai-review.yml` on mimi, models via OpenCode Go |
+| `ai:coderabbit` | CodeRabbit | label allowlist in its own config; free on public repos only |
+| `ai:sourcery` | Sourcery | label allowlist in its own config; free on public repos only |
+| `ai:cubic` | cubic | no allowlist: `review-label.yml` comments `@cubic-dev-ai review` as melchbot, then removes the label; 20 reviews per org per month on private repos |
+| `ai:pr-agent` | PR-Agent | `ai-review.yml`, models via OpenCode Go |
 
 ## GitHub App
 

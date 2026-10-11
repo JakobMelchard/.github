@@ -1,7 +1,7 @@
 name: review-label
 
 # Reusable bridge for review bots without a label allowlist. A repo's caller runs it on
-# `pull_request: types: [labeled]`; labelling a ready PR "cubic" posts `@cubic-dev-ai review`
+# `pull_request: types: [labeled]`; labelling a ready PR "ai:cubic" posts `@cubic-dev-ai review`
 # as the org app, then drops the label so it can be applied again for another review.
 # CodeRabbit and Sourcery filter by label natively and need no workflow. The app token comes
 # from Infisical (project gha, identity gha-org, OIDC), so the caller grants id-token: write.
@@ -27,7 +27,7 @@ permissions: {}
 jobs:
   cubic:
     if: >-
-      github.event.label.name == 'cubic' && !github.event.pull_request.draft &&
+      github.event.label.name == 'ai:cubic' && !github.event.pull_request.draft &&
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -36,13 +36,25 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+      - name: fetch APP_CLIENT_ID
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
           identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+          secret-name: APP_CLIENT_ID
+
+      - name: fetch APP_PRIVATE_KEY
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
 
       - name: mint app token
         id: app
@@ -62,5 +74,6 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
         run: |
+          # Remove the label first: if this fails nothing was requested and a retry is safe.
+          gh pr edit "$PR_NUM" --remove-label ai:cubic
           gh pr comment "$PR_NUM" --body '@cubic-dev-ai review'
-          gh pr edit "$PR_NUM" --remove-label cubic

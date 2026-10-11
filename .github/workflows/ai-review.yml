@@ -1,7 +1,7 @@
 name: ai-review
 
 # Reusable PR-Agent review. A repo's caller runs it on `pull_request: labeled`; labelling a
-# ready PR "ai-review" gets one review. Runs the PR-Agent CLI via uv on a Linux runner (org
+# ready PR "ai:pr-agent" gets one review. Runs the PR-Agent CLI via uv on a Linux runner (org
 # variable RUNNER_LINUX or ubuntu-latest), OpenCode Go only. The model key comes from
 # Infisical over OIDC, like the other org workflows. The caller grants pull-requests: write,
 # issues: write and id-token: write.
@@ -25,7 +25,7 @@ on:
 jobs:
   review:
     if: >-
-      github.event.label.name == 'ai-review' && !github.event.pull_request.draft &&
+      github.event.label.name == 'ai:pr-agent' && !github.event.pull_request.draft &&
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}

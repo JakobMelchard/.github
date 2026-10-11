@@ -338,21 +338,21 @@
       "color": "b60205",
       "description": "Vulnerability fix, opened by Renovate from a Dependabot or OSV alert"
     },
-    "ai-review": {
+    "ai:pr-agent": {
       "color": "fbca04",
-      "description": "Run one PR-Agent review on mimi (needs the ai-review workflow in the repo)"
+      "description": "Request a PR-Agent review"
     },
-    "coderabbit": {
+    "ai:coderabbit": {
       "color": "ff570a",
       "description": "Request a CodeRabbit review"
     },
-    "sourcery": {
+    "ai:sourcery": {
       "color": "f5a623",
       "description": "Request a Sourcery review"
     },
-    "cubic": {
+    "ai:cubic": {
       "color": "6f42c1",
-      "description": "Request a cubic review (review-label workflow comments, then removes the label)"
+      "description": "Request a cubic review"
     }
   }
 }
