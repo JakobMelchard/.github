@@ -65,12 +65,10 @@ minor updates automerge once CI is green; majors, Docker and `copier` updates wa
 ### Private dependencies
 
 `go`, `python` and `node` read private org repos when `private-modules` (go) or `private-deps`
-(python, node) is true and `private-repos` names them. Credentials, first match wins:
-
-1. `app-client-id` and `app-private-key` secrets: mints a token for the listed repos, revoked when
-   the job ends.
-2. A `token` secret (fine-grained PAT, Contents read).
-3. `github.token`, which cannot read other repos, so the job fails.
+(python, node) is true and `private-repos` names them. They need the `app-client-id` and
+`app-private-key` secrets, which mint a token for the listed repos, revoked when the job ends.
+Without them `github.token` is used, which cannot read other repos, so the job fails. The `token`
+(PAT) secret was removed in v2.0.0.
 
 Map secrets explicitly instead of `secrets: inherit`, so only those cross the boundary.
 

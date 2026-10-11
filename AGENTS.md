@@ -41,7 +41,7 @@ prek run --all-files   # same as the CI hooks job
   `review-label` (need a labelled PR and secrets). `cf` runs with `dry-run`, `tofu` with plan,
   apply and state commit off.
 - `github.token` reads only the calling repo. A cross-repo private dependency needs credentials
-  mapped explicitly (`app-client-id` and `app-private-key`, or `token`), not `secrets: inherit`.
+  mapped explicitly (`app-client-id` and `app-private-key`; the `token` secret is gone), not `secrets: inherit`.
 
 ## Gotcha
 

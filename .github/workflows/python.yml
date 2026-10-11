@@ -53,8 +53,7 @@ on:
       private-deps:
         description: >
           Wire a token into git so private JakobMelchard repos referenced as git+https://
-          dependencies resolve. The token is the minted app token, else the token secret,
-          else github.token.
+          dependencies resolve. The token is the minted app token, else github.token.
         type: boolean
         default: false
       private-repos:
@@ -65,13 +64,10 @@ on:
         default: ""
     secrets:
       app-client-id:
-        description: GitHub App client ID, preferred over a PAT. Only read when private-deps is true.
+        description: GitHub App client ID. Only read when private-deps is true.
         required: false
       app-private-key:
         description: GitHub App private key. Its presence selects the app path.
-        required: false
-      token:
-        description: PAT fallback, used when no app private key is supplied.
         required: false
 
 jobs:
@@ -153,7 +149,7 @@ jobs:
       - name: configure private dependency access
         if: inputs.private-deps
         env:
-          TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
+          TOKEN: ${{ steps.app.outputs.token || github.token }}
         run: git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
 
       # Commands go through env vars: an empty `${{ }}` interpolated into an if/case body is a
