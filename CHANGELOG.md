@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/JakobMelchard/.github/compare/v1.5.0...v1.6.0) (2026-10-11)
+
+
+### Features
+
+* **review-label:** ai:* review labels and label-triggered cubic review ([#121](https://github.com/JakobMelchard/.github/issues/121)) ([3df05b5](https://github.com/JakobMelchard/.github/commit/3df05b5988afb7e6cf186702438e3f79e9dab893))
+
 ## [1.5.0](https://github.com/JakobMelchard/.github/compare/v1.4.0...v1.5.0) (2026-10-10)
 
 
