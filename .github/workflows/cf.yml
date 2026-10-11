@@ -1,0 +1,168 @@
+name: cf
+
+# Reusable `wrangler deploy` for a Cloudflare Worker that has a Durable Object. Workers without
+# one deploy through Workers Builds; this exists because a Durable Object needs the migration
+# applied by the same deploy, in order.
+#
+#   permissions:
+#     contents: read
+#     id-token: write           # Infisical OIDC; needed even with dry-run
+#   jobs:
+#     deploy:
+#       needs: ci
+#       if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+#       uses: JakobMelchard/.github/.github/workflows/cf.yml@v1.6.0
+#       with:
+#         account-id: <cloudflare account id>   # optional
+#
+# Inputs (all optional):
+#   working-directory string,  default "."     Directory with the wrangler config; every run step
+#                                              executes there.
+#   environment       string,  default ""      wrangler --env name. Empty deploys the top-level
+#                                              environment. Not a GitHub environment: a job with
+#                                              `environment:` changes the OIDC subject and the
+#                                              Infisical identity only accepts main and dev.
+#   wrangler-version  string,  default ""      Empty runs the wrangler the repo locked
+#                                              (`npx --no-install`, so a missing one fails instead
+#                                              of fetching latest). A version such as "4.143.0"
+#                                              runs `npx wrangler@<version>` instead, fetched before
+#                                              the credentials are loaded.
+#   dry-run           boolean, default false   `wrangler deploy --dry-run`: bundles, prints bindings,
+#                                              publishes nothing. Skips the Infisical step, so it
+#                                              needs no credentials.
+#   account-id        string,  default ""      Exported as CLOUDFLARE_ACCOUNT_ID when set. Needed when
+#                                              the token sees more than one account. Not a secret.
+#   node-version      string,  default "24"    Node for actions/setup-node.
+#   install-cmd       string,  default "npm ci"  Runs before the credentials are loaded, so install
+#                                              scripts never see them. "" skips the step.
+#
+# Secrets: none. CLOUDFLARE_API_TOKEN comes from Infisical project cloudflare-a1s-e (env dev) over
+# OIDC as identity gha-deploy, which accepts the main and dev branches only; the secrets-action
+# exports every key of that environment into the deploy step. Never an Actions secret. Worker
+# secrets (bot tokens and the like) are not set here: they live in Cloudflare, synced from Infisical,
+# and survive deploys.
+#
+# Permissions: the job asks for contents: read and id-token: write, so the caller must grant both.
+#
+# Concurrency: one deploy per working-directory and environment (dry runs have their own group); a
+# second push waits instead of racing the first to the same Worker, and nothing is cancelled.
+# Gate on the branch in the caller: the identity refuses other refs, but the run would fail late.
+#
+# Jobs: deploy (15 min): checkout, provenance, setup-node, install, fetch wrangler, Infisical, wrangler deploy.
+#
+# Callers: JakobMelchard/switchboard and JakobMelchard/mealrot replace their inline deploy job
+# (npm ci, Infisical, `npm run deploy`). lint.yml smoke-cf runs it with dry-run against
+# scripts/test/cf-smoke.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        default: "."
+      environment:
+        description: wrangler --env name. Empty deploys the top-level environment.
+        type: string
+        default: ""
+      wrangler-version:
+        description: Empty runs the repository's locked wrangler; otherwise npx wrangler@<version>.
+        type: string
+        default: ""
+      dry-run:
+        description: Bundle only (`wrangler deploy --dry-run`); no credentials are loaded.
+        type: boolean
+        default: false
+      account-id:
+        description: Exported as CLOUDFLARE_ACCOUNT_ID when set.
+        type: string
+        default: ""
+      node-version:
+        type: string
+        default: "24"
+      install-cmd:
+        description: Empty string skips the step.
+        type: string
+        default: "npm ci"
+
+jobs:
+  deploy:
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: cf-${{ inputs.working-directory }}-${{ inputs.environment || 'default' }}${{ inputs.dry-run && '-dry' || '' }}
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: provenance
+        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
+        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
+        # actionlint's job-context type does not know them yet.
+        env:
+          JOB: ${{ toJSON(job) }}
+        shell: bash
+        run: |
+          ref=$(jq -r '.workflow_ref // "unknown"' <<<"$JOB")
+          sha=$(jq -r '.workflow_sha // "unknown"' <<<"$JOB")
+          echo "reusable workflow: $ref @ $sha"
+          echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: install
+        if: inputs.install-cmd != ''
+        env:
+          CMD: ${{ inputs.install-cmd }}
+        shell: bash
+        run: eval "$CMD"
+
+      # Fetch a pinned wrangler (and run its dependencies' install scripts) before the token exists.
+      - name: fetch wrangler
+        if: inputs.wrangler-version != ''
+        env:
+          WRANGLER_VERSION: ${{ inputs.wrangler-version }}
+        shell: bash
+        run: |
+          [[ "$WRANGLER_VERSION" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad wrangler-version '$WRANGLER_VERSION'"; exit 1; }
+          npx --yes "wrangler@$WRANGLER_VERSION" --version
+
+      # CLOUDFLARE_API_TOKEN; loaded after install so lifecycle scripts never see it.
+      - name: credentials
+        if: ${{ !inputs.dry-run }}
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: 5bba3659-c0e6-4d26-9161-0cb72567c426 # gha-deploy: main and dev only
+          domain: https://eu.infisical.com
+          project-slug: cloudflare-a1s-e
+          env-slug: dev
+
+      - name: wrangler deploy
+        env:
+          WRANGLER_ENV: ${{ inputs.environment }}
+          WRANGLER_VERSION: ${{ inputs.wrangler-version }}
+          DRY_RUN: ${{ inputs.dry-run }}
+          ACCOUNT_ID: ${{ inputs.account-id }}
+          WRANGLER_SEND_METRICS: "false"
+        shell: bash
+        run: |
+          [[ "$WRANGLER_ENV" =~ ^[A-Za-z0-9_-]*$ ]] || { echo "::error::bad environment '$WRANGLER_ENV'"; exit 1; }
+          [[ "$WRANGLER_VERSION" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad wrangler-version '$WRANGLER_VERSION'"; exit 1; }
+          [ -z "$ACCOUNT_ID" ] || export CLOUDFLARE_ACCOUNT_ID="$ACCOUNT_ID"
+          if [ -n "$WRANGLER_VERSION" ]; then w=(npx --yes "wrangler@$WRANGLER_VERSION"); else w=(npx --no-install wrangler); fi
+          args=(deploy)
+          [ -z "$WRANGLER_ENV" ] || args+=(--env "$WRANGLER_ENV")
+          [ "$DRY_RUN" != true ] || args+=(--dry-run)
+          "${w[@]}" "${args[@]}"

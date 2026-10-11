@@ -17,7 +17,7 @@ groups for their packages; majors and security fixes come on their own. The CI w
 `*-cmd` inputs reach the shell through `env`, never by template expansion.
 `lint.yml` gates every change here — actionlint over workflows, zizmor, shellcheck over the hooks, a bash-3.2 portability check, and smoke calls of `go` `python` `node` (including the Chromium path)
 and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
-with no Gradle tasks (toolchain setup only). `release.yml` is not smoke-called; `tofu.yml` is called with plan, apply and state commit off, so its jobs skip.
+with no Gradle tasks (toolchain setup only). `cf` with `dry-run` against a fixture Worker (no credentials); `release.yml` is not smoke-called; `tofu.yml` is called with plan, apply and state commit off, so its jobs skip.
 
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
@@ -105,6 +105,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `template` | `paths` `severity` |
 | `terraform.yml` | `infra` | `working-directory` `validate` `runs-on` |
 | `tofu.yml` | `infra` | `working-directory` `runs-on` `plan` `apply` `state-commit` `state-path` `passphrase-env` `env` `app-token-owner` `app-token-env` `app-token-owner-2` `app-token-env-2` (see *Tofu*) |
+| `cf.yml` | `switchboard` `mealrot` | `working-directory` `environment` `wrangler-version` `dry-run` `account-id` `node-version` `install-cmd` (`wrangler deploy` for a Worker with a Durable Object; credentials from Infisical project `cloudflare` over OIDC; caller grants `id-token: write`) |
 | `xcode.yml` | `zmxapp` `zmxkit` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 | `android.yml` | `workouts-go` `workouts-hx` `fz` `template` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
 
