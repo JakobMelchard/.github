@@ -106,7 +106,7 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `terraform.yml` | `infra` | `working-directory` `validate` `runs-on` |
 | `tofu.yml` | `infra` | `working-directory` `runs-on` `plan` `apply` `state-commit` `state-path` `passphrase-env` `env` `app-token-owner` `app-token-env` `app-token-owner-2` `app-token-env-2` (see *Tofu*) |
 | `xcode.yml` | `zmxapp` `zmxkit` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
-| `android.yml` | `zmxdroid` `lift` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
+| `android.yml` | `workouts-go` `workouts-hx` `fz` `template` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
 
 Every `*-cmd` input skips its step when set to `""`.
 
