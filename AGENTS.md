@@ -13,7 +13,7 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform tofu xcode android hooks lint self-release fleet-sync ai-review review-label`
+- `.github/workflows/` `release go python node shell terraform tofu xcode android hooks lint self-release ai-review review-label`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
 - `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's

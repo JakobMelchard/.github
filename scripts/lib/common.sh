@@ -87,7 +87,6 @@ org_repos() { # org_repos [all] -> sorted $ORG repo names, archived ones only wi
   gh repo list "$ORG" --limit 200 --json name,isArchived -q "$q" | sort
 }
 
-settings_json() { # prints .github/infra/settings.json (live from the org, or local clone)
-  local d; d=$(fetch .github)
-  cat "$d/infra/settings.json"
+settings_json() { # prints settings.json, now in the private JakobMelchard/infra (terraform/github)
+  gh api -H 'Accept: application/vnd.github.raw' "repos/$ORG/infra/contents/terraform/github/settings.json"
 }

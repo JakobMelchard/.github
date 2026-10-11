@@ -64,7 +64,7 @@ Review bots run on demand, by PR label (labels above, `review-label.yml` for the
 ## GitHub App
 
 `melchbot` is the org GitHub App behind every cross-repo job: private dependencies in
-the reusable workflows, `infra`'s `labels.yml` and `github.yml`, and `fleet-sync.yml`. It is installed on **all
+the reusable workflows and `infra`'s `labels.yml` and `github.yml`. It is installed on **all
 repositories** with Contents, Issues and Pull requests read and write, which is exactly
 what those jobs mint tokens for (each job requests only the permissions it names, scoped
 to the repos in `infra`'s `terraform/github/settings.json`, revoked when the job ends).
@@ -298,17 +298,6 @@ changelog. The release PR is authored by melchbot (`release.yml` loads its crede
 Infisical), so `lint.yml` runs on it like on any PR. Every caller gets the same; its calling
 job must grant `id-token: write`, or the run fails at startup.
 
-## Fleet sync
-
-`fleet-sync.yml` checks out `JakobMelchard/.config` and runs its `scripts/fleet-sync` weekly with the org app
-token: for every non-archived repo in `JakobMelchard/infra` `terraform/github/settings.json` it refreshes the vendored copies the repo
-already carries (config-sync groups whose file exists, opt-in tokens), from the latest `.config` release
-tag, and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet/deps`. A copy whose
-only change is its `VENDORED` header opens no PR. Nothing is added to a repo that lacks it. Only
-`APP_CLIENT_ID` and `APP_PRIVATE_KEY` are fetched from Infisical, one step each. Dispatch it with `dry-run`
-to see the diffs, or run `~/Workspaces/JakobMelchard/.config/scripts/fleet-sync --dry-run` locally with your own
-gh auth.
-
 ## Routines
 
 Two Claude Code cloud routines (claude.ai/code/routines, account of the org owner, Max
@@ -354,7 +343,7 @@ The org's GitHub settings (repos of both accounts, rulesets, runner variables, l
 ## Layout
 
 ```
-.github/workflows/    reusable workflows + this repo's own lint.yml, self-release.yml, fleet-sync.yml
+.github/workflows/    reusable workflows + this repo's own lint.yml, self-release.yml
 .github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
 actions/              composite actions (code-changed, docs, gitleaks, tokens-check)
 scripts/              shell tools: `ci` (latest CI conclusion per repo) and `lib/common.sh`, the helpers
