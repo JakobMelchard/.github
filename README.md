@@ -18,7 +18,7 @@ groups for their packages; majors and security fixes come on their own. The CI w
 `lint.yml` gates every change here — actionlint over workflows, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
 validate, and smoke calls of `go` `python` `node` (including the Chromium path)
 and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
-with no Gradle tasks (toolchain setup only). `release.yml` and `terraform.yml` are not smoke-called.
+with no Gradle tasks (toolchain setup only). `release.yml` is not smoke-called; `tofu.yml` is called with plan, apply and state commit off, so its jobs skip.
 
 Callers currently reference `@main`, so fixes propagate immediately. `@v1` is the
 alternative: it follows the latest 1.x release of this repo (see *Releases of this repo*).
@@ -114,7 +114,8 @@ Call with `uses: JakobMelchard/.github/.github/workflows/<name>.yml@main`.
 | `python.yml` | `monitor` `observe` `cf` | `python-version` `package-manager` (`uv`\|`pip`\|`none`) `lint-cmd` `test-cmd` |
 | `node.yml` | `cf` `hx` `workouts-hx` `lists` `switchboard` `interviews` `lilfeelz.github.io` | `node-version` `install-cmd` `check-cmd` `lint-cmd` `test-cmd` `e2e-cmd` `browsers` (Linux runners) |
 | `shell.yml` | `bin` `lilfeelz/bin` `monitor` `.githooks` `template` | `paths` `severity` |
-| `terraform.yml` | `infra` | `working-directory` `validate` |
+| `terraform.yml` | `infra` | `working-directory` `validate` `runs-on` |
+| `tofu.yml` | `infra` | `working-directory` `runs-on` `plan` `apply` `state-commit` `state-path` `passphrase-env` `env` `app-token-owner` `app-token-env` `app-token-owner-2` `app-token-env-2` (see *Tofu*) |
 | `xcode.yml` | `zmxapp` `zmxkit` | `scheme` `project` `destination` `generate-cmd` `lint-cmd` `test-cmd` `xcode-version` (macOS runner; empty `scheme` skips xcodebuild) |
 | `android.yml` | `zmxdroid` `lift` | `gradle-tasks` `android-packages` `setup-cmd` `working-directory` `java-version` `java-distribution` `artifact-path` (Linux runner; empty `gradle-tasks` skips Gradle) |
 
@@ -245,6 +246,41 @@ jobs:
       check-cmd: make check
       lint-cmd: make lint
 ```
+
+### Tofu
+
+`terraform.yml` only lints (fmt, `init -backend=false`, validate). `tofu.yml` plans, applies and commits state; it is a separate workflow so that lint-only callers never grant its permissions. The state is OpenTofu-encrypted and
+committed in git; the passphrase `TOFU_STATE_PASSPHRASE`, `APP_CLIENT_ID` and `APP_PRIVATE_KEY` come
+from Infisical (project `gha`, identity `gha-org`, OIDC), never Actions secrets.
+
+```yaml
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths: [terraform/tailscale/**, "!terraform/tailscale/state/**"]
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
+jobs:
+  tofu:
+    uses: JakobMelchard/.github/.github/workflows/tofu.yml@main
+    with:
+      working-directory: terraform/tailscale
+      plan: true            # default; PR: tofu plan against the committed state, one comment per directory
+      apply: true           # default; push to the default branch: tofu apply -auto-approve
+      state-commit: true    # default; then push the encrypted state back (only if the serial moved)
+      env: |
+        TAILSCALE_OAUTH_CLIENT_ID=...
+      app-token-owner: JakobMelchard   # optional: org-app token exported as GITHUB_TOKEN
+```
+
+`state-commit` pushes as the org app, which needs an `always` bypass on the branch ruleset, and the
+commit is `chore(<dir>): update encrypted state (serial N) [skip ci]`. The caller filters its push
+paths and excludes the state directory. Plans and applies of one directory share the concurrency
+group `tofu-state-<dir>`, queued and never cancelled. The caller grants `id-token: write` and
+`pull-requests: write`.
 
 ## Composite actions
 

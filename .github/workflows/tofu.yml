@@ -1,0 +1,390 @@
+name: tofu
+
+# Reusable OpenTofu plan, apply and encrypted-state commit. Separate from terraform.yml
+# (lint only) so a caller that only lints never has to grant the id-token and
+# pull-requests permissions these jobs request. Callers: infra (every root).
+#
+# - plan: on pull_request and workflow_dispatch, `tofu init` and `tofu plan` against the
+#   state committed in the checkout (the PR merged into the base), posted as one PR
+#   comment per working directory. Skipped, reporting success, when a PR does not touch
+#   working-directory, so a required check never hangs.
+# - apply: on a push to the default branch, `tofu apply -auto-approve`.
+# - state-commit: after the apply, push the updated encrypted state to the default branch
+#   as the org app (only when the state serial moved; refuses a plaintext state). The
+#   app needs an `always` bypass on the branch ruleset.
+#
+# Inputs:
+#   working-directory  tofu root (default terraform)
+#   runs-on            runner label; empty picks vars.RUNNER_LINUX, then ubuntu-latest
+#   plan               run the plan job (default true)
+#   apply              run the apply job (default true)
+#   state-commit       commit the encrypted state after the apply (default true)
+#   state-path         state file relative to working-directory (default state/terraform.tfstate)
+#   passphrase-env     env var that receives TOFU_STATE_PASSPHRASE (default TF_VAR_state_passphrase)
+#   env                extra non-secret env, one KEY=VALUE per line
+#   app-token-owner    mint an org-app installation token for this account and export it
+#                      as app-token-env (default GITHUB_TOKEN); empty mints none
+#   app-token-owner-2  a second token, exported as app-token-env-2 (for example a provider
+#                      alias on another account)
+#
+# Credentials: Infisical (project gha, identity gha-org, OIDC) supplies TOFU_STATE_PASSPHRASE,
+# APP_CLIENT_ID and APP_PRIVATE_KEY. No Actions secrets. The caller grants `id-token: write`
+# and `pull-requests: write`.
+#
+# Triggers belong to the caller: filter push on the root's paths and exclude the state
+# directory (`!<dir>/state/**`). The state commit carries `[skip ci]`. Plans and applies of
+# one working directory share the concurrency group tofu-state-<dir>, queued, never
+# cancelled (a cancelled apply could lose its state commit); a newer queued run replaces
+# an older one still waiting, and the apply checks out the branch head, so nothing is lost.
+
+permissions:
+  contents: read
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        default: terraform
+      runs-on:
+        description: >
+          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
+          private repos only) and falls back to ubuntu-latest.
+        type: string
+        default: ""
+      plan:
+        description: Run `tofu plan` on pull requests and manual runs and comment it on the PR.
+        type: boolean
+        default: true
+      apply:
+        description: Run `tofu apply -auto-approve` on a push to the default branch.
+        type: boolean
+        default: true
+      state-commit:
+        description: After the apply, commit the encrypted state file back to the default branch.
+        type: boolean
+        default: true
+      state-path:
+        description: State file relative to working-directory.
+        type: string
+        default: state/terraform.tfstate
+      passphrase-env:
+        description: Env var that receives TOFU_STATE_PASSPHRASE from Infisical.
+        type: string
+        default: TF_VAR_state_passphrase
+      env:
+        description: Extra non-secret env for plan and apply, one KEY=VALUE per line.
+        type: string
+        default: ""
+      app-token-owner:
+        description: Account to mint an org-app installation token for. Empty mints none.
+        type: string
+        default: ""
+      app-token-env:
+        description: Env var that receives the app-token-owner token.
+        type: string
+        default: GITHUB_TOKEN
+      app-token-owner-2:
+        description: Second account to mint an installation token for. Empty mints none.
+        type: string
+        default: ""
+      app-token-env-2:
+        description: Env var that receives the app-token-owner-2 token.
+        type: string
+        default: ""
+
+jobs:
+  # Plan against the committed state. The check always reports, so a required `plan`
+  # status never hangs on a PR that does not touch this root.
+  plan:
+    if: inputs.plan && github.event_name != 'push'
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    concurrency:
+      group: tofu-state-${{ inputs.working-directory }}
+      cancel-in-progress: false
+    env:
+      TF_IN_AUTOMATION: "1"
+      TF_INPUT: "0"
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+
+      - name: changed files
+        id: changed
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          DIR: ${{ inputs.working-directory }}
+        run: |
+          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
+          if awk -v d="${DIR%/}/" 'index($0, d) == 1 { f = 1 } END { exit !f }' <<<"$files"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::no changes under $DIR in this PR; plan skipped"
+          fi
+
+      - if: steps.changed.outputs.run != 'false'
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_wrapper: false }
+
+      - if: steps.changed.outputs.run != 'false'
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
+      - name: tofu env
+        if: steps.changed.outputs.run != 'false'
+        env:
+          PASSPHRASE: ${{ env.TOFU_STATE_PASSPHRASE }}
+          PASSPHRASE_VAR: ${{ inputs.passphrase-env }}
+          EXTRA: ${{ inputs.env }}
+        run: |
+          [ -n "$PASSPHRASE" ] || { echo "::error::TOFU_STATE_PASSPHRASE is empty (Infisical gha/dev)"; exit 1; }
+          echo "::add-mask::$PASSPHRASE"
+          echo "$PASSPHRASE_VAR=$PASSPHRASE" >> "$GITHUB_ENV"
+          [ -z "$EXTRA" ] || printf '%s\n' "$EXTRA" >> "$GITHUB_ENV"
+
+      # Unscoped on purpose: create-github-app-token has no `permission-*` input for
+      # Variables (infra github root), and naming any permission drops the rest. The
+      # installation itself is scoped to what the root needs.
+      - name: mint app token
+        id: app
+        if: steps.changed.outputs.run != 'false' && inputs.app-token-owner != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: ${{ inputs.app-token-owner }}
+
+      - name: mint app token (2)
+        id: app2
+        if: steps.changed.outputs.run != 'false' && inputs.app-token-owner-2 != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: ${{ inputs.app-token-owner-2 }}
+
+      - name: export app tokens
+        if: steps.changed.outputs.run != 'false' && inputs.app-token-owner != '' || inputs.app-token-owner-2 != ''
+        env:
+          TOKEN: ${{ steps.app.outputs.token }}
+          TOKEN_VAR: ${{ inputs.app-token-env }}
+          TOKEN2: ${{ steps.app2.outputs.token }}
+          TOKEN2_VAR: ${{ inputs.app-token-env-2 }}
+        run: |
+          [ -z "$TOKEN" ] || echo "$TOKEN_VAR=$TOKEN" >> "$GITHUB_ENV"
+          if [ -n "$TOKEN2" ]; then
+            [ -n "$TOKEN2_VAR" ] || { echo "::error::app-token-owner-2 needs app-token-env-2"; exit 1; }
+            echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
+          fi
+
+      - if: steps.changed.outputs.run != 'false'
+        run: tofu init -input=false
+
+      - name: tofu plan
+        id: plan
+        if: steps.changed.outputs.run != 'false'
+        run: |
+          set -o pipefail
+          tofu plan -no-color -out=plan.tfplan 2>&1 | tee plan.txt
+
+      - name: comment
+        if: always() && github.event_name == 'pull_request' && steps.changed.outputs.run != 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          OUTCOME: ${{ steps.plan.outcome }}
+          DIR: ${{ inputs.working-directory }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          marker="<!-- tofu-plan:$DIR -->"
+          [ -f plan.txt ] || echo "no plan output (earlier step failed)" > plan.txt
+          {
+            echo "$marker"
+            echo "### tofu plan: \`$DIR\`"
+            echo
+            echo "Outcome: \`$OUTCOME\`"
+            echo
+            summary=$(grep -E '^(Plan:|No changes\.)' plan.txt | tail -1 || true)
+            [ -n "$summary" ] && echo "**${summary}**" && echo
+            echo '<details><summary>plan output</summary>'
+            echo
+            echo '```'
+            head -c 60000 plan.txt
+            echo '```'
+            echo '</details>'
+            echo
+            echo "[run]($RUN_URL)"
+          } > comment.md
+          cat comment.md >> "$GITHUB_STEP_SUMMARY"
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | tail -1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@comment.md >/dev/null
+          else
+            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@comment.md >/dev/null
+          fi
+
+  apply:
+    if: >-
+      inputs.apply && github.event_name == 'push'
+      && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    permissions:
+      contents: read # the state commit is pushed with the app token, not github.token
+      id-token: write
+    concurrency:
+      group: tofu-state-${{ inputs.working-directory }}
+      cancel-in-progress: false
+    env:
+      TF_IN_AUTOMATION: "1"
+      TF_INPUT: "0"
+      STATE: ${{ inputs.state-path }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+        shell: bash
+    steps:
+      # The branch head, not github.sha: a run queued behind another apply
+      # must see the state commit that run pushed.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+          persist-credentials: false
+
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with: { tofu_wrapper: false }
+
+      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+
+      - name: tofu env
+        env:
+          PASSPHRASE: ${{ env.TOFU_STATE_PASSPHRASE }}
+          PASSPHRASE_VAR: ${{ inputs.passphrase-env }}
+          EXTRA: ${{ inputs.env }}
+        run: |
+          [ -n "$PASSPHRASE" ] || { echo "::error::TOFU_STATE_PASSPHRASE is empty (Infisical gha/dev)"; exit 1; }
+          echo "::add-mask::$PASSPHRASE"
+          echo "$PASSPHRASE_VAR=$PASSPHRASE" >> "$GITHUB_ENV"
+          [ -z "$EXTRA" ] || printf '%s\n' "$EXTRA" >> "$GITHUB_ENV"
+
+      # Unscoped on purpose: create-github-app-token has no `permission-*` input for
+      # Variables (infra github root), and naming any permission drops the rest. The
+      # installation itself is scoped to what the root needs.
+      - name: mint app token
+        id: app
+        if: inputs.app-token-owner != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: ${{ inputs.app-token-owner }}
+
+      - name: mint app token (2)
+        id: app2
+        if: inputs.app-token-owner-2 != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
+        with:
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: ${{ inputs.app-token-owner-2 }}
+
+      - name: export app tokens
+        if: inputs.app-token-owner != '' || inputs.app-token-owner-2 != ''
+        env:
+          TOKEN: ${{ steps.app.outputs.token }}
+          TOKEN_VAR: ${{ inputs.app-token-env }}
+          TOKEN2: ${{ steps.app2.outputs.token }}
+          TOKEN2_VAR: ${{ inputs.app-token-env-2 }}
+        run: |
+          [ -z "$TOKEN" ] || echo "$TOKEN_VAR=$TOKEN" >> "$GITHUB_ENV"
+          if [ -n "$TOKEN2" ]; then
+            [ -n "$TOKEN2_VAR" ] || { echo "::error::app-token-owner-2 needs app-token-env-2"; exit 1; }
+            echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
+          fi
+
+      - run: tofu init -input=false
+
+      - name: tofu apply
+        id: apply
+        run: |
+          set -o pipefail
+          old=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
+          tofu apply -auto-approve -input=false -no-color 2>&1 | tee apply.txt
+          new=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
+          {
+            echo "### tofu apply: \`$WD\`"
+            echo
+            echo '```'
+            grep -E '^(Apply complete!|No changes\.)' apply.txt || tail -5 apply.txt
+            echo '```'
+            echo "state serial: $old -> $new"
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          WD: ${{ inputs.working-directory }}
+
+      # Scoped to this repo and contents: the app has an `always` bypass on the ruleset.
+      - name: mint state token
+        id: state
+        if: always() && inputs.state-commit && steps.apply.outcome != 'skipped'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ env.APP_CLIENT_ID }}
+          private-key: ${{ env.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+
+      # Every apply re-encrypts the file (new nonce), so compare the serial,
+      # which only moves on a real state change. Runs even if the apply failed
+      # part-way: whatever it wrote to state must not be lost.
+      - name: commit state
+        if: always() && inputs.state-commit && steps.apply.outcome != 'skipped'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOKEN: ${{ steps.state.outputs.token }}
+          APP: ${{ steps.state.outputs.app-slug }}
+          DIR: ${{ inputs.working-directory }}
+        run: |
+          set -euo pipefail
+          old=$(git show "HEAD:./$STATE" 2>/dev/null | jq -r .serial || echo none)
+          new=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
+          if [ "$old" = "$new" ]; then
+            echo "state unchanged (serial $new)"
+            exit 0
+          fi
+          # never commit a plaintext state
+          jq -e '.encrypted_data and (.resources == null)' "$STATE" >/dev/null
+          uid=$(gh api "users/${APP}[bot]" --jq .id)
+          git config user.name "${APP}[bot]"
+          git config user.email "${uid}+${APP}[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$STATE"
+          git commit -m "chore($DIR): update encrypted state (serial $new) [skip ci]"
+          # Nothing else pushes state while this group runs, but a human merge
+          # can land in between: rebase once and retry.
+          if ! git push origin "HEAD:$GITHUB_REF"; then
+            git pull --rebase origin "$GITHUB_REF"
+            git push origin "HEAD:$GITHUB_REF"
+          fi
