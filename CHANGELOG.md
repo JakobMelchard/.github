@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.0.0](https://github.com/JakobMelchard/.github/compare/v1.6.0...v2.0.0) (2026-10-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* drop the token secret from go, python and node ([#142](https://github.com/JakobMelchard/.github/issues/142))
+
+### Features
+
+* **cf:** reusable wrangler deploy for Workers with a Durable Object ([#134](https://github.com/JakobMelchard/.github/issues/134)) ([e65ef67](https://github.com/JakobMelchard/.github/commit/e65ef67c793877b9a6512de6eb5be2078f3cbe8d))
+* drop the token secret from go, python and node ([#142](https://github.com/JakobMelchard/.github/issues/142)) ([df5f3ee](https://github.com/JakobMelchard/.github/commit/df5f3eeb693e350ab4b8c524c1283a4aaca13264))
+* **tofu:** read a second Infisical project and map env names ([#137](https://github.com/JakobMelchard/.github/issues/137)) ([b7007fa](https://github.com/JakobMelchard/.github/commit/b7007fa8d7b234f1a5255ca50483d29b590c91d2))
+* **tofu:** reusable plan, apply and encrypted state commit ([#124](https://github.com/JakobMelchard/.github/issues/124)) ([a1cd195](https://github.com/JakobMelchard/.github/commit/a1cd195ad9ac123e86b5e1954eaa701736091edc))
+* workflow-templates as one-line callers ([#135](https://github.com/JakobMelchard/.github/issues/135)) ([507a794](https://github.com/JakobMelchard/.github/commit/507a794bade56a5b06a02e024f4b1d8c64b2de99))
+
+
+### Bug Fixes
+
+* simulator step and tofu token conditions ([#141](https://github.com/JakobMelchard/.github/issues/141)) ([806e63a](https://github.com/JakobMelchard/.github/commit/806e63a7d87a49bef9c12091e882754f69daed1b))
+
 ## [1.6.0](https://github.com/JakobMelchard/.github/compare/v1.5.0...v1.6.0) (2026-10-11)
 
 
