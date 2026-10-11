@@ -26,7 +26,7 @@ on:
           uv, pip or none. Picks the default install and how lint-cmd and test-cmd run.
           uv: `uv sync --all-extras`, commands as `uv run <cmd>`. pip: a .venv with
           `pip install -e ".[dev]"`, commands as `.venv/bin/<cmd>`. none: no install, commands
-          run bare. Any other value fails the install step.
+          run bare. Any other value fails the install step unless install-cmd is set.
         type: string
         default: uv
       install-cmd:

@@ -89,7 +89,7 @@ jobs:
           # shellcheck disable=SC2086 # space-separated roots by contract
           for root in $PATHS; do
             while IFS= read -r f; do
-              head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)' && echo "$f" >> /tmp/scripts.txt
+              if head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)'; then echo "$f" >> /tmp/scripts.txt; fi
             done < <(find "$root" -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.venv/*')
           done
           sort -u /tmp/scripts.txt -o /tmp/scripts.txt

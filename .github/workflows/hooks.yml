@@ -6,7 +6,7 @@ name: hooks
 #   jobs:
 #     hooks:
 #       uses: JakobMelchard/.github/.github/workflows/hooks.yml@vX.Y.Z
-#       with: { skip: eslint,prettier }
+#       with: { skip: 'eslint,prettier' }
 
 permissions:
   contents: read
