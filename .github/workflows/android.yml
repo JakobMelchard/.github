@@ -1,53 +1,12 @@
 name: android
 
-# Reusable Android (Gradle) CI, Linux runner.
+# Reusable Android (Gradle) CI on a Linux runner: SDK setup, Gradle tasks, artifact upload.
+# Skips ci for Markdown-only changes.
 #
 #   jobs:
 #     ci:
-#       uses: JakobMelchard/.github/.github/workflows/android.yml@v1.6.0
-#       with:
-#         gradle-tasks: ":app:testDebugUnitTest :app:assembleDebug"
-#         android-packages: "platforms;android-36 build-tools;36.0.0"
-#         artifact-path: app/build/outputs/apk/debug/*.apk
-#
-# Inputs (all optional):
-#   working-directory string, default "."       Directory holding gradlew; only the gradle step runs
-#                                               there (setup-cmd runs in the repository root).
-#   java-version      string, default "17"      JDK for actions/setup-java.
-#   java-distribution string, default "temurin" setup-java distribution.
-#   android-packages  string, default "platform-tools"
-#                                               Space-separated sdkmanager packages, e.g.
-#                                               "platforms;android-35 build-tools;35.0.0".
-#   setup-cmd         string, default ""        Runs in the repository root before Gradle, e.g.
-#                                               "npm install && npx cap sync android". "" skips it.
-#   gradle-tasks      string, default "testDebugUnitTest assembleDebug"
-#                                               Passed unquoted to `./gradlew --no-daemon`, so tasks
-#                                               and flags are split on spaces. "" skips Gradle.
-#   artifact-path     string, default ""        Glob uploaded after the build, relative to the
-#                                               repository root, even when Gradle failed. "" skips it.
-#   artifact-name     string, default "app-debug"  Name of the uploaded artifact.
-#   runs-on           string, default ""        Runner label for the ci job only (pr-title and
-#                                               changes always use RUNNER_LINUX). Empty picks the org
-#                                               variable RUNNER_LINUX (Blacksmith, x86_64, which
-#                                               aapt2 needs) and falls back to ubuntu-latest.
-#
-# Secrets: none. Outputs: none.
-#
-# Jobs: pr-title (pull_request only: Conventional Commits check, 5 min), changes (skips ci for
-# markdown-only diffs, 10 min), ci (60 min). setup-cmd runs through eval in bash. The gradle cache
-# is only set up when a *.gradle* file or gradle-wrapper.properties exists.
-#
-# Callers (scan 2026-10-11, both accounts):
-#   JakobMelchard/workouts-go ci.yml android job (main): java-version, setup-cmd,
-#     working-directory, gradle-tasks, artifact-path.
-#   JakobMelchard/workouts-hx ci.yml android job (main): setup-cmd, working-directory,
-#     gradle-tasks, artifact-path.
-#   lilfeelz/fz ci.yml (main): android-packages, artifact-path.
-#   JakobMelchard/template ci.yml.jinja (v1.6.0): capacitor job as workouts-go; android template
-#     passes android-packages and artifact-path.
-#   This repo: lint.yml smoke-android (gradle-tasks "").
-#   Never passed by any caller: java-distribution, artifact-name, runs-on. The former callers
-#   zmxdroid and lift no longer call it.
+#       uses: JakobMelchard/.github/.github/workflows/android.yml@vX.Y.Z
+#       with: { artifact-path: app/build/outputs/apk/debug/*.apk }
 
 permissions:
   contents: read
@@ -56,13 +15,15 @@ on:
   workflow_call:
     inputs:
       working-directory:
-        description: Directory holding gradlew.
+        description: Directory holding gradlew. Only the gradle step runs there; setup-cmd runs in the repository root.
         type: string
         default: "."
       java-version:
+        description: JDK version for actions/setup-java.
         type: string
         default: "17"
       java-distribution:
+        description: setup-java distribution.
         type: string
         default: temurin
       android-packages:
@@ -74,34 +35,35 @@ on:
       setup-cmd:
         description: >
           Runs in the repository root before Gradle, e.g. "npm install && npx cap sync android".
-          Empty string skips the step.
+          Empty skips the step.
         type: string
         default: ""
       gradle-tasks:
         description: >
-          Tasks (and flags) for ./gradlew --no-daemon, e.g. ":app:testDebugUnitTest :app:assembleDebug".
-          Empty string skips Gradle.
+          Tasks and flags for `./gradlew --no-daemon`, split on spaces, e.g.
+          ":app:testDebugUnitTest :app:assembleDebug". Empty skips Gradle.
         type: string
         default: "testDebugUnitTest assembleDebug"
       artifact-path:
         description: >
           Glob to upload after the build, relative to the repository root, e.g.
-          app/build/outputs/apk/debug/*.apk. Empty string skips the upload.
+          app/build/outputs/apk/debug/*.apk. Uploaded even when Gradle failed. Empty skips the upload.
         type: string
         default: ""
       artifact-name:
+        description: Name of the uploaded artifact.
         type: string
         default: app-debug
       runs-on:
         description: >
-          Empty picks the variable RUNNER_LINUX (Blacksmith, x86_64, which Android
-          build-tools need for aapt2) and falls back to ubuntu-latest.
+          Runner label for the ci job only (pr-title and changes always use RUNNER_LINUX).
+          Empty picks the variable RUNNER_LINUX (Blacksmith, x86_64, which Android build-tools
+          need for aapt2) and falls back to ubuntu-latest.
         type: string
         default: ""
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push.
+  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -120,8 +82,6 @@ jobs:
             exit 1
           fi
 
-  # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
-  # still run, since they lint titles and docs.
   changes:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 10
@@ -141,9 +101,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -163,9 +121,8 @@ jobs:
           packages: ${{ inputs.android-packages }}
           log-accepted-android-sdk-licenses: false
 
-      # v6 defaults to a proprietary caching component (gradle.com terms of use, preview-only
-      # for private repos). cache-provider: basic keeps the open-source actions/cache path.
-      # basic caching keys on the Gradle files and fails without any (lint.yml's smoke job has none)
+      # v6 defaults to a proprietary cache component; `basic` keeps actions/cache. It keys on the
+      # Gradle files and fails without any, hence the hashFiles guard.
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         if: hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') != ''
         with:
@@ -184,7 +141,7 @@ jobs:
         env:
           TASKS: ${{ inputs.gradle-tasks }}
         shell: bash
-        # TASKS is split into words on purpose: it is a task list, not one argument.
+        # TASKS is split into words on purpose.
         run: |
           chmod +x gradlew
           # shellcheck disable=SC2086

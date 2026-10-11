@@ -1,6 +1,11 @@
 name: terraform
 
-# Reusable OpenTofu CI. Caller: infra (terraform/cloudflare/ and terraform/tailscale/).
+# Reusable OpenTofu lint: fmt, init without a backend, validate. Plans and applies are tofu.yml.
+#
+#   jobs:
+#     ci:
+#       uses: JakobMelchard/.github/.github/workflows/terraform.yml@vX.Y.Z
+#       with: { working-directory: terraform/cloudflare }
 
 permissions:
   contents: read
@@ -9,12 +14,11 @@ on:
   workflow_call:
     inputs:
       working-directory:
+        description: OpenTofu root.
         type: string
         default: terraform
       validate:
-        description: >
-          Run `tofu validate`. Set false only for a config that is known
-          not to validate yet, and say why at the call site.
+        description: Run `tofu validate`. Set false only for a config known not to validate yet, and say why at the call site.
         type: boolean
         default: true
       runs-on:
@@ -25,8 +29,7 @@ on:
         default: ""
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push.
+  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -44,8 +47,6 @@ jobs:
             exit 1
           fi
 
-  # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
-  # still run, since they lint titles and docs.
   changes:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
@@ -66,9 +67,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash

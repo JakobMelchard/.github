@@ -1,34 +1,12 @@
 name: shell
 
-# Reusable shell CI: bash -n / zsh -n syntax check and shellcheck over every script under paths.
-# bin/ scripts are extensionless with shebangs, so globbing on *.sh is not enough —
-# detect by shebang instead (bash, sh or zsh in line 1). zsh scripts get the syntax check only.
+# Reusable shell CI: syntax check and shellcheck over every script with a bash, sh or zsh
+# shebang under paths (extensionless bin/ scripts included). zsh scripts get the syntax check only.
 #
 #   jobs:
 #     shell:
-#       uses: JakobMelchard/.github/.github/workflows/shell.yml@v1.6.0
-#       with:
-#         paths: scripts
-#         severity: warning
-#
-# Inputs (all optional):
-#   paths    string, default "."       Space-separated roots to scan (.git, node_modules and .venv
-#                                      are skipped).
-#   severity string, default "warning" shellcheck minimum severity: error | warning | info | style.
-#   runs-on  string, default ""        Runner for EVERY job, as JSON: '"ubuntu-latest"' or
-#                                      '["self-hosted","macOS"]'. Empty picks the repo variable
-#                                      RUNNER_LINUX (Blacksmith on private org repos) and falls back
-#                                      to ubuntu-latest. Personal repos get no Blacksmith: pass mimi.
-#                                      (hooks.yml, go.yml, python.yml and node.yml take a plain label
-#                                      and apply it to the main job only.)
-#
-# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
-# diffs), ci. Missing zsh and shellcheck are installed on the runner (apt on Linux, brew shellcheck
-# on macOS).
-#
-# Callers: .config (paths, severity), .githooks (paths, severity), monitor (severity), template
-# (pinned v1.4.0), lilfeelz/.config (pinned v1.4.0), lilfeelz/bin (severity), lilfeelz/workspaces
-# (runs-on, pinned SHA).
+#       uses: JakobMelchard/.github/.github/workflows/shell.yml@vX.Y.Z
+#       with: { paths: scripts }
 
 permissions:
   contents: read
@@ -37,24 +15,23 @@ on:
   workflow_call:
     inputs:
       paths:
-        description: Space-separated roots to scan.
+        description: Space-separated roots to scan. .git, node_modules and .venv are skipped.
         type: string
         default: "."
       severity:
-        description: shellcheck minimum severity (error|warning|info|style).
+        description: shellcheck minimum severity (error, warning, info or style).
         type: string
         default: warning
       runs-on:
         description: >
-          Runner for every job, as JSON ('"ubuntu-latest"' or '["self-hosted","macOS"]').
-          Empty picks the repo variable RUNNER_LINUX (Blacksmith on private org repos)
-          and falls back to ubuntu-latest. Personal repos get no Blacksmith: pass mimi.
+          Runner for every job, as JSON: '"ubuntu-latest"' or '["self-hosted","macOS"]'.
+          Empty picks the repo variable RUNNER_LINUX (Blacksmith on private org repos) and
+          falls back to ubuntu-latest. Personal repos get no Blacksmith: pass mimi.
         type: string
         default: ""
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push.
+  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
   pr-title:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
@@ -73,8 +50,6 @@ jobs:
             exit 1
           fi
 
-  # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
-  # still run, since they lint titles and docs.
   changes:
     timeout-minutes: 10
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -94,9 +69,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -110,21 +83,20 @@ jobs:
         id: collect
         env:
           PATHS: ${{ inputs.paths }}
+        shell: bash
         run: |
           : > /tmp/scripts.txt
           # shellcheck disable=SC2086 # space-separated roots by contract
           for root in $PATHS; do
             while IFS= read -r f; do
-              case "$(head -c 2 "$f")" in
-                '#!') head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)' && echo "$f" >> /tmp/scripts.txt ;;
-              esac
+              head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)' && echo "$f" >> /tmp/scripts.txt
             done < <(find "$root" -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.venv/*')
           done
           sort -u /tmp/scripts.txt -o /tmp/scripts.txt
-          echo "count=$(wc -l < /tmp/scripts.txt)" >> "$GITHUB_OUTPUT"
-          echo "found $(wc -l < /tmp/scripts.txt) scripts:"
+          n=$(wc -l < /tmp/scripts.txt)
+          echo "count=$n" >> "$GITHUB_OUTPUT"
+          echo "found $n scripts:"
           cat /tmp/scripts.txt
-        shell: bash
 
       - name: syntax check
         if: steps.collect.outputs.count != '0'

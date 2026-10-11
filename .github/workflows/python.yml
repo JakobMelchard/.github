@@ -1,50 +1,11 @@
 name: python
 
-# Reusable Python CI.
+# Reusable Python CI: install, lint, test. Skips ci for Markdown-only changes.
 #
 #   jobs:
-#     python:
-#       uses: JakobMelchard/.github/.github/workflows/python.yml@v1.6.0
-#       with:
-#         package-manager: uv
-#       secrets: inherit          # only if the repo needs private dependencies
-#
-# Inputs (all optional):
-#   python-version    string,  default "3.12"        Interpreter for actions/setup-python.
-#   working-directory string,  default "."           Directory every run step executes in.
-#   package-manager   string,  default "uv"          uv | pip | none. Picks the default install and
-#                                                     how lint-cmd and test-cmd are invoked:
-#                                                       uv   -> uv sync --all-extras; commands run as
-#                                                               `uv run <cmd>`
-#                                                       pip  -> python -m venv .venv && .venv/bin/pip
-#                                                               install -e ".[dev]"; commands run as
-#                                                               `.venv/bin/<cmd>`
-#                                                       none -> stdlib only, no install; commands run bare
-#                                                     Any other value fails the install step.
-#   install-cmd       string,  default ""            When set, replaces the package-manager install.
-#   lint-cmd          string,  default "ruff check ." "" skips the step. Only the start of the string gets
-#                                                     the uv/pip prefix: write
-#                                                     "ruff check . && uv run mypy" for several commands.
-#   test-cmd          string,  default "pytest"      "" skips the step. Same prefix rule as lint-cmd.
-#   runs-on           string,  default ""            Runner label for the ci job only (pr-title and
-#                                                     changes always use RUNNER_LINUX). Empty picks the
-#                                                     org variable RUNNER_LINUX (self-hosted on mimi,
-#                                                     private repos only) and falls back to ubuntu-latest.
-#   private-deps      boolean, default false         Wire a token into git so private JakobMelchard
-#                                                     repos referenced as git+https:// dependencies
-#                                                     resolve.
-#   private-repos     string,  default ""            Comma/newline-separated repos the minted app token
-#                                                     may read, e.g. "observe". Only with app secrets.
-#
-# Secrets (all optional, only read when private-deps is true): app-client-id and app-private-key
-# (GitHub App, preferred), else token (PAT), else the job's github.token.
-#
-# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
-# diffs), ci. Commands run through eval.
-#
-# Callers: content (lint-cmd; pinned v1.3.0), infra (python-version, package-manager, install-cmd, lint-cmd,
-# test-cmd; pinned v1.3.0), monitor (python-version, package-manager none, install-cmd, lint-cmd,
-# test-cmd), observe (python-version, package-manager, lint-cmd; pinned v1.3.0).
+#     ci:
+#       uses: JakobMelchard/.github/.github/workflows/python.yml@vX.Y.Z
+#       with: { package-manager: uv }
 
 permissions:
   contents: read
@@ -53,57 +14,68 @@ on:
   workflow_call:
     inputs:
       python-version:
+        description: Interpreter version for actions/setup-python.
         type: string
         default: "3.12"
       working-directory:
+        description: Directory every run step executes in.
         type: string
         default: "."
       package-manager:
-        description: uv | pip | none
+        description: >
+          uv, pip or none. Picks the default install and how lint-cmd and test-cmd run.
+          uv: `uv sync --all-extras`, commands as `uv run <cmd>`. pip: a .venv with
+          `pip install -e ".[dev]"`, commands as `.venv/bin/<cmd>`. none: no install, commands
+          run bare. Any other value fails the install step.
         type: string
         default: uv
       install-cmd:
-        description: Overrides the package-manager default when set.
+        description: Replaces the package-manager install when set.
         type: string
         default: ""
       lint-cmd:
+        description: >
+          Empty skips the step. The uv or pip prefix applies to the start of the string only:
+          write "ruff check . && uv run mypy" for several commands.
         type: string
         default: "ruff check ."
       test-cmd:
+        description: Empty skips the step. Same prefix rule as lint-cmd.
         type: string
         default: "pytest"
       runs-on:
         description: >
+          Runner label for the ci job only (pr-title and changes always use RUNNER_LINUX).
           Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
           private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
       private-deps:
         description: >
-          Authenticate git so private JakobMelchard repos referenced as
-          dependencies (git+https://…) resolve.
+          Wire a token into git so private JakobMelchard repos referenced as git+https://
+          dependencies resolve. The token is the minted app token, else the token secret,
+          else github.token.
         type: boolean
         default: false
       private-repos:
         description: >
-          Comma/newline-separated repos the minted app token may read,
-          e.g. "observe". Only used with app credentials.
+          Comma or newline separated repos the minted app token may read, e.g. "observe".
+          Only used with app credentials.
         type: string
         default: ""
     secrets:
       app-client-id:
-        description: GitHub App client ID (preferred over a PAT — no expiry to babysit).
+        description: GitHub App client ID, preferred over a PAT. Only read when private-deps is true.
         required: false
       app-private-key:
-        description: GitHub App private key. Presence of this selects the app path.
+        description: GitHub App private key. Its presence selects the app path.
         required: false
       token:
         description: PAT fallback, used when no app private key is supplied.
         required: false
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push.
+  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
   pr-title:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
@@ -122,8 +94,6 @@ jobs:
             exit 1
           fi
 
-  # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
-  # still run, since they lint titles and docs.
   changes:
     timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
@@ -139,8 +109,7 @@ jobs:
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     env:
-      # `secrets` is not available in a step-level `if`. Evaluate the
-      # comparison here so only the boolean — never the key — is in env.
+      # `secrets` is unavailable in a step-level `if`; expose only the boolean, never the key.
       HAS_APP: ${{ secrets.app-private-key != '' }}
     defaults:
       run:
@@ -150,9 +119,7 @@ jobs:
         with: { persist-credentials: false }
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -171,9 +138,6 @@ jobs:
         with:
           enable-cache: true
 
-      # Commands go through env vars, not direct interpolation: an empty
-      # `${{ }}` inside an if/case block produces an empty body, which is a
-      # bash syntax error.
       - name: mint app token
         id: app
         if: inputs.private-deps && env.HAS_APP == 'true'
@@ -185,13 +149,15 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # pip/uv shell out to git over https; a token must be wired into git config.
+      # pip and uv shell out to git over https.
       - name: configure private dependency access
         if: inputs.private-deps
         env:
           TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
         run: git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
 
+      # Commands go through env vars: an empty `${{ }}` interpolated into an if/case body is a
+      # bash syntax error.
       - name: install
         env:
           INSTALL_CMD: ${{ inputs.install-cmd }}
@@ -203,7 +169,7 @@ jobs:
             case "$PKG_MGR" in
               uv)   uv sync --all-extras ;;
               pip)  python -m venv .venv && .venv/bin/pip install -e '.[dev]' ;;
-              none) echo 'stdlib only — no install' ;;
+              none) ;;
               *)    echo "unknown package-manager: $PKG_MGR" >&2; exit 1 ;;
             esac
           fi

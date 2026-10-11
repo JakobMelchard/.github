@@ -1,18 +1,13 @@
 name: xcode
 
-# Reusable Xcode CI for Apple apps and packages. Callers: zmxapp, zmxkit.
+# Reusable Xcode CI for Apple apps and packages: generate, swift-format lint, xcodebuild test.
+# Runs on a macOS runner (10x the Linux minute cost), so trigger it on pull_request and main only.
+# An empty scheme skips xcodebuild.
 #
 #   jobs:
 #     ci:
-#       uses: JakobMelchard/.github/.github/workflows/xcode.yml@v1.6.0
-#       with:
-#         scheme: Attach
-#         siblings: zmxkit        # optional: public org repos cloned next to the checkout
-#
-# Runs on a macOS runner (10x the minute cost of Linux on the free plan), so callers
-# should trigger it on pull_request and main only. Every *-cmd input skips its step
-# when "", and an empty scheme skips xcodebuild entirely — that is what lint.yml's
-# smoke job passes.
+#       uses: JakobMelchard/.github/.github/workflows/xcode.yml@vX.Y.Z
+#       with: { scheme: Attach, siblings: zmxkit }
 
 permissions:
   contents: read
@@ -35,16 +30,16 @@ on:
         type: string
         default: "platform=iOS Simulator,name=iPad Air 11-inch (M4)"
       generate-cmd:
-        description: Runs before anything else, e.g. xcodegen for repos that git-ignore the .xcodeproj.
+        description: Runs before anything else, e.g. xcodegen for repos that git-ignore the .xcodeproj. Empty skips the step.
         type: string
         default: "if [ -f project.yml ]; then brew install xcodegen && xcodegen generate; fi"
       lint-cmd:
-        description: Empty string skips the step.
+        description: Empty skips the step.
         type: string
         default: "xcrun swift-format lint --strict --recursive ."
       test-cmd:
         description: >
-          Replaces the default `xcodebuild test` (built from scheme/project/destination)
+          Replaces the default `xcodebuild test` (built from scheme, project and destination)
           when set. Empty runs the default, or nothing when scheme is empty.
         type: string
         default: ""
@@ -54,12 +49,13 @@ on:
         default: ""
       siblings:
         description: >
-          Space-separated public JakobMelchard repos to clone next to the checkout, as
-          name or name@ref (default ref main), mirroring the local ~/Workspaces/JakobMelchard
-          layout. For projects that include or depend on a sibling checkout by path.
+          Space-separated public JakobMelchard repos to clone next to the checkout, as name or
+          name@ref (default ref main), mirroring the local ~/Workspaces/JakobMelchard layout.
+          For projects that include or depend on a sibling checkout by path.
         type: string
         default: ""
       working-directory:
+        description: Directory every run step executes in.
         type: string
         default: "."
       runs-on:
@@ -70,10 +66,8 @@ on:
         default: ""
 
 jobs:
-  # The PR title becomes the squash-commit subject that release-please reads.
-  # Same regex as .githooks/commit-msg. Skipped on push. Runs on the same runner
-  # as the build: Xcode callers already have the Mac runner on mimi, and a hosted
-  # Linux runner would be the only metered job in the workflow.
+  # Same regex as .githooks/commit-msg. Runs on the build's Mac runner: a hosted Linux runner
+  # would be the only metered job here.
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
@@ -115,9 +109,7 @@ jobs:
           done
 
       - name: provenance
-        # Which commit of JakobMelchard/.github defined this job. job.workflow_ref and
-        # job.workflow_sha (GitHub, Sept 2026) are read through toJSON because
-        # actionlint's job-context type does not know them yet.
+        # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
           JOB: ${{ toJSON(job) }}
         shell: bash
@@ -150,10 +142,8 @@ jobs:
         shell: bash
         run: eval "$CMD"
 
-      # Runner images can ship without iOS simulators (macos-latest with Xcode 26.6 lists only
-      # placeholders), so create the device the destination names, downloading the iOS
-      # runtime first when none is installed. The name comes from destination, or from a
-      # `name=` inside test-cmd.
+      # Runner images can ship without iOS simulators, so create the device the destination
+      # names (or a `name=` inside test-cmd), downloading the iOS runtime first if none exists.
       - name: simulator
         if: inputs.test-cmd != '' || inputs.scheme != ''
         env:

@@ -1,15 +1,13 @@
 name: review-label
 
-# Reusable bridge for review bots without a label allowlist. A repo's caller runs it on
-# `pull_request: types: [labeled]`; labelling a ready PR "ai:cubic" posts `@cubic-dev-ai review`
-# as the org app, then drops the label so it can be applied again for another review.
-# CodeRabbit and Sourcery filter by label natively and need no workflow. The app token comes
-# from Infisical (project gha, identity gha-org, OIDC), so the caller grants id-token: write.
+# Reusable bridge for review bots without a label allowlist. Labelling a ready PR "ai:cubic"
+# posts `@cubic-dev-ai review` as the org app, then removes the label so it can be applied again.
+# CodeRabbit and Sourcery filter by label natively and need no workflow.
 #
 #   on: { pull_request: { types: [labeled] } }
 #   jobs:
 #     review-label:
-#       uses: JakobMelchard/.github/.github/workflows/review-label.yml@v1.6.0
+#       uses: JakobMelchard/.github/.github/workflows/review-label.yml@vX.Y.Z
 #       permissions: { contents: read, id-token: write }
 
 on:
