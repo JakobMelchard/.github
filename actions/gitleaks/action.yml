@@ -29,7 +29,5 @@ runs:
         CONFIG: ${{ inputs.config }}
         EXTRA: ${{ inputs.args }}
       run: |
-        args=""
-        [ -n "$CONFIG" ] && args="--config $CONFIG"
-        # shellcheck disable=SC2086 # deliberate word splitting of caller-supplied flags
-        gitleaks dir . --no-banner --redact $args $EXTRA
+        # shellcheck disable=SC2086 # EXTRA is split into flags on purpose
+        gitleaks dir . --no-banner --redact ${CONFIG:+--config "$CONFIG"} $EXTRA
