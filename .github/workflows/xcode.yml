@@ -1,18 +1,60 @@
 name: xcode
 
-# Reusable Xcode CI for Apple apps and packages. Callers: zmxapp, zmxkit.
+# Reusable Xcode CI for Apple apps and packages.
 #
 #   jobs:
 #     ci:
 #       uses: JakobMelchard/.github/.github/workflows/xcode.yml@main
 #       with:
 #         scheme: Attach
-#         siblings: zmxkit        # optional: public org repos cloned next to the checkout
+#         runs-on: self-hosted
 #
-# Runs on a macOS runner (10x the minute cost of Linux on the free plan), so callers
-# should trigger it on pull_request and main only. Every *-cmd input skips its step
-# when "", and an empty scheme skips xcodebuild entirely — that is what lint.yml's
-# smoke job passes.
+# Inputs (all optional):
+#   scheme            string, default ""   Xcode scheme for the default `xcodebuild test`. Empty skips
+#                                          xcodebuild; lint.yml's smoke job passes this.
+#   project           string, default ""   .xcodeproj or .xcworkspace path. Empty picks the first
+#                                          workspace, else project, in working-directory after
+#                                          generate-cmd ran.
+#   destination       string, default "platform=iOS Simulator,name=iPad Air 11-inch (M4)"
+#                                          xcodebuild -destination; also names the simulator the
+#                                          simulator step creates when it is missing.
+#   generate-cmd      string, default xcodegen if project.yml exists, else nothing
+#                                          Runs first (after xcode-version). "" skips the step.
+#   lint-cmd          string, default "xcrun swift-format lint --strict --recursive ."
+#                                          Runs second. "" skips the step.
+#   test-cmd          string, default ""   Replaces the default `xcodebuild test` when set. Empty runs
+#                                          the default, or nothing when scheme is empty. Also read by
+#                                          the simulator step to find a `name=` to create.
+#   xcode-version     string, default ""   Selects /Applications/Xcode_<version>.app, e.g. "26.6".
+#                                          Empty keeps the runner default.
+#   siblings          string, default ""   Space-separated public JakobMelchard repos, name or
+#                                          name@ref (default main), cloned next to the checkout.
+#   working-directory string, default "."  Every run step of ci executes there; the xcodebuild log
+#                                          artifact is read from it.
+#   runs-on           string, default ""   One runner label (no fromJSON), for pr-title and ci. Empty
+#                                          picks the org variable RUNNER_MACOS (self-hosted on mimi,
+#                                          private org repos only) and falls back to macos-latest.
+#
+# Secrets: none. Outputs: none. Artifact: xcodebuild-log (xcodebuild.log, only on failure).
+#
+# Jobs: pr-title (pull_request only: Conventional Commits check, 5 min), ci (60 min). Both run on the macOS runner
+# (10x the Linux minute cost on the free plan), so callers should trigger it on pull_request and
+# main only and filter with `paths`: unlike the language workflows there is no markdown-only gate.
+# Each *-cmd runs through eval in bash. Steps in order: checkout, siblings, provenance, select
+# xcode, generate, lint, simulator, test, xcodebuild log.
+#
+# Callers (scan 2026-10-11, both accounts):
+#   lilfeelz/workspaces attach-ci.yml (v1.3.0): scheme, working-directory, runs-on=self-hosted.
+#   lilfeelz/keyboard kanata-ios.yml (v1.4.0): working-directory, scheme, runs-on=macos-26,
+#     xcode-version, test-cmd.
+#   JakobMelchard/workouts-go ci.yml ios job (v1.3.0): runs-on=self-hosted, working-directory,
+#     generate-cmd, lint-cmd "", test-cmd.
+#   JakobMelchard/template ci.yml.jinja: ios job as workouts-go (v1.6.0); macos template passes
+#     scheme and destination=platform=macOS.
+#   This repo: lint.yml smoke-xcode (scheme "", generate-cmd "", lint-cmd "") and smoke-simulator
+#     (generate-cmd "", lint-cmd "", test-cmd printing a destination).
+#   Never passed by any caller: project, siblings. The former callers zmxapp and zmxkit no longer
+#   exist.
 
 permissions:
   contents: read
@@ -77,6 +119,7 @@ jobs:
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
+    timeout-minutes: 5
     steps:
       - name: conventional title
         env:
@@ -93,6 +136,7 @@ jobs:
 
   ci:
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
