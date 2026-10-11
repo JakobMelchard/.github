@@ -282,8 +282,7 @@ subscription) work the org at night, Europe/Vienna: `nightly-sweep` at 03:07
 triages new issues, implements issues labelled `agent:cloud` as draft PRs on `claude/issue-*`
 branches, and comments a verdict on Renovate PRs; `nightly-improve` at 04:37 opens at most
 three draft PRs on `claude/improve-*` branches, three repos per night in rotation. Both stay
-inside the repos named in their prompts (every live org repo plus lilfeelz workspaces,
-bin, .config, .agents, keyboard; the personal dotfiles use `dev` as base; keyboard
+inside the repos present in the run (the non-archived, non-fork org repos at run time, listed by `gh repo list`, plus whatever lilfeelz repos a hosted routine has attached; the personal dotfiles use `dev` as base; keyboard
 gets reading-only changes since its checks cannot run in the cloud), never
 merge, never touch base branches, workflows or infra. A repo's own checks run with `GH_TOKEN` and `GITHUB_TOKEN` removed from their environment (`env -u`). `routines/*.md` are the prompts, copied verbatim into the routine; edit the
 file, then paste it into the routine (`/schedule update` in Claude Code, or the web form).
