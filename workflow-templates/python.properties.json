@@ -6,7 +6,6 @@
     "Python"
   ],
   "filePatterns": [
-    "pyproject\\.toml$",
-    "requirements.*\\.txt$"
+    "pyproject\\.toml$"
   ]
 }

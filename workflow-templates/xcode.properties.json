@@ -7,7 +7,6 @@
   ],
   "filePatterns": [
     "project\\.yml$",
-    "\\.xcodeproj$",
-    "Package\\.swift$"
+    "\\.xcodeproj$"
   ]
 }
