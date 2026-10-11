@@ -25,7 +25,8 @@ name: cf
 #   wrangler-version  string,  default ""      Empty runs the wrangler the repo locked
 #                                              (`npx --no-install`, so a missing one fails instead
 #                                              of fetching latest). A version such as "4.143.0"
-#                                              runs `npx wrangler@<version>` instead.
+#                                              runs `npx wrangler@<version>` instead, fetched before
+#                                              the credentials are loaded.
 #   dry-run           boolean, default false   `wrangler deploy --dry-run`: bundles, prints bindings,
 #                                              publishes nothing. Skips the Infisical step, so it
 #                                              needs no credentials.
@@ -47,7 +48,7 @@ name: cf
 # second push waits instead of racing the first to the same Worker, and nothing is cancelled.
 # Gate on the branch in the caller: the identity refuses other refs, but the run would fail late.
 #
-# Jobs: deploy (15 min): checkout, provenance, setup-node, install, Infisical, wrangler deploy.
+# Jobs: deploy (15 min): checkout, provenance, setup-node, install, fetch wrangler, Infisical, wrangler deploy.
 #
 # Callers: JakobMelchard/switchboard and JakobMelchard/mealrot replace their inline deploy job
 # (npm ci, Infisical, `npm run deploy`). lint.yml smoke-cf runs it with dry-run against
@@ -126,6 +127,16 @@ jobs:
           CMD: ${{ inputs.install-cmd }}
         shell: bash
         run: eval "$CMD"
+
+      # Fetch a pinned wrangler (and run its dependencies' install scripts) before the token exists.
+      - name: fetch wrangler
+        if: inputs.wrangler-version != ''
+        env:
+          WRANGLER_VERSION: ${{ inputs.wrangler-version }}
+        shell: bash
+        run: |
+          [[ "$WRANGLER_VERSION" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad wrangler-version '$WRANGLER_VERSION'"; exit 1; }
+          npx --yes "wrangler@$WRANGLER_VERSION" --version
 
       # CLOUDFLARE_API_TOKEN; loaded after install so lifecycle scripts never see it.
       - name: credentials
