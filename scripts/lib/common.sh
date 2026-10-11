@@ -14,7 +14,7 @@ root() { git rev-parse --show-toplevel 2>/dev/null || die "not in a git repo"; }
 
 # fetch <repo> [ref]: print a directory holding a checkout of $ORG/<repo>.
 # No ref: the local clone when it is clean and at origin/main, else a gh tarball of main.
-# With a ref: always the gh tarball, so the ref is what gets vendored.
+# With a ref: always the gh tarball, so the ref is what is fetched.
 fetch() {
   local repo=$1 ref=${2:-} c="$WS/$1" d
   if [ -z "${FETCH_REMOTE:-}" ] && [ -z "$ref" ] && [ -d "$c/.git" ]; then
