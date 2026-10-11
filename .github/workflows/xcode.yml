@@ -155,7 +155,7 @@ jobs:
       # runtime first when none is installed. The name comes from destination, or from a
       # `name=` inside test-cmd.
       - name: simulator
-        if: inputs.test-cmd != '' || inputs.scheme != ''''
+        if: inputs.test-cmd != '' || inputs.scheme != ''
         env:
           CMD: ${{ inputs.test-cmd }}
           DEST: ${{ inputs.destination }}
