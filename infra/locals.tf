@@ -7,7 +7,7 @@ locals {
   # resource from your configuration"). Archive with `gh repo archive`, then mark
   # it `archived: true` here, which takes it out of state on the next apply
   # (`tofu state rm` first, so prevent_destroy does not block the plan).
-  # Unlisted repos are touched only by `org-repo sync`.
+  # Unlisted repos are touched only by `org-repo new`, once, when it creates them.
   all_repos = {
     for name, override in local.settings.repos :
     name => merge(local.defaults, override)
