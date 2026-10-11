@@ -1,11 +1,38 @@
 name: go
 
-# Reusable Go CI. Callers: health, workouts, gsheet.
+# Reusable Go CI.
 #
 #   jobs:
 #     ci:
 #       uses: JakobMelchard/.github/.github/workflows/go.yml@main
+#       with:
+#         go-version: "1.26"
 #       secrets: inherit          # only if the repo needs private modules
+#
+# Inputs (all optional):
+#   go-version        string,  default "1.25"          Go toolchain for actions/setup-go.
+#   working-directory string,  default "."            Module root; every run step executes there and
+#                                                      go.sum caching is keyed on it (off when absent).
+#   vet-cmd           string,  default "go vet ./..."  Runs first. "" skips the step.
+#   test-cmd          string,  default "go test ./..." Runs second. "" skips the step.
+#   build-cmd         string,  default "go build ./..." Runs last. "" skips the step.
+#   runs-on           string,  default ""              Runner label for the ci job only (pr-title and
+#                                                      changes always use RUNNER_LINUX). Empty picks the
+#                                                      org variable RUNNER_LINUX (self-hosted on mimi,
+#                                                      private repos only) and falls back to ubuntu-latest.
+#   private-modules   boolean, default false           Set GOPRIVATE to the owner's repos and wire a
+#                                                      token into git so private modules resolve.
+#   private-repos     string,  default ""              Comma/newline-separated repos the minted app token
+#                                                      may read, e.g. "gsheet". Only with app secrets.
+#
+# Secrets (all optional, only read when private-modules is true): app-client-id and app-private-key
+# (GitHub App, preferred), else token (PAT), else the job's github.token.
+#
+# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
+# diffs), ci. Each *-cmd runs through eval in bash.
+#
+# Callers: JakobMelchard/drill (defaults), JakobMelchard/lists and JakobMelchard/workouts-go
+# (go-version, vet-cmd, test-cmd, build-cmd), JakobMelchard/workline (defaults, pinned v1.3.0).
 
 permissions:
   contents: read
@@ -63,6 +90,7 @@ jobs:
   # The PR title becomes the squash-commit subject that release-please reads.
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
@@ -82,6 +110,7 @@ jobs:
   # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
   # still run, since they lint titles and docs.
   changes:
+    timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
@@ -90,6 +119,7 @@ jobs:
         uses: JakobMelchard/.github/actions/code-changed@main
 
   ci:
+    timeout-minutes: 60
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
