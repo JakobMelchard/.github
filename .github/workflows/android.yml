@@ -1,6 +1,6 @@
 name: android
 
-# Reusable Android (Gradle) CI. Callers: zmxdroid, lift (Capacitor, android/).
+# Reusable Android (Gradle) CI, Linux runner.
 #
 #   jobs:
 #     ci:
@@ -10,10 +10,44 @@ name: android
 #         android-packages: "platforms;android-36 build-tools;36.0.0"
 #         artifact-path: app/build/outputs/apk/debug/*.apk
 #
-# Linux runner: JDK, Android SDK (licenses accepted by setup-android) and the Gradle
-# wrapper cache. A Capacitor wrapper builds its web assets first through setup-cmd and
-# points working-directory at its android/ folder. Every *-cmd input and gradle-tasks
-# skip their step when "", which is what lint.yml's smoke job passes.
+# Inputs (all optional):
+#   working-directory string, default "."       Directory holding gradlew; only the gradle step runs
+#                                               there (setup-cmd runs in the repository root).
+#   java-version      string, default "17"      JDK for actions/setup-java.
+#   java-distribution string, default "temurin" setup-java distribution.
+#   android-packages  string, default "platform-tools"
+#                                               Space-separated sdkmanager packages, e.g.
+#                                               "platforms;android-35 build-tools;35.0.0".
+#   setup-cmd         string, default ""        Runs in the repository root before Gradle, e.g.
+#                                               "npm install && npx cap sync android". "" skips it.
+#   gradle-tasks      string, default "testDebugUnitTest assembleDebug"
+#                                               Passed unquoted to `./gradlew --no-daemon`, so tasks
+#                                               and flags are split on spaces. "" skips Gradle.
+#   artifact-path     string, default ""        Glob uploaded after the build, relative to the
+#                                               repository root, even when Gradle failed. "" skips it.
+#   artifact-name     string, default "app-debug"  Name of the uploaded artifact.
+#   runs-on           string, default ""        Runner label for the ci job only (pr-title and
+#                                               changes always use RUNNER_LINUX). Empty picks the org
+#                                               variable RUNNER_LINUX (Blacksmith, x86_64, which
+#                                               aapt2 needs) and falls back to ubuntu-latest.
+#
+# Secrets: none. Outputs: none.
+#
+# Jobs: pr-title (pull_request only: Conventional Commits check, 5 min), changes (skips ci for
+# markdown-only diffs, 10 min), ci (60 min). setup-cmd runs through eval in bash. The gradle cache
+# is only set up when a *.gradle* file or gradle-wrapper.properties exists.
+#
+# Callers (scan 2026-10-11, both accounts):
+#   JakobMelchard/workouts-go ci.yml android job (main): java-version, setup-cmd,
+#     working-directory, gradle-tasks, artifact-path.
+#   JakobMelchard/workouts-hx ci.yml android job (main): setup-cmd, working-directory,
+#     gradle-tasks, artifact-path.
+#   lilfeelz/fz ci.yml (main): android-packages, artifact-path.
+#   JakobMelchard/template ci.yml.jinja (v1.6.0): capacitor job as workouts-go; android template
+#     passes android-packages and artifact-path.
+#   This repo: lint.yml smoke-android (gradle-tasks "").
+#   Never passed by any caller: java-distribution, artifact-name, runs-on. The former callers
+#   zmxdroid and lift no longer call it.
 
 permissions:
   contents: read
@@ -71,6 +105,7 @@ jobs:
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    timeout-minutes: 5
     steps:
       - name: conventional title
         env:
@@ -89,6 +124,7 @@ jobs:
   # still run, since they lint titles and docs.
   changes:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    timeout-minutes: 10
     outputs:
       code: ${{ steps.files.outputs.code }}
     steps:
@@ -99,6 +135,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
