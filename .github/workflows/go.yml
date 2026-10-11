@@ -43,7 +43,7 @@ on:
       private-modules:
         description: >
           Set GOPRIVATE to the owner's repos and wire a token into git so private modules
-          resolve. The token is the minted app token, else the token secret, else github.token.
+          resolve. The token is the minted app token, else github.token.
         type: boolean
         default: false
       private-repos:
@@ -54,13 +54,10 @@ on:
         default: ""
     secrets:
       app-client-id:
-        description: GitHub App client ID, preferred over a PAT. Only read when private-modules is true.
+        description: GitHub App client ID. Only read when private-modules is true.
         required: false
       app-private-key:
         description: GitHub App private key. Its presence selects the app path.
-        required: false
-      token:
-        description: PAT fallback, used when no app private key is supplied.
         required: false
 
 jobs:
@@ -141,7 +138,7 @@ jobs:
       - name: configure private module access
         if: inputs.private-modules
         env:
-          TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
+          TOKEN: ${{ steps.app.outputs.token || github.token }}
           OWNER: ${{ github.repository_owner }}
         run: |
           go env -w GOPRIVATE="github.com/$OWNER/*"
