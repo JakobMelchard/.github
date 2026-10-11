@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/JakobMelchard/.github/compare/v1.4.0...v1.5.0) (2026-10-10)
+
+
+### Features
+
+* **ai-review:** add reusable PR-Agent review with a fallback model and a failing check ([#114](https://github.com/JakobMelchard/.github/issues/114)) ([15d66f6](https://github.com/JakobMelchard/.github/commit/15d66f61ce372d87ea4610cc488f2e2208feb8a2))
+
 ## [1.4.0](https://github.com/JakobMelchard/.github/compare/v1.3.0...v1.4.0) (2026-10-09)
 
 
