@@ -11,7 +11,7 @@ name: xcode
 #
 # Inputs (all optional):
 #   scheme            string, default ""   Xcode scheme for the default `xcodebuild test`. Empty skips
-#                                          xcodebuild; lint.yml's smoke job passes this.
+#                                          that default test; the simulator step may still run.
 #   project           string, default ""   .xcodeproj or .xcworkspace path. Empty picks the first
 #                                          workspace, else project, in working-directory after
 #                                          generate-cmd ran.
@@ -29,13 +29,15 @@ name: xcode
 #                                          Empty keeps the runner default.
 #   siblings          string, default ""   Space-separated public JakobMelchard repos, name or
 #                                          name@ref (default main), cloned next to the checkout.
-#   working-directory string, default "."  Every run step of ci executes there; the xcodebuild log
-#                                          artifact is read from it.
+#   working-directory string, default "."  Every run step of ci executes there, except the sibling
+#                                          clone step, which runs from github.workspace and clones
+#                                          beside the checkout. The xcodebuild log artifact is read
+#                                          from it.
 #   runs-on           string, default ""   One runner label (no fromJSON), for pr-title and ci. Empty
 #                                          picks the org variable RUNNER_MACOS (self-hosted on mimi,
 #                                          private org repos only) and falls back to macos-latest.
 #
-# Secrets: none. Outputs: none. Artifact: xcodebuild-log (xcodebuild.log, only on failure).
+# Secrets: none. Outputs: none. Artifact: xcodebuild-log (xcodebuild.log, only on failure or timeout).
 #
 # Jobs: pr-title (pull_request only: Conventional Commits check, 5 min), ci (60 min). Both run on the macOS runner
 # (10x the Linux minute cost on the free plan), so callers should trigger it on pull_request and
@@ -254,7 +256,7 @@ jobs:
             test 2>&1 | tee xcodebuild.log | grep -E 'error:|warning: |Test Suite|Test Case|Executed|\*\*'
 
       - name: xcodebuild log
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: xcodebuild-log
