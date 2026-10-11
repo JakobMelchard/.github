@@ -3,7 +3,32 @@ name: hooks
 # Reusable prek run: the repo's own .pre-commit-config.yaml over every tracked file. This is the
 # gate for the checks the local hooks run (local hooks can be skipped, this cannot). Hooks come
 # from the pinned revs in the caller's config, e.g. JakobMelchard/.githooks (public, no token).
-# Callers: zmxkit.
+#
+#   jobs:
+#     hooks:
+#       uses: JakobMelchard/.github/.github/workflows/hooks.yml@main
+#       with:
+#         skip: eslint,prettier   # optional
+#
+# Inputs (all optional):
+#   skip              string, default ""   Comma-separated hook ids to skip on this runner, passed as
+#                                          SKIP to prek (e.g. swift-format on Linux, tofu-fmt, eslint
+#                                          when node.yml lints).
+#   working-directory string, default "."  Directory holding .pre-commit-config.yaml, relative to the
+#                                          repo root. Also where tokens-check looks for
+#                                          .config/tokens.path.
+#   runs-on           string, default ""   Runner label. Empty picks the org variable RUNNER_LINUX
+#                                          (self-hosted on mimi, visible to private repos only) and
+#                                          falls back to ubuntu-latest. Unlike shell.yml this is a
+#                                          plain label, not JSON.
+#
+# Jobs: one, `prek`, so the required check is "<caller job> / prek". The tokens-check step runs
+# before prek and is a no-op unless the repo has .config/tokens.path.
+#
+# Callers: .agents, .config, JakobMelchard.github.io, agenx, cf, content, drill, hx, infra,
+# interviews, lists, mealrot, monitor, observe, switchboard, template, workline, workouts-go,
+# workouts-hx, lilfeelz/.config, lilfeelz/bin, lilfeelz/fz, lilfeelz/keyboard,
+# lilfeelz/lilfeelz.github.io, lilfeelz/workspaces (JakobMelchard org unless prefixed).
 
 permissions:
   contents: read
@@ -27,6 +52,7 @@ on:
 
 jobs:
   prek:
+    timeout-minutes: 30
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
