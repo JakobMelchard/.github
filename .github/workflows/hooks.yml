@@ -48,7 +48,7 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: j178/prek-action@4e14d07f9231acabce116ccfca13b13dd9755ece # v3.0.0
+      - uses: j178/prek-action@1382ad72dea72f9d53832f2bcb65b3e87a947204 # v3.0.1
         env:
           SKIP: ${{ inputs.skip }}
         with:
