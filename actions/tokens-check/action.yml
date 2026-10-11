@@ -1,0 +1,16 @@
+name: tokens-check
+description: >
+  No-op. Workflows pinned at v2.0.1 or older call this action from main; remove it once no
+  caller pins one of those releases.
+
+inputs:
+  working-directory:
+    description: Unused.
+    required: false
+    default: "."
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: "true"
