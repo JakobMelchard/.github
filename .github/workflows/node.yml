@@ -1,10 +1,52 @@
 name: node
 
-# Reusable Node CI. Callers: cf, hx, lift, lists, switchboard,
-# lilfeelz.github.io.
+# Reusable Node CI.
 # Vanilla JS + JSDoc house style — eslint flat config, prettier, vitest.
 #
 # Repos with no committed lockfile must pass install-cmd: npm install.
+#
+#   jobs:
+#     ci:
+#       uses: JakobMelchard/.github/.github/workflows/node.yml@main
+#       with:
+#         check-cmd: npx tsc
+#         test-cmd: npm test
+#       secrets: inherit          # only if the repo needs private dependencies
+#
+# Inputs (all optional). Steps run in this order: install, browsers, check, lint, test, e2e. Every
+# *-cmd runs through eval in bash and "" skips its step.
+#   node-version      string,  default "22"           Node for actions/setup-node.
+#   working-directory string,  default "."            Directory every run step executes in; also
+#                                                      where tokens-check looks for .config/tokens.path.
+#   install-cmd       string,  default "npm ci"       "" skips install (static sites with no deps).
+#   check-cmd         string,  default ""             Formatting/type check, e.g. "make check",
+#                                                      "npx tsc" or "npx prettier --check .".
+#   lint-cmd          string,  default "npx eslint ." Lint.
+#   test-cmd          string,  default ""             Unit tests.
+#   e2e-cmd           string,  default ""             Runs after test-cmd, with Chromium available when
+#                                                      browsers is true.
+#   browsers          boolean, default false          Cache ~/.cache/ms-playwright and, on Linux runners,
+#                                                      run `playwright-core install --with-deps chromium`.
+#   runs-on           string,  default ""             Runner label for the ci job only (pr-title and
+#                                                      changes always use RUNNER_LINUX). Empty picks the
+#                                                      org variable RUNNER_LINUX (self-hosted on mimi,
+#                                                      private repos only) and falls back to ubuntu-latest.
+#   private-deps      boolean, default false          Wire a token into git (https, ssh and git+ forms of
+#                                                      github.com) so private JakobMelchard repos
+#                                                      referenced as github:owner/repo#ref resolve.
+#   private-repos     string,  default ""             Comma/newline-separated repos the minted app token
+#                                                      may read, e.g. "observe". Only with app secrets.
+#
+# Secrets (all optional, only read when private-deps is true): app-client-id and app-private-key
+# (GitHub App, preferred), else token (PAT), else the job's github.token.
+#
+# Jobs: pr-title (pull_request only: Conventional Commits check), changes (skips ci for markdown-only
+# diffs), ci. The ci job starts with the tokens-check action, a no-op unless the repo has
+# .config/tokens.path.
+#
+# Callers: agenx, cf, chrome-extensions, hx, interviews, JakobMelchard.github.io, mealrot, switchboard,
+# workline, workouts-hx, lilfeelz/lilfeelz.github.io. Inputs passed: install-cmd, check-cmd, lint-cmd,
+# test-cmd, e2e-cmd, browsers.
 
 permissions:
   contents: read
@@ -73,6 +115,7 @@ jobs:
   # The PR title becomes the squash-commit subject that release-please reads.
   # Same regex as .githooks/commit-msg. Skipped on push.
   pr-title:
+    timeout-minutes: 5
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
@@ -92,6 +135,7 @@ jobs:
   # Markdown-only changes skip ci (actions/code-changed); pr-title and the caller's hooks job
   # still run, since they lint titles and docs.
   changes:
+    timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
@@ -100,6 +144,7 @@ jobs:
         uses: JakobMelchard/.github/actions/code-changed@main
 
   ci:
+    timeout-minutes: 60
     needs: changes
     if: needs.changes.outputs.code == 'true'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
