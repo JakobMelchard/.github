@@ -15,8 +15,7 @@ groups for their packages; majors and security fixes come on their own. The CI w
 `permissions: contents: read` at the top (`release.yml` needs `contents: write` +
 `pull-requests: write` + `id-token: write`), checkouts do not persist credentials, and caller-supplied
 `*-cmd` inputs reach the shell through `env`, never by template expansion.
-`lint.yml` gates every change here — actionlint over workflows, zizmor, shellcheck over the hooks, a bash-3.2 portability check, tofu
-validate, and smoke calls of `go` `python` `node` (including the Chromium path)
+`lint.yml` gates every change here — actionlint over workflows, zizmor, shellcheck over the hooks, a bash-3.2 portability check, and smoke calls of `go` `python` `node` (including the Chromium path)
 and `shell`, plus `xcode` with an empty scheme (no xcodebuild, macOS minutes cost 10x) and `android`
 with no Gradle tasks (toolchain setup only). `release.yml` is not smoke-called; `tofu.yml` is called with plan, apply and state commit off, so its jobs skip.
 
@@ -25,9 +24,7 @@ alternative: it follows the latest 1.x release of this repo (see *Releases of th
 
 ## Other workflows
 
-`.github/workflows/interaction-limits.yml` re-applies, monthly and on change, the `interaction_limit`
-a repo declares in `infra/settings.json` (`collaborators_only`, `contributors_only`, `existing_users`):
-GitHub caps these at six months, the workflow makes them permanent.
+Repo settings, labels, rulesets and interaction limits are declared in `JakobMelchard/infra` (`terraform/github`), see *Infra*.
 
 Issues labeled `feedback` (filed from an app's in-app form)
 are triaged by the nightly cloud routine (see Routines), which retitles them and queues
@@ -47,21 +44,13 @@ Default community health files here apply to every org repo that has none of its
 private repos included: the issue forms under `.github/ISSUE_TEMPLATE/` (`Bug`, `Task`,
 blank issues off), `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md` and `CONTRIBUTING.md`.
 CODEOWNERS and LICENSE are not inheritable and stay per repo. Private vulnerability
-reporting is on for the public repos (`private_vulnerability_reporting` in `infra/settings.json`).
+reporting is on for the public repos (`private_vulnerability_reporting` in `JakobMelchard/infra` `terraform/github/settings.json`).
 
 ## Labels
 
-`infra/settings.json` `labels` declares the label set every non-archived repo carries: the
-GitHub defaults, `fleet/*` for agent-driven work, and release-please's `autorelease: *`.
-`infra/labels` creates or updates them with `gh label create --force` and only lists labels
-it does not know; it never deletes. Two callers, one script:
-
-```sh
-infra/labels [repo…]           # your gh auth, from a clone of this repo
-```
-
-`.github/workflows/labels.yml` runs the same script weekly and on every change to the file,
-with a token from the org GitHub App (see below).
+`terraform/github/settings.json` in `JakobMelchard/infra` declares the label set every non-archived repo carries
+and `terraform/github/labels` applies it (`labels.yml` there, weekly and on change). The set: the GitHub
+defaults, `fleet/*` for agent-driven work, and release-please's `autorelease: *`.
 
 Review bots run on demand, by PR label (labels above, `review-label.yml` for the bridge):
 
@@ -75,10 +64,10 @@ Review bots run on demand, by PR label (labels above, `review-label.yml` for the
 ## GitHub App
 
 `melchbot` is the org GitHub App behind every cross-repo job: private dependencies in
-the reusable workflows, `labels.yml`, and `fleet-sync.yml`. It is installed on **all
+the reusable workflows, `infra`'s `labels.yml` and `github.yml`, and `fleet-sync.yml`. It is installed on **all
 repositories** with Contents, Issues and Pull requests read and write, which is exactly
 what those jobs mint tokens for (each job requests only the permissions it names, scoped
-to the repos in `infra/settings.json`, revoked when the job ends).
+to the repos in `infra`'s `terraform/github/settings.json`, revoked when the job ends).
 
 Its credentials live in Infisical project `core` (`dev`) as `MELCHBOT_CLIENT_ID` and
 `MELCHBOT_PRIVATE_KEY`, with a copy as `APP_CLIENT_ID` and `APP_PRIVATE_KEY` in project
@@ -312,7 +301,7 @@ job must grant `id-token: write`, or the run fails at startup.
 ## Fleet sync
 
 `fleet-sync.yml` checks out `JakobMelchard/.config` and runs its `scripts/fleet-sync` weekly with the org app
-token: for every non-archived repo in `infra/settings.json` it refreshes the vendored copies the repo
+token: for every non-archived repo in `JakobMelchard/infra` `terraform/github/settings.json` it refreshes the vendored copies the repo
 already carries (config-sync groups whose file exists, opt-in tokens), from the latest `.config` release
 tag, and opens or updates one `chore/fleet-sync` PR per changed repo, labelled `fleet/deps`. A copy whose
 only change is its `VENDORED` header opens no PR. Nothing is added to a repo that lacks it. Only
@@ -358,32 +347,16 @@ template's CI callers point at the workflows here, so change a workflow here fir
 
 ## Infra
 
-`infra/` is OpenTofu for the org: every repo listed in `infra/settings.json` is
-adopted (import blocks) and kept at the shared settings — merge strategies,
-branch deletion, auto-merge, visibility, archived, Dependabot alerts. Org-level
-settings apply only with `-var manage_org=true` and an `admin:org` token.
-`org-repo new` applies the repo-level defaults once to a repo it creates, before it is listed here.
-Labels (`labels`) are applied by `labels.yml`, not by tofu: the provider's label resource fails on labels
-that already exist. Private vulnerability reporting and `is_template` are applied by `org-repo new` only;
-tofu ignores them.
-
-Every public repo gets a branch ruleset on `main` (`rulesets.tf`): PR only, no
-force push or deletion, linear history, and the repo's `checks` from `settings.json`
-as required status checks. Private repos get none: the free plan does not enforce
-rulesets there.
-
-`infra.yml` runs it: `tofu plan` on every PR as a comment and a required check,
-`tofu apply` on push to `main`, then the encrypted state (`infra/state/`) is
-committed back by the org app. `infra/README.md` has the details and the local
-fallback (`make plan`, `make apply`).
+The org's GitHub settings (repos of both accounts, rulesets, runner variables, labels) are OpenTofu in
+`JakobMelchard/infra`, `terraform/github`, applied by that repo's CI through `tofu.yml`. They were here in
+`infra/` until the move; `settings.json` and the encrypted state moved there; the history of the old directory stays here.
 
 ## Layout
 
 ```
-.github/workflows/    reusable workflows + this repo's own lint.yml, labels.yml, self-release.yml, fleet-sync.yml
+.github/workflows/    reusable workflows + this repo's own lint.yml, self-release.yml, fleet-sync.yml
 .github/ISSUE_TEMPLATE/  org-wide issue forms; PULL_REQUEST_TEMPLATE.md beside it
 actions/              composite actions (code-changed, docs, gitleaks, tokens-check)
-infra/                opentofu: org + repo settings, settings.json, labels script
 scripts/              shell tools: `ci` (latest CI conclusion per repo) and `lib/common.sh`, the helpers
                       config-sync, fleet-sync, org-repo and ios source (`JM_LIB`, default
                       `~/Workspaces/JakobMelchard/.github/scripts/lib`); bats tests in `scripts/test`
