@@ -341,6 +341,18 @@
     "ai-review": {
       "color": "fbca04",
       "description": "Run one PR-Agent review on mimi (needs the ai-review workflow in the repo)"
+    },
+    "coderabbit": {
+      "color": "ff570a",
+      "description": "Request a CodeRabbit review"
+    },
+    "sourcery": {
+      "color": "f5a623",
+      "description": "Request a Sourcery review"
+    },
+    "cubic": {
+      "color": "6f42c1",
+      "description": "Request a cubic review (review-label workflow comments, then removes the label)"
     }
   }
 }
