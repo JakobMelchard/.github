@@ -1,0 +1,11 @@
+{
+  "name": "Release (release-please)",
+  "description": "Opens and cuts release-please releases as the org app, credentials from Infisical over OIDC (JakobMelchard/.github release.yml)",
+  "iconName": "octicon tag",
+  "categories": [
+    "Deployment"
+  ],
+  "filePatterns": [
+    "release-please-config\\.json$"
+  ]
+}

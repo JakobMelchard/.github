@@ -1,0 +1,11 @@
+{
+  "name": "Git hooks (prek)",
+  "description": "Runs the repo's .pre-commit-config.yaml over every file with prek (JakobMelchard/.github hooks.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "Continuous integration"
+  ],
+  "filePatterns": [
+    "\\.pre-commit-config\\.yaml$"
+  ]
+}

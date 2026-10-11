@@ -1,0 +1,8 @@
+{
+  "name": "PR-Agent review (label)",
+  "description": "Labelling a ready PR ai:pr-agent runs one PR-Agent review (JakobMelchard/.github ai-review.yml)",
+  "iconName": "octicon comment-discussion",
+  "categories": [
+    "Automation"
+  ]
+}

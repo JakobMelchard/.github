@@ -1,0 +1,11 @@
+{
+  "name": "OpenTofu CI",
+  "description": "OpenTofu: fmt, init without backend and validate (JakobMelchard/.github terraform.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "HCL"
+  ],
+  "filePatterns": [
+    "\\.tf$"
+  ]
+}

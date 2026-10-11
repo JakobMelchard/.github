@@ -15,6 +15,7 @@ a second hook set.
 
 - `.github/workflows/` `release go python node shell terraform tofu xcode android cf hooks lint self-release ai-review review-label`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
+- `workflow-templates/` starter callers (`<name>.yml` + `<name>.properties.json`), the "New workflow" list for the org
 - `actions/gitleaks/` composite action
 - `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's
   vendored design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
@@ -54,11 +55,13 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
   `release.yml`, `ai-review.yml` and `review-label.yml` are deliberately not smoked: release-please
   holds `contents: write` and would open real release PRs, ai-review needs a labelled PR and the model key,
   and review-label needs Infisical secrets and a labelled PR.
-- Callers reference `@main`, so a mistake here reaches every repo immediately.
-  `v1` follows the latest 1.x release and is moved only by `self-release.yml`;
-  release tags are immutable. Never move a tag by hand.
-- There are no starter workflows: a repo's CI caller comes from `JakobMelchard/template`. Devcontainer
-  templates live there too (`devcontainer/`, formerly the `.devcontainer` repo).
+- Callers pin a release tag (`@vX.Y.Z`), never `@main`; legacy callers still on `@main` get every merge
+  immediately until they are switched. `v1` follows the latest 1.x release and is moved only by
+  `self-release.yml`; release tags are immutable. Never move a tag by hand.
+- `workflow-templates/` has one starter per reusable workflow: a one-line caller pinned by SHA to the
+  latest release tag, with a `.properties.json`. A new reusable workflow gets its template once a release
+  contains it (a template cannot pin a file that is not in the tag). A rendered repo's CI caller still
+  comes from `JakobMelchard/template`, which also holds the devcontainer templates (`devcontainer/`).
 - `github.token` is scoped to the calling repo. A cross-repo private module needs
   a PAT or app token mapped explicitly as `secrets.token`, not `secrets: inherit`,
   so only that one secret crosses the boundary.

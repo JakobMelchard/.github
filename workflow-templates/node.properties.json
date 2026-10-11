@@ -1,0 +1,11 @@
+{
+  "name": "Node CI",
+  "description": "Node: install, eslint, type check and tests, optional Chromium e2e (JakobMelchard/.github node.yml)",
+  "iconName": "octicon check-circle",
+  "categories": [
+    "JavaScript"
+  ],
+  "filePatterns": [
+    "package\\.json$"
+  ]
+}
