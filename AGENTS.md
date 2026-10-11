@@ -1,78 +1,50 @@
-# .github — shared CI, actions and hooks
+# .github
 
-Reusable workflows, composite actions and the common git hook set for the
-`JakobMelchard` org and the `lilfeelz` personal repos. No application code.
+Reusable workflows, composite actions and the org Renovate preset for `JakobMelchard` and the
+`lilfeelz` personal repos. No application code. The human overview is in README.md.
 
-## Boundary against hx
-
-This repo is **how code is built and checked**. `hx` is code that **ships
-inside the app**. Workflows, composite actions, hooks and scaffolding templates
-belong here. `hx` keeps `src/`, `SPEC.md`, the store contract test and the
-semver tags consumers pin. `hx` must never grow a second reusable workflow or
-a second hook set.
+This repo is how code is built and checked. `hx` is code that ships inside an app. Workflows,
+actions, hooks and scaffolding templates belong here; `hx` must never grow a second reusable
+workflow or hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform tofu xcode android cf hooks lint self-release ai-review review-label`
-- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
-- `workflow-templates/` starter callers (`<name>.yml` + `<name>.properties.json`), the "New workflow" list for the org
-- `actions/gitleaks/` composite action
-- `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's
-  vendored design tokens (`.config/tokens.path`) against the `.config` ref its header names; used by
-  `hooks.yml` and `node.yml`, a no-op for repos that did not opt in
-- repo settings, labels and tofu live in `JakobMelchard/infra` (`terraform/github`), not here
-- `scripts/` `ci` and `lib/common.sh`, the helpers the org's shell tools source (`config-sync`, `fleet-sync`
-  in `.config`, `org-repo` in `template`, `ios` in `lilfeelz/workspaces`) via `JM_LIB`; bats in `scripts/test`
-- `renovate/default.json` the org Renovate preset every repo extends
-- `profile/README.md` the org profile page
+- `.github/workflows/` reusable workflows, plus this repo's own `lint.yml`, `self-release.yml` and `routines.yml`
+- `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `SUPPORT.md`, `CONTRIBUTING.md` org defaults
+- `workflow-templates/` starter callers (`<name>.yml` + `<name>.properties.json`)
+- `actions/` composite actions
+- `scripts/ci` and `scripts/lib/common.sh`: the helpers that `config-sync` and `fleet-sync` (`.config`), `org-repo` (`template`) and `ios` (`lilfeelz/workspaces`) source via `JM_LIB`; bats tests in `scripts/test`
+- `renovate/default.json` org preset, `routines/` prompts for the nightly routines, `profile/` org profile
+- Repo settings, labels and tofu live in `JakobMelchard/infra`, not here
 
 ## Commands
 
 ```sh
-prek install           # once per clone (brew install prek)
-prek run --all-files   # what the smoke-hooks job runs
+prek install           # once per clone
+prek run --all-files   # same as the CI hooks job
 ```
-
-Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-config.yaml`.
-`hooks.yml` here is the reusable CI job that runs a caller's config.
 
 ## Rules
 
-- Every `*-cmd` input skips its step when set to `""`. That is the extension
-  point: add an input, not an `if` inside the workflow. One exception:
-  `python.yml`'s `install-cmd` is an override, not a skip switch — its install
-  step is unguarded and falls back to `package-manager`. Install nothing with
-  `package-manager: none`.
-- Actions are pinned by commit SHA with the version in a trailing comment. Bump
-  deliberately.
-- Labels are declared in `JakobMelchard/infra` `terraform/github/settings.json` and written only by
-  its `labels` script. Never `gh label create` by hand in a repo; add it to the document.
-- `lint.yml` gates every change here: actionlint, shellcheck over the hooks, a
-  bash 3.2 portability check, and a smoke call of `go.yml` `python.yml`
-  `node.yml` `shell.yml` with empty inputs. A new workflow of that kind must
-  survive being called with nothing set — add a `smoke-<name>` job for it.
-  `cf.yml` is smoked with `dry-run` against `scripts/test/cf-smoke`, which needs no credentials. `tofu.yml` is smoked with plan, apply and state-commit off (both jobs skip: they need Infisical and a state).
-  `release.yml`, `ai-review.yml` and `review-label.yml` are deliberately not smoked: release-please
-  holds `contents: write` and would open real release PRs, ai-review needs a labelled PR and the model key,
-  and review-label needs Infisical secrets and a labelled PR.
-- Callers pin a release tag (`@vX.Y.Z`), never `@main`; legacy callers still on `@main` get every merge
-  immediately until they are switched. `v1` follows the latest 1.x release and is moved only by
-  `self-release.yml`; release tags are immutable. Never move a tag by hand.
-- `workflow-templates/` has one starter per reusable workflow: a one-line caller pinned by SHA to the
-  latest release tag, with a `.properties.json`. A new reusable workflow gets its template once a release
-  contains it (a template cannot pin a file that is not in the tag). A rendered repo's CI caller still
-  comes from `JakobMelchard/template`, which also holds the devcontainer templates (`devcontainer/`).
-- `github.token` is scoped to the calling repo. A cross-repo private module needs
-  a PAT or app token mapped explicitly as `secrets.token`, not `secrets: inherit`,
-  so only that one secret crosses the boundary.
+- Every `*-cmd` input skips its step when `""`. To make a step optional, add an input, not an
+  `if` in the workflow. `python.yml`'s `install-cmd` is the exception: it overrides the
+  `package-manager` install, and `package-manager: none` installs nothing.
+- Describe every input with `description:` in `inputs:`. The workflow header stays short.
+- Pin third-party actions by commit SHA with the version in a trailing comment.
+- Labels are declared in `JakobMelchard/infra` `terraform/github/settings.json`. Never
+  `gh label create` by hand.
+- Callers pin a release tag, never `@main`. Never move a tag by hand; `self-release.yml` moves `v1`.
+- A reusable workflow gets a starter in `workflow-templates/` once a release contains it. A
+  rendered repo's caller comes from `JakobMelchard/template`.
+- `lint.yml` gates every change. A new workflow must survive being called with no inputs: add a
+  `smoke-<name>` job. Not smoked on purpose: `release` (opens real release PRs), `ai-review` and
+  `review-label` (need a labelled PR and secrets). `cf` runs with `dry-run`, `tofu` with plan,
+  apply and state commit off.
+- `github.token` reads only the calling repo. A cross-repo private dependency needs an app token
+  or PAT mapped explicitly as `secrets.token`, not `secrets: inherit`.
 
 ## Gotcha
 
-These reusable workflows build their caller's checkout. `actions/checkout`
-itself takes `repository:`/`ref:`, so this is a property of these workflows and
-of token scope, not a platform limit: every checkout here is bare, none takes a
-`repository` input, and `github.token` only reads the calling repo. Pointing one
-at another repo would need both a new input and a token passed in. That is why
-`hx`'s `consumers-e2e.yml` inlines its steps instead of calling `node.yml`,
-and why it mints an app token (credentials from Infisical) to read a
-private consumer.
+These workflows build their caller's checkout: no checkout here takes a `repository` input, and
+`github.token` reads only the calling repo. Building another repo needs both a new input and a
+token. That is why `hx`'s `consumers-e2e.yml` inlines its steps instead of calling `node.yml`.
