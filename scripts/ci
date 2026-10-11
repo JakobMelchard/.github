@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# ci [repo…] — latest CI conclusion per org repo on its default branch. No args: every repo.
+# ci [repo...]: latest CI conclusion per org repo on its default branch. No args: every repo.
 set -euo pipefail
 . "$(cd "$(dirname "$0")" && pwd)/lib/common.sh"
 need gh jq
 if [ $# -eq 0 ]; then
-  set --
-  while IFS= read -r __n; do set -- "$@" "$__n"; done < <(org_repos)
+  while IFS= read -r n; do set -- "$@" "$n"; done < <(org_repos)
 fi
 printf '%-26s %-10s %-18s %s\n' REPO STATUS WORKFLOW WHEN
 for r in "$@"; do

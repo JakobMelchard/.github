@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Shared helpers for the JakobMelchard shell tools (ci here, config-sync and fleet-sync in .config,
-# org-repo in template, ios in lilfeelz/workspaces). Sourced, not executed. bash 3.2.
-# A tool sources it as: . "${JM_LIB:-$HOME/Workspaces/JakobMelchard/.github/scripts/lib}/common.sh"
-# It does not know where the tool lives: a tool that needs its own directory computes it.
+# Helpers shared by the org's shell tools (ci here, config-sync and fleet-sync in .config, org-repo
+# in template, ios in lilfeelz/workspaces). Sourced, not executed; bash 3.2 compatible.
+#   . "${JM_LIB:-$HOME/Workspaces/JakobMelchard/.github/scripts/lib}/common.sh"
 ORG="${ORG:-JakobMelchard}"
 WS="${WORKSPACES_ROOT:-$HOME/Workspaces}/$ORG"
 
@@ -13,9 +12,9 @@ need() { for c in "$@"; do have "$c" || die "needs $c"; done; }
 
 root() { git rev-parse --show-toplevel 2>/dev/null || die "not in a git repo"; }
 
-# fetch <repo> [ref]  -> prints a temp dir holding a checkout of $ORG/<repo>
-# No ref: the local workspace clone when it is clean and at origin/main, else a gh tarball of main.
-# Explicit ref: always the gh tarball (private-safe), so the ref is what gets vendored.
+# fetch <repo> [ref]: print a directory holding a checkout of $ORG/<repo>.
+# No ref: the local clone when it is clean and at origin/main, else a gh tarball of main.
+# With a ref: always the gh tarball, so the ref is what gets vendored.
 fetch() {
   local repo=$1 ref=${2:-} c="$WS/$1" d
   if [ -z "${FETCH_REMOTE:-}" ] && [ -z "$ref" ] && [ -d "$c/.git" ]; then
@@ -28,16 +27,16 @@ fetch() {
   ref=${ref:-main}
   need gh
   d=$(mktemp -d)
-  # command substitution drops set -e in bash 3.2, so check each step
+  # bash 3.2 drops set -e inside command substitution, so check each step
   gh api "repos/$ORG/$repo/tarball/$ref" > "$d/t.tgz" || die "cannot fetch $ORG/$repo@$ref"
   tar -xzf "$d/t.tgz" -C "$d" --strip-components=1 || die "cannot unpack $ORG/$repo@$ref"
-  # the tarball's top dir is <owner>-<repo>-<short sha>; keep ref and sha for fetch_rev
+  # the tarball's top directory is <owner>-<repo>-<short sha>; record ref and sha for fetch_rev
   printf '%s %s\n' "$ref" "$(tar -tzf "$d/t.tgz" | sed -n '1{s|/.*||;s|.*-||;p;}')" > "$d/.fetch-rev"
   rm -f "$d/t.tgz"
   printf '%s\n' "$d"
 }
 
-# fetch_rev <dir from fetch>  -> the version it holds: its tag when it is exactly at one, else a short sha
+# fetch_rev <dir from fetch>: the version it holds, its tag when exactly at one, else a short sha
 fetch_rev() {
   local d=$1 ref sha
   if [ -d "$d/.git" ]; then
@@ -48,8 +47,8 @@ fetch_rev() {
   case "$ref" in v[0-9]*) printf '%s\n' "$ref" ;; *) printf '%s\n' "${sha:-$ref}" ;; esac
 }
 
-# vendored <src> <dst> <label> [rev]: print <src> as vendor writes it, with a one-line provenance
-# header where <dst>'s format has comments. <label> is <repo>/<path>; rev is the source version.
+# vendored <src> <dst> <label> [rev]: print <src> as vendor writes it, with a one-line header
+# where <dst>'s format has comments. <label> is <repo>/<path>, rev the source version.
 vendored() {
   local src=$1 dst=$2 label=$3 rev=${4:-unknown}
   case "$dst" in
@@ -58,19 +57,19 @@ vendored() {
             echo "# VENDORED from $ORG/$label - do not edit here; run config-sync." ;;
     *.css)  echo "/* VENDORED from $ORG/${label%%/*} ${label#*/} @$rev. Do not edit; run config-sync. */" ;;
     *.swift) echo "// VENDORED from $ORG/${label%%/*} ${label#*/} @$rev. Do not edit; run config-sync." ;;
-  esac      # json/markdown: no comment syntax, copied verbatim
+  esac      # json and markdown have no comment syntax: copied verbatim
   cat "$src"
 }
 
-# vendor <src> <dst> <label> [rev]: write the vendored copy
+# vendor <src> <dst> <label> [rev]: write the vendored copy of <src> to <dst>
 vendor() {
   mkdir -p "$(dirname "$2")"
   vendored "$@" > "$2"
   say "  $2"
 }
 
-# vendor_check <src> <dst> <label> [rev]: 0 when <dst> matches what vendor would write, else print a
-# diff and return 1. The VENDORED header line is ignored, so a version bump alone is not drift.
+# vendor_check <src> <dst> <label> [rev]: succeed when <dst> matches what vendor would write, else
+# print a diff and fail. The VENDORED header is ignored, so a version bump alone is not drift.
 vendor_check() {
   local dst=$2 unheader='1{/VENDORED from/d;}'
   [ -f "$dst" ] || { say "  missing $dst"; return 1; }
@@ -81,12 +80,12 @@ vendor_check() {
   fi
 }
 
-org_repos() { # org_repos [all] -> sorted $ORG repo names, archived ones only with `all`
+org_repos() { # org_repos [all]: sorted $ORG repo names; archived ones only with `all`
   local q='.[] | select(.isArchived|not) | .name'
   [ "${1:-}" = all ] && q='.[].name'
   gh repo list "$ORG" --limit 200 --json name,isArchived -q "$q" | sort
 }
 
-settings_json() { # prints settings.json, now in the private JakobMelchard/infra (terraform/github)
+settings_json() { # print terraform/github/settings.json from JakobMelchard/infra
   gh api -H 'Accept: application/vnd.github.raw' "repos/$ORG/infra/contents/terraform/github/settings.json"
 }

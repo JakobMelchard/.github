@@ -27,7 +27,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Build docs
+    - name: build docs
       shell: bash
       env:
         ACTION: ${{ github.action_path }}
