@@ -1,0 +1,8 @@
+{
+  // Fixture for lint.yml smoke-cf: the smallest Worker with a Durable Object, deployed with --dry-run.
+  "name": "cf-smoke",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "durable_objects": { "bindings": [{ "name": "SMOKE", "class_name": "Smoke" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Smoke"] }]
+}

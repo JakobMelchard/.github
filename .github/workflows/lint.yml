@@ -99,6 +99,20 @@ jobs:
       apply: false
       state-commit: false
 
+  # --dry-run bundles the fixture Worker (a Durable Object and its migration) and publishes
+  # nothing, so it needs no Infisical and no secrets; the caller still grants id-token: write
+  # because the reusable job asks for it.
+  smoke-cf:
+    uses: ./.github/workflows/cf.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      working-directory: scripts/test/cf-smoke
+      dry-run: true
+      wrangler-version: 4.143.0
+      install-cmd: ""
+
   # macOS minutes cost 10x: this smoke sets scheme "" so no xcodebuild runs, only the
   # generate/lint plumbing on a bare checkout.
   smoke-xcode:

@@ -13,7 +13,7 @@ a second hook set.
 
 ## Layout
 
-- `.github/workflows/` `release go python node shell terraform tofu xcode android hooks lint self-release ai-review review-label`
+- `.github/workflows/` `release go python node shell terraform tofu xcode android cf hooks lint self-release ai-review review-label`
 - `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`, `SECURITY.md`, `CONTRIBUTING.md` org defaults, inherited by every repo without its own
 - `actions/gitleaks/` composite action
 - `actions/tokens-check/` composite action: `config-sync --check` (from `JakobMelchard/.config`) of a repo's
@@ -50,7 +50,7 @@ Hooks live in `JakobMelchard/.githooks` (public), pinned by tag in `.pre-commit-
   bash 3.2 portability check, and a smoke call of `go.yml` `python.yml`
   `node.yml` `shell.yml` with empty inputs. A new workflow of that kind must
   survive being called with nothing set — add a `smoke-<name>` job for it.
-  `tofu.yml` is smoked with plan, apply and state-commit off (both jobs skip: they need Infisical and a state).
+  `cf.yml` is smoked with `dry-run` against `scripts/test/cf-smoke`, which needs no credentials. `tofu.yml` is smoked with plan, apply and state-commit off (both jobs skip: they need Infisical and a state).
   `release.yml`, `ai-review.yml` and `review-label.yml` are deliberately not smoked: release-please
   holds `contents: write` and would open real release PRs, ai-review needs a labelled PR and the model key,
   and review-label needs Infisical secrets and a labelled PR.
