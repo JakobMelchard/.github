@@ -250,7 +250,7 @@ jobs:
           owner: ${{ inputs.app-token-owner-2 }}
 
       - name: export app tokens
-        if: steps.changed.outputs.run != 'false' && inputs.app-token-owner != '' || inputs.app-token-owner-2 != ''
+        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
         env:
           TOKEN: ${{ steps.app.outputs.token }}
           TOKEN_VAR: ${{ inputs.app-token-env }}
