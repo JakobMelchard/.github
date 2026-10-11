@@ -45,7 +45,7 @@ Shared behaviour:
   workflow's ref and SHA to the step summary.
 - `runs-on` is a plain label in most workflows and JSON in `shell`, `release`, `ai-review` and
   `review-label`. Empty uses the org variable `RUNNER_LINUX` (`RUNNER_MACOS` for `xcode`), then
-  Blacksmith (`blacksmith-2vcpu-ubuntu-2404`) for Linux or the mimi runner for macOS in JakobMelchard repos, and GitHub's hosted runner elsewhere. The default is owner-aware: a missing variable never reaches hosted runners in this org (the account's hosted minutes are refused), while personal repos have no Blacksmith and keep hosted.
+  Blacksmith (`blacksmith-2vcpu-ubuntu-2404`) for Linux in JakobMelchard repos, and GitHub's hosted runner elsewhere (macOS always falls back to `macos-latest`, never the self-hosted runner). The default is owner-aware: a missing RUNNER_LINUX never reaches hosted runners in this org (the account's hosted minutes are refused), while personal repos have no Blacksmith and keep hosted.
 
 Find callers with a code search for `JakobMelchard/.github/.github/workflows/<name>.yml`.
 

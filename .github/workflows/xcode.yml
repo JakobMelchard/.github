@@ -61,7 +61,7 @@ on:
       runs-on:
         description: >
           Empty picks the org variable RUNNER_MACOS (self-hosted on mimi, visible to
-          private repos only) and falls back to the mimi runner (macos-latest outside JakobMelchard).
+          private repos only) and falls back to macos-latest.
         type: string
         default: ""
 
@@ -70,7 +70,7 @@ jobs:
   # would be the only metered job here.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || (github.repository_owner == 'JakobMelchard' && '["self-hosted","macOS"]' || '"macos-latest"')) }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
     timeout-minutes: 5
     steps:
       - name: conventional title
@@ -87,7 +87,7 @@ jobs:
           fi
 
   ci:
-    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || (github.repository_owner == 'JakobMelchard' && '["self-hosted","macOS"]' || '"macos-latest"')) }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
     timeout-minutes: 60
     defaults:
       run:
