@@ -36,6 +36,6 @@ runs:
         TITLE: ${{ inputs.title }}
         ASSETS: ${{ inputs.assets }}
         REPO: ${{ inputs.repo }}
-      run: |
+      run: | # zizmor: ignore[adhoc-packages] exact version, single dependency
         (cd "$ACTION" && npm install --no-save --no-audit --no-fund marked@18.0.14 >/dev/null)
         node "$ACTION/build.mjs" --src "$SRC" --out "$OUT" --title "$TITLE" --assets "$ASSETS" --repo "$REPO"

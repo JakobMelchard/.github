@@ -141,8 +141,9 @@ jobs:
         if: inputs.private-modules
         env:
           TOKEN: ${{ steps.app.outputs.token || secrets.token || github.token }}
+          OWNER: ${{ github.repository_owner }}
         run: |
-          go env -w GOPRIVATE='github.com/${{ github.repository_owner }}/*'
+          go env -w GOPRIVATE="github.com/$OWNER/*"
           git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
 
       - name: vet

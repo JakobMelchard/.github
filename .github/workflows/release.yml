@@ -10,7 +10,7 @@ name: release
 #     release:
 #       uses: JakobMelchard/.github/.github/workflows/release.yml@main
 #       with: { release-type: go }
-#       permissions: { contents: write, pull-requests: write, id-token: write }
+#       permissions: { contents: read, id-token: write }
 #     publish:
 #       needs: release
 #       if: needs.release.outputs.release_created == 'true'
@@ -44,14 +44,15 @@ on:
       version:
         value: ${{ jobs.release-please.outputs.version }}
 
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
+permissions: {}
 
 jobs:
   release-please:
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    # Writes go through the app token; github.token only needs OIDC for Infisical.
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
