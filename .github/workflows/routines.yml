@@ -32,7 +32,7 @@ on:
     - cron: "37 2 * * *" # nightly-improve, 04:37 Vienna in summer time
 
 env:
-  REPOS: flatplan interviews lists hx workouts-hx workouts-go cf switchboard monitor observe workline agenx content template .github .githooks .config .agents
+  REPOS: interviews lists hx workouts-hx workouts-go cf switchboard monitor observe workline agenx content template .github .githooks .config .agents
 
 jobs:
   run:

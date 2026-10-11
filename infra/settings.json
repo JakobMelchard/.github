@@ -127,18 +127,6 @@
     "drill": {
       "description": "Spaced repetition over card blocks in Markdown notes, FSRS, served on the tailnet"
     },
-    "flatplan": {
-      "description": "2D furniture arrangement planner. Vanilla JS + Canvas, no runtime deps.",
-      "visibility": "public",
-      "interaction_limit": "collaborators_only",
-      "private_vulnerability_reporting": true,
-      "checks": [
-        "ci / ci",
-        "ci / pr-title",
-        "hooks / prek"
-      ],
-      "homepage_url": "https://docs.melchard.org/flatplan/"
-    },
     "hx": {
       "visibility": "public",
       "description": "htmx + JSDoc library: router, html, Store adapters",
