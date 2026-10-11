@@ -125,7 +125,7 @@ get their caller from there instead; change a workflow here first, then the temp
 
 ## Labels
 
-`infra` declares the label set every repo carries: the GitHub defaults, `fleet:*` for agent work
+`infra` declares the label set every repo carries: the GitHub defaults, `fleet:*` for agent work,
 release-please's `autorelease: *` and `automerge`. Review bots run on demand by PR label:
 
 | Label | Bot | Notes |
