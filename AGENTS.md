@@ -38,7 +38,7 @@ prek run --all-files   # same as the CI hooks job
   rendered repo's caller comes from `JakobMelchard/template`.
 - `lint.yml` gates every change. A new workflow must survive being called with no inputs: add a
   `smoke-<name>` job. Not smoked on purpose: `release` (opens real release PRs), `ai-review` and
-  `review-label` (need a labelled PR and secrets). `cf` runs with `dry-run`, `tofu` with plan,
+  `review-label` and `automerge` (need a labelled PR and secrets). `cf` runs with `dry-run`, `tofu` with plan,
   apply and state commit off.
 - `github.token` reads only the calling repo. A cross-repo private dependency needs credentials
   mapped explicitly (`app-client-id` and `app-private-key`; the `token` secret is gone), not `secrets: inherit`.
