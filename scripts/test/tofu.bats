@@ -87,12 +87,12 @@ SH
   export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@t GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@t
   export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="url.$T/remote.insteadOf" GIT_CONFIG_VALUE_0="https://x-access-token:tok@github.com/o/r.git"
   git init -q --bare -b main "$T/remote"
-  cd "$T/work"
+  cd "$T/work" || return
   git init -q -b main .
   echo '{"serial":1,"encrypted_data":"x"}' > root/state/terraform.tfstate
   git add -A && git commit -q -m seed && git push -q "$T/remote" main
   git remote add origin "$T/remote"
-  cd root
+  cd root || return
   export STATE=state/terraform.tfstate GITHUB_REF=refs/heads/main GITHUB_REPOSITORY=o/r
   export TOKEN=tok APP=app DIR=root GH_TOKEN=x
 }
