@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.0](https://github.com/JakobMelchard/.github/compare/v2.0.1...v2.1.0) (2026-10-13)
+
+
+### Features
+
+* **automerge:** squash-merge labelled PRs once checks pass ([#153](https://github.com/JakobMelchard/.github/issues/153)) ([b50d893](https://github.com/JakobMelchard/.github/commit/b50d8938f139db43b34103f8dfa0c3cd03cc93fe))
+
+
+### Bug Fixes
+
+* **actions:** keep tokens-check as a no-op for pinned callers ([#149](https://github.com/JakobMelchard/.github/issues/149)) ([83a8ba3](https://github.com/JakobMelchard/.github/commit/83a8ba3ef6322e188b4a8b50a7a31f6a8f1a2df7))
+* **automerge:** merge only after two polls see the same checks ([#176](https://github.com/JakobMelchard/.github/issues/176)) ([51d6380](https://github.com/JakobMelchard/.github/commit/51d6380d9bdc79ca6f8a8160222bcaf9bbb11099))
+* **automerge:** skip its own check by name; the caller grants no actions read ([#154](https://github.com/JakobMelchard/.github/issues/154)) ([3136823](https://github.com/JakobMelchard/.github/commit/3136823a60259dfcfa34f4b81623472810a67d2b))
+* keep listing repos when gh fails for one ([#173](https://github.com/JakobMelchard/.github/issues/173)) ([b80becf](https://github.com/JakobMelchard/.github/commit/b80becf940098c25e99998a0e6b6b608ab9a063e))
+* keep the app key and the token out of the routine agent's reach ([#169](https://github.com/JakobMelchard/.github/issues/169)) ([143fac6](https://github.com/JakobMelchard/.github/commit/143fac64b021fb2fa77d6038d31e77f91514eeea))
+* no next link on unlisted docs pages, per-run temp file in shell.yml ([#175](https://github.com/JakobMelchard/.github/issues/175)) ([42259da](https://github.com/JakobMelchard/.github/commit/42259da7da1c806799b7688630974bbc4ea0eb42))
+* pin code-changed in the reusable workflows to a release and test its logic ([#172](https://github.com/JakobMelchard/.github/issues/172)) ([b443d73](https://github.com/JakobMelchard/.github/commit/b443d73f06d402bbe036449d29b95ae0dec9251f))
+* **tofu:** load only the secrets a PR plan needs and blank the app key before it runs ([#170](https://github.com/JakobMelchard/.github/issues/170)) ([c150dd1](https://github.com/JakobMelchard/.github/commit/c150dd1390fdf2f27a3b7f29447bc888438574e8))
+* verify the gitleaks download and pin the actionlint install ([#174](https://github.com/JakobMelchard/.github/issues/174)) ([2d0256d](https://github.com/JakobMelchard/.github/commit/2d0256dd515b05888ae829eee4bfa3b1e6b562e2))
+
 ## [2.0.1](https://github.com/JakobMelchard/.github/compare/v2.0.0...v2.0.1) (2026-10-11)
 
 
