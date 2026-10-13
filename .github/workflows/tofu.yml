@@ -31,7 +31,9 @@ on:
         description: >
           On pull requests and manual runs, `tofu init` and `tofu plan` against the committed
           state, posted as one PR comment per working directory. Skipped, reporting success,
-          when a PR does not touch working-directory, so a required check never hangs.
+          when a PR does not touch working-directory, so a required check never hangs. The PR's
+          tofu code runs with the state passphrase and the minted app tokens in its environment,
+          so only trusted authors should be able to push branches; the app key is blanked first.
         type: boolean
         default: true
       apply:
@@ -141,7 +143,8 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_wrapper: false }
 
-      - if: steps.changed.outputs.run != 'false'
+      - name: fetch TOFU_STATE_PASSPHRASE
+        if: steps.changed.outputs.run != 'false'
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
@@ -149,6 +152,29 @@ jobs:
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+          secret-name: TOFU_STATE_PASSPHRASE
+
+      - name: fetch APP_CLIENT_ID
+        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_CLIENT_ID
+
+      - name: fetch APP_PRIVATE_KEY
+        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
 
       - name: snapshot gha credentials
         if: steps.changed.outputs.run != 'false' && inputs.extra-infisical-project != ''
@@ -235,6 +261,11 @@ jobs:
             [ -n "$TOKEN2_VAR" ] || { echo "::error::app-token-owner-2 needs app-token-env-2"; exit 1; }
             echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
           fi
+
+      # The PR's own tofu code runs next: it must not be able to read the long-lived app key.
+      - name: drop the app key from the job env
+        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
+        run: echo "APP_PRIVATE_KEY=" >> "$GITHUB_ENV"
 
       - if: steps.changed.outputs.run != 'false'
         run: tofu init -input=false
