@@ -1,13 +1,17 @@
 name: routines
 
 # Nightly routines (see the README): runs routines/*.md with opencode on the org app token over
-# the non-archived org repos the app can reach. The schedule only runs when the repo variable
-# ROUTINES is "on"; workflow_dispatch always runs, as a dry run by default. The app token cannot
-# reach lilfeelz/*, which the prompts treat as "repository folder missing".
+# the non-archived org repos the app can reach. Nothing runs unless the repo variable ROUTINES is
+# "on"; workflow_dispatch defaults to a dry run. The app token cannot reach lilfeelz/*, which the
+# prompts treat as "repository folder missing".
 # Secrets (APP_*, OPENCODE_API_KEY) come from Infisical project gha, one secret at a time, and the
-# app key is blanked once the token is minted, so the agent and the repos' scripts never see it.
+# app key is blanked from the env once the token is minted.
 # A dry run mints a read-only token. The app needs Contents, Issues and Pull requests write plus
 # Checks and Actions read.
+#
+# Keep ROUTINES unset until the agent runs without OIDC and without the ruleset-bypass app: with
+# id-token: write in the job, the agent or any repo script can log in to Infisical as gha-org and
+# read every gha secret, and the minted token can push to any org repo.
 
 permissions:
   contents: read
@@ -34,7 +38,7 @@ on:
 
 jobs:
   run:
-    if: github.event_name == 'workflow_dispatch' || vars.ROUTINES == 'on'
+    if: vars.ROUTINES == 'on'
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 60
     permissions:
