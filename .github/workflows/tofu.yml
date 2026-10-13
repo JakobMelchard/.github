@@ -33,7 +33,8 @@ on:
           state, posted as one PR comment per working directory. Skipped, reporting success,
           when a PR does not touch working-directory, so a required check never hangs. The PR's
           tofu code runs with the state passphrase and the minted app tokens in its environment,
-          so only trusted authors should be able to push branches; the app key is blanked first.
+          and through the job's id-token it can log in to Infisical as gha-org and read every gha
+          secret, the app key included. Only trusted authors may push branches.
         type: boolean
         default: true
       apply:
@@ -264,7 +265,8 @@ jobs:
             echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
           fi
 
-      # The PR's own tofu code runs next: it must not be able to read the long-lived app key.
+      # Keeps the app key out of the env of the PR's tofu code. It does not stop that code from
+      # reading the key through the job's id-token.
       - name: drop the app key from the job env
         if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
         run: echo "APP_PRIVATE_KEY=" >> "$GITHUB_ENV"
