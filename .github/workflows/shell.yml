@@ -57,7 +57,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@main
+        uses: JakobMelchard/.github/actions/code-changed@86ce618fe2528abf23b57f57de9d012f04041b2d # v2.0.1
 
   ci:
     timeout-minutes: 30
