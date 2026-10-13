@@ -85,18 +85,18 @@ jobs:
           PATHS: ${{ inputs.paths }}
         shell: bash
         run: |
-          : > /tmp/scripts.txt
+          : > "$RUNNER_TEMP/scripts.txt"
           # shellcheck disable=SC2086 # space-separated roots by contract
           for root in $PATHS; do
             while IFS= read -r f; do
-              if head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)'; then echo "$f" >> /tmp/scripts.txt; fi
+              if head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)'; then echo "$f" >> "$RUNNER_TEMP/scripts.txt"; fi
             done < <(find "$root" -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.venv/*')
           done
-          sort -u /tmp/scripts.txt -o /tmp/scripts.txt
-          n=$(wc -l < /tmp/scripts.txt)
+          sort -u "$RUNNER_TEMP/scripts.txt" -o "$RUNNER_TEMP/scripts.txt"
+          n=$(wc -l < "$RUNNER_TEMP/scripts.txt")
           echo "count=$n" >> "$GITHUB_OUTPUT"
           echo "found $n scripts:"
-          cat /tmp/scripts.txt
+          cat "$RUNNER_TEMP/scripts.txt"
 
       - name: syntax check
         if: steps.collect.outputs.count != '0'
@@ -110,7 +110,7 @@ jobs:
               *zsh*) zsh -n "$f" || rc=1 ;;
               *)    bash -n "$f" || rc=1 ;;
             esac
-          done < /tmp/scripts.txt
+          done < "$RUNNER_TEMP/scripts.txt"
           exit $rc
         shell: bash
 
@@ -128,6 +128,6 @@ jobs:
           while IFS= read -r f; do
             head -1 "$f" | grep -q zsh && continue
             shellcheck --severity="$SEVERITY" "$f" || rc=1
-          done < /tmp/scripts.txt
+          done < "$RUNNER_TEMP/scripts.txt"
           exit $rc
         shell: bash
