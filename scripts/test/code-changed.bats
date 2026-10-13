@@ -41,6 +41,6 @@ setup() { common_setup; }
 
 @test "a new branch (all-zero base), no base and other events: true" {
   [ "$(BASE=0000000000000000000000000000000000000000 run_with 'README.md')" = "code=true" ]
-  [ "$(BASE= run_with 'README.md')" = "code=true" ]
+  [ "$(BASE='' run_with 'README.md')" = "code=true" ]
   [ "$(EVENT=schedule run_with 'README.md')" = "code=true" ]
 }
