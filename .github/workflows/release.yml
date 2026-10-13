@@ -70,13 +70,25 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+      - name: fetch APP_CLIENT_ID
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
           identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+          secret-name: APP_CLIENT_ID
+
+      - name: fetch APP_PRIVATE_KEY
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
 
       - name: mint app token
         id: app
