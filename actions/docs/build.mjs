@@ -125,8 +125,9 @@ function render(entries, page) {
           : `<span>${esc(e.title)}</span>`,
     )
     .join('\n      ')
-  const prev = listed[i - 1] && `<a href="${esc(link(out(listed[i - 1].page)))}">← ${esc(listed[i - 1].title)}</a>`
-  const next = listed[i + 1] && `<a href="${esc(link(out(listed[i + 1].page)))}">${esc(listed[i + 1].title)} →</a>`
+  const [before, after] = i < 0 ? [] : [listed[i - 1], listed[i + 1]]
+  const prev = before && `<a href="${esc(link(out(before.page)))}">← ${esc(before.title)}</a>`
+  const next = after && `<a href="${esc(link(out(after.page)))}">${esc(after.title)} →</a>`
   return `<!doctype html>
 <html lang="en">
 <head>
