@@ -145,12 +145,18 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # pip and uv shell out to git over https.
+      # pip and uv shell out to git over https. GIT_CONFIG_* in the job env, not ~/.gitconfig: a
+      # persistent runner would keep the token for later jobs.
       - name: configure private dependency access
         if: inputs.private-deps
         env:
           TOKEN: ${{ steps.app.outputs.token || github.token }}
-        run: git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+        run: |
+          {
+            echo "GIT_CONFIG_COUNT=1"
+            echo "GIT_CONFIG_KEY_0=url.https://x-access-token:${TOKEN}@github.com/.insteadOf"
+            echo "GIT_CONFIG_VALUE_0=https://github.com/"
+          } >> "$GITHUB_ENV"
 
       # Commands go through env vars: an empty `${{ }}` interpolated into an if/case body is a
       # bash syntax error.
