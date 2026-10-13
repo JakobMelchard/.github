@@ -8,7 +8,10 @@ if [ $# -eq 0 ]; then
 fi
 printf '%-26s %-10s %-18s %s\n' REPO STATUS WORKFLOW WHEN
 for r in "$@"; do
-  gh run list -R "$ORG/$r" --limit 1 --json name,conclusion,status,createdAt,headBranch \
-    -q '.[] | "\(.conclusion // .status)\t\(.name)\t\(.createdAt[:16])\t\(.headBranch)"' 2>/dev/null \
-    | { IFS=$'\t' read -r c n w b || { printf '%-26s %s\n' "$r" "-"; exit 0; }; printf '%-26s %-10s %-18s %s  %s\n' "$r" "$c" "$n" "$w" "$b"; }
+  # a repo gh cannot read (no access, Actions off) prints "-" and the loop goes on
+  out=$(gh run list -R "$ORG/$r" --limit 1 --json name,conclusion,status,createdAt,headBranch \
+    -q '.[] | "\(.conclusion // .status)\t\(.name)\t\(.createdAt[:16])\t\(.headBranch)"' 2>/dev/null) || out=
+  [ -n "$out" ] || { printf '%-26s %s\n' "$r" "-"; continue; }
+  IFS=$'\t' read -r c n w b <<<"$out"
+  printf '%-26s %-10s %-18s %s  %s\n' "$r" "$c" "$n" "$w" "$b"
 done
