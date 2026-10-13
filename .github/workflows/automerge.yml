@@ -39,12 +39,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
-          WORKFLOW_REF: ${{ github.workflow_ref }}
         run: |
-          wf=${WORKFLOW_REF#"$GH_REPO"/}; wf=${wf%%@*}
-          # Own runs on this commit, including cancelled ones, are not checks to wait for.
-          own=$(gh api "repos/$GH_REPO/actions/runs?head_sha=$SHA" --paginate \
-            --jq ".workflow_runs[] | select(.path == \"$wf\") | .id" | paste -sd'|' -)
           stop() { echo "::notice::not merging: $1"; echo "not merging: $1" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
           # shellcheck disable=SC2016
           q='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){
@@ -58,7 +53,7 @@ jobs:
             jq -e 'any(.labels[]; .name == "automerge")' <<<"$pr" >/dev/null || stop "label removed"
 
             runs=$(gh api "repos/$GH_REPO/commits/$SHA/check-runs" --paginate --jq '.check_runs[]' |
-              jq -s --arg own "${own:-^$}" '[.[] | select((.details_url // "") | test("/runs/(" + $own + ")/") | not)]')
+              jq -s '[.[] | select(.name | test("^automerge( / |$)") | not)]')
             statuses=$(gh api "repos/$GH_REPO/commits/$SHA/status" --jq '.statuses')
             bad=$(jq -r --argjson s "$statuses" '[.[] | select(.status == "completed" and
               (.conclusion | IN("success", "neutral", "skipped") | not)) | .name] +
