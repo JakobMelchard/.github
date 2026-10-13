@@ -44,6 +44,7 @@ jobs:
           # shellcheck disable=SC2016
           q='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){
             reviewThreads(first:100){totalCount nodes{isResolved}}}}}'
+          prev=-1
           # shellcheck disable=SC2016
           for i in $(seq 90); do
             pr=$(gh pr view "$PR_NUM" --json state,isDraft,headRefOid,labels)
@@ -66,11 +67,13 @@ jobs:
             threads=$(gh api graphql -F o="${GH_REPO%/*}" -F r="${GH_REPO#*/}" -F n="$PR_NUM" -f query="$q" \
               --jq '.data.repository.pullRequest.reviewThreads | (.totalCount > 100) as $more |
                 [.nodes[] | select(.isResolved | not)] | length + ($more | if . then 1 else 0 end)')
-            # Checks register a few seconds after a push, so none yet means not started.
-            if [ "$todo" = 0 ] && [ "$threads" = 0 ] && { [ "$seen" -gt 0 ] || [ "$i" -gt 4 ]; }; then
+            # Checks register a few seconds after a push, so none yet means not started, and a
+            # check that registers late shows up as a changed count: wait for two equal polls.
+            if [ "$todo" = 0 ] && [ "$threads" = 0 ] && [ "$seen" = "$prev" ] && { [ "$seen" -gt 0 ] || [ "$i" -gt 4 ]; }; then
               echo "ready=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
+            prev=$seen
             sleep 30
           done
           stop "timed out waiting for checks or review threads"
