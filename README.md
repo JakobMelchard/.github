@@ -54,7 +54,8 @@ Find callers with a code search for `JakobMelchard/.github/.github/workflows/<na
 
 Pin a release tag (`@vX.Y.Z`) or its commit SHA with the tag in a trailing comment, never
 `@main`. The moving `v1` tag exists for old callers; do not use it. Third-party actions are pinned
-by SHA. Renovate bumps both through the org preset, which every repo extends:
+by SHA, and so are the actions the reusable workflows use from this repo (`code-changed`), which
+stay on the previous release until Renovate bumps them here. Renovate bumps all of it through the org preset, which every repo extends:
 
 ```json
 { "extends": ["github>JakobMelchard/.github//renovate/default"] }
