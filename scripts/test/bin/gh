@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Fake gh for the bats suite: answers `repo list` from $GH_FIXTURES/repos.json and `run list` with
-# no runs, applying -q with jq as gh does.
+# Fake gh for the bats suite: answers `repo list` from $GH_FIXTURES/repos.json and `run list -R
+# <org>/<repo>` from runs-<repo>.json (no runs when absent) or with exit 1 when fail-<repo> exists,
+# applying -q with jq as gh does.
 set -euo pipefail
 q=""; a=()
 while [ $# -gt 0 ]; do
@@ -9,7 +10,10 @@ while [ $# -gt 0 ]; do
 done
 case "${a[*]}" in
   "repo list "*) out=$(cat "$GH_FIXTURES/repos.json") ;;
-  "run list "*) out='[]' ;;
+  "run list "*)
+    for ((i = 0; i < ${#a[@]}; i++)); do [ "${a[i]}" = -R ] && r=${a[i + 1]##*/}; done
+    [ ! -e "$GH_FIXTURES/fail-$r" ] || exit 1
+    if [ -e "$GH_FIXTURES/runs-$r.json" ]; then out=$(cat "$GH_FIXTURES/runs-$r.json"); else out='[]'; fi ;;
   *) echo "fake gh: unhandled: ${a[*]}" >&2; exit 99 ;;
 esac
 if [ -n "$q" ]; then printf '%s\n' "$out" | jq -r "$q"; else printf '%s\n' "$out"; fi
