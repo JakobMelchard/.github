@@ -146,22 +146,25 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # npm expands `github:owner/repo` to git+ssh, so every form needs the token. `--add`
-      # because insteadOf is multi-valued and a plain `git config` would replace the earlier forms.
+      # npm expands `github:owner/repo` to git+ssh, so every form needs the token. GIT_CONFIG_*
+      # in the job env, not ~/.gitconfig: a persistent runner would keep the token for later jobs.
       - name: configure private dependency access
         if: inputs.private-deps
         env:
           TOKEN: ${{ steps.app.outputs.token || github.token }}
         run: |
           auth="https://x-access-token:${TOKEN}@github.com/"
+          i=0
           for from in \
             "https://github.com/" \
             "ssh://git@github.com/" \
             "git@github.com:" \
             "git+https://github.com/" \
             "git+ssh://git@github.com/"; do
-            git config --global --add url."$auth".insteadOf "$from"
+            printf 'GIT_CONFIG_KEY_%s=url.%s.insteadOf\nGIT_CONFIG_VALUE_%s=%s\n' "$i" "$auth" "$i" "$from" >> "$GITHUB_ENV"
+            i=$((i + 1))
           done
+          echo "GIT_CONFIG_COUNT=$i" >> "$GITHUB_ENV"
 
       - name: install
         if: inputs.install-cmd != ''

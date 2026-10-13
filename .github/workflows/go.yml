@@ -134,7 +134,8 @@ jobs:
           repositories: ${{ inputs.private-repos }}
           permission-contents: read
 
-      # GOPRIVATE alone is not enough on a runner: git needs credentials too.
+      # GOPRIVATE alone is not enough on a runner: git needs credentials too. GIT_CONFIG_* in the
+      # job env, not ~/.gitconfig: a persistent runner would keep the token for later jobs.
       - name: configure private module access
         if: inputs.private-modules
         env:
@@ -142,7 +143,11 @@ jobs:
           OWNER: ${{ github.repository_owner }}
         run: |
           go env -w GOPRIVATE="github.com/$OWNER/*"
-          git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+          {
+            echo "GIT_CONFIG_COUNT=1"
+            echo "GIT_CONFIG_KEY_0=url.https://x-access-token:${TOKEN}@github.com/.insteadOf"
+            echo "GIT_CONFIG_VALUE_0=https://github.com/"
+          } >> "$GITHUB_ENV"
 
       - name: vet
         if: inputs.vet-cmd != ''
