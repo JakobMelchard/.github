@@ -104,6 +104,12 @@ SH
   [ "$(changed infra/ terraform-other/main.tf infra-x/a.tf README.md)" = "run=false" ]
 }
 
+@test "changed files: a root that mints app tokens never plans on a PR" {
+  [ "$(APP_OWNERS=JakobMelchard changed infra infra/main.tf)" = "run=false" ]
+  [ "$(APP_OWNERS=lilfeelz changed . main.tf)" = "run=false" ]
+  [ "$(APP_OWNERS='' changed infra infra/main.tf)" = "run=true" ]
+}
+
 # commit state: a repo with the state committed at serial 1, a local bare remote behind the app URL
 state_repo() {
   mkdir -p "$T/bin" "$T/remote" "$T/work/root/state"

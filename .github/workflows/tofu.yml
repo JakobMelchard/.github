@@ -31,10 +31,11 @@ on:
         description: >
           On pull requests and manual runs, `tofu init` and `tofu plan` against the committed
           state, posted as one PR comment per working directory. Skipped, reporting success,
-          when a PR does not touch working-directory, so a required check never hangs. The PR's
-          tofu code runs with the state passphrase and the minted app tokens in its environment,
-          and through the job's id-token it can log in to Infisical as gha-org and read every gha
-          secret, the app key included. Only trusted authors may push branches.
+          when a PR does not touch working-directory, so a required check never hangs. On a PR
+          the passphrase comes from identity gha-tofu-pr, which can read nothing else, and no
+          app token is minted: a root with app-token-owner set is skipped, plan it with
+          workflow_dispatch. The PR's tofu code still holds the job's id-token and the passphrase,
+          which decrypts every root sharing it.
         type: boolean
         default: true
       apply:
@@ -71,7 +72,8 @@ on:
         description: >
           Identity id for the OIDC login to extra-infisical-project. It must trust the caller's
           OIDC subject: repo:OWNER/REPO:pull_request for PR runs, repo:OWNER/REPO:ref:refs/heads/BRANCH
-          for push and workflow_dispatch runs.
+          for push and workflow_dispatch runs. gha-org trusts no pull_request subject, so a caller
+          passing it runs no PR plan.
         type: string
         default: ""
       env-map:
@@ -133,7 +135,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           DIR: ${{ inputs.working-directory }}
+          APP_OWNERS: ${{ inputs.app-token-owner }}${{ inputs.app-token-owner-2 }}
         run: |
+          # The PR's tofu code can mint the job's id-token, so the app key never enters a PR run.
+          if [ -n "$APP_OWNERS" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::app tokens are not minted on pull requests; plan $DIR with workflow_dispatch"
+            exit 0
+          fi
           files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
           # the API lists repo-relative paths: "./infra/" must match "infra/x", "." matches all
           d=${DIR#./}; d=${d%/}
@@ -153,7 +162,8 @@ jobs:
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
-          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          # gha-tofu-pr trusts only pull_request subjects and reads only this secret; gha-org rejects them.
+          identity-id: ${{ github.event_name == 'pull_request' && 'GHA_TOFU_PR_IDENTITY_ID' || 'b1ede60d-f7a7-4699-86ec-eea6ac51be30' }}
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
