@@ -115,6 +115,11 @@ jobs:
       apply: false
       state-commit: false
 
+  smoke-terraform:
+    uses: ./.github/workflows/terraform.yml
+    with:
+      working-directory: scripts/test/tf-smoke
+
   # Dry run bundles the fixture Worker (a Durable Object and its migration) and publishes nothing.
   # The caller still grants id-token: write because the reusable job asks for it.
   smoke-cf:
