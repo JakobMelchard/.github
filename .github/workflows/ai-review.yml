@@ -1,8 +1,9 @@
 name: ai-review
 
 # Reusable PR-Agent review. Labelling a ready PR "ai:pr-agent" gets one review through OpenCode Go.
-# The model key comes from Infisical over OIDC. The caller runs it on `pull_request: labeled` and
-# grants pull-requests: write, issues: write and id-token: write.
+# The model key comes from Infisical over OIDC, or from the opencode-api-key secret where that
+# identity does not reach (repos outside JakobMelchard). The caller runs it on
+# `pull_request: labeled` and grants pull-requests: write, issues: write and id-token: write.
 #
 #   on: { pull_request: { types: [labeled] } }
 #   jobs:
@@ -23,6 +24,10 @@ on:
           to Blacksmith (ubuntu-latest outside JakobMelchard).
         type: string
         default: ""
+    secrets:
+      opencode-api-key:
+        description: OpenCode Go API key. Its presence skips the Infisical fetch.
+        required: false
 
 jobs:
   review:
@@ -40,6 +45,7 @@ jobs:
     env:
       PR_URL: ${{ github.event.pull_request.html_url }}
       PR_NUM: ${{ github.event.pull_request.number }}
+      HAS_KEY: ${{ secrets.opencode-api-key != '' }}
       GITHUB__USER_TOKEN: ${{ github.token }}
       OPENAI__API_BASE: https://opencode.ai/zen/go/v1
       CONFIG__MODEL: openai/mimo-v2.6-pro
@@ -53,7 +59,8 @@ jobs:
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
       # secret-name: only this secret enters the job env
-      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+      - if: env.HAS_KEY != 'true'
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
           identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
@@ -67,7 +74,7 @@ jobs:
       - name: review
         shell: bash
         env:
-          OPENAI__KEY: ${{ env.OPENCODE_API_KEY }}
+          OPENAI__KEY: ${{ secrets.opencode-api-key || env.OPENCODE_API_KEY }}
         run: |
           set -o pipefail
           # OpenCode Go rejects requests without a session id and wants a custom agent
