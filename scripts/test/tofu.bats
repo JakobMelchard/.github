@@ -88,7 +88,8 @@ SH
   jq -nc '[$ARGS.positional[] | {filename: .}]' --args "$@" > "$T/files.json"
   step plan "changed files"
   : > "$T/out"
-  T=$T PATH=$T/bin:$PATH GITHUB_OUTPUT=$T/out GITHUB_REPOSITORY=o/r PR=1 DIR=$dir runner >/dev/null
+  export T PATH=$T/bin:$PATH
+  GITHUB_OUTPUT=$T/out GITHUB_REPOSITORY=o/r PR=1 DIR=$dir runner >/dev/null
   cat "$T/out"
 }
 
