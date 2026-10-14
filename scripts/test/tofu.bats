@@ -75,6 +75,34 @@ setup() {
   [[ "$output" == *"overrides TOFU_STATE_PASSPHRASE"* ]] || false
 }
 
+# changed <working-directory> <file>...: run the plan's "changed files" step on a PR with these files
+changed() {
+  mkdir -p "$T/bin"
+  cat > "$T/bin/gh" <<'SH'
+#!/usr/bin/env bash
+while [ $# -gt 0 ]; do [ "$1" = --jq ] && q=$2; shift; done
+jq -r "$q" "$T/files.json"
+SH
+  chmod +x "$T/bin/gh"
+  local dir=$1; shift
+  jq -nc '[$ARGS.positional[] | {filename: .}]' --args "$@" > "$T/files.json"
+  step plan "changed files"
+  : > "$T/out"
+  T=$T PATH=$T/bin:$PATH GITHUB_OUTPUT=$T/out GITHUB_REPOSITORY=o/r PR=1 DIR=$dir runner >/dev/null
+  cat "$T/out"
+}
+
+@test "changed files: a root working directory plans on any change" {
+  [ "$(changed . main.tf)" = "run=true" ]
+  [ "$(changed ./ README.md)" = "run=true" ]
+}
+
+@test "changed files: a nested directory plans only on changes under it" {
+  [ "$(changed infra README.md infra/main.tf)" = "run=true" ]
+  [ "$(changed ./infra/ infra/main.tf)" = "run=true" ]
+  [ "$(changed infra/ terraform-other/main.tf infra-x/a.tf README.md)" = "run=false" ]
+}
+
 # commit state: a repo with the state committed at serial 1, a local bare remote behind the app URL
 state_repo() {
   mkdir -p "$T/bin" "$T/remote" "$T/work/root/state"
