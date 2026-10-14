@@ -1,6 +1,6 @@
 name: routines
 
-# Nightly routines (see the README): runs routines/*.md with opencode on the org app token over
+# Nightly routines: runs routines/*.md with opencode on the org app token over
 # the non-archived org repos the app can reach. Nothing runs unless the repo variable ROUTINES is
 # "on"; workflow_dispatch defaults to a dry run. The app token cannot reach lilfeelz/*, which the
 # prompts treat as "repository folder missing".

@@ -19,4 +19,4 @@ Rules for agents working in this repo. Overview and commands: README.md.
 
 ## Releases
 
-- Callers pin a release tag, never `@main`. Never move a tag by hand; `self-release.yml` moves `v1`.
+- Callers pin a release tag, never `@main`. Never move a tag by hand; `self-release.yml` moves the major tag.

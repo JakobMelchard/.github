@@ -66,7 +66,7 @@ on:
         default: ""
 
 jobs:
-  # Same regex as .githooks/commit-msg. Runs on the build's Mac runner: a hosted Linux runner
+  # Same regex as the .githooks conventional-commit hook. Runs on the build's Mac runner: a hosted Linux runner
   # would be the only metered job here.
   pr-title:
     if: github.event_name == 'pull_request'

@@ -1,5 +1,4 @@
-# Our own reusable workflows are consumed at @main on purpose (lint.yml here is the gate).
-# Third-party actions must be hash-pinned.
+# JakobMelchard/* may pin a release tag; third-party actions must be hash-pinned.
 rules:
   unpinned-uses:
     config:

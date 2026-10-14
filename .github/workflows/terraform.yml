@@ -29,7 +29,7 @@ on:
         default: ""
 
 jobs:
-  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
+  # The title becomes the squash commit that release-please reads; same regex as the .githooks conventional-commit hook.
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}

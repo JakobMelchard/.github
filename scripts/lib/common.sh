@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Helpers shared by the org's shell tools (ci here, fleet-sync in .config, scripts/new
-# in template, ios in lilfeelz/workspaces). Sourced, not executed; bash 3.2 compatible.
+# Helpers shared by the org's shell tools. Sourced, not executed; bash 3.2 compatible.
 #   . "${JM_LIB:-$HOME/Workspaces/JakobMelchard/.github/scripts/lib}/common.sh"
 ORG="${ORG:-JakobMelchard}"
 WS="${WORKSPACES_ROOT:-$HOME/Workspaces}/$ORG"
