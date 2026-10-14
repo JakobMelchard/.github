@@ -350,13 +350,37 @@ jobs:
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_wrapper: false }
 
-      - uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+      - name: fetch TOFU_STATE_PASSPHRASE
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
           identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
+          secret-name: TOFU_STATE_PASSPHRASE
+
+      - name: fetch APP_CLIENT_ID
+        if: inputs.app-token-owner != '' || inputs.app-token-owner-2 != '' || inputs.state-commit
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_CLIENT_ID
+
+      - name: fetch APP_PRIVATE_KEY
+        if: inputs.app-token-owner != '' || inputs.app-token-owner-2 != ''
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
 
       - name: snapshot gha credentials
         if: inputs.extra-infisical-project != ''
@@ -443,6 +467,12 @@ jobs:
             echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
           fi
 
+      # Keeps the app key out of the env of tofu and its providers, which can still read it
+      # through the job's id-token. The state commit fetches it again after the apply.
+      - name: drop the app key from the job env
+        if: inputs.app-token-owner != '' || inputs.app-token-owner-2 != ''
+        run: echo "APP_PRIVATE_KEY=" >> "$GITHUB_ENV"
+
       - run: tofu init -input=false
 
       - name: tofu apply
@@ -462,6 +492,17 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
         env:
           WD: ${{ inputs.working-directory }}
+
+      - name: fetch APP_PRIVATE_KEY for the state commit
+        if: always() && inputs.state-commit && steps.apply.outcome != 'skipped'
+        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
+        with:
+          method: oidc
+          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          domain: https://eu.infisical.com
+          project-slug: gha-lfq-y
+          env-slug: dev
+          secret-name: APP_PRIVATE_KEY
 
       # Scoped to this repo and contents: the app has an `always` bypass on the ruleset.
       - name: mint state token
