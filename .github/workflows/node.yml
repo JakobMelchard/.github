@@ -77,7 +77,7 @@ on:
         required: false
 
 jobs:
-  # The title becomes the squash commit that release-please reads; same regex as .githooks/commit-msg.
+  # The title becomes the squash commit that release-please reads; same regex as the .githooks conventional-commit hook.
   pr-title:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'

@@ -2,7 +2,7 @@ name: self-release
 
 # release-please for this repo (release.yml called locally; the org app authors the release PR so
 # lint.yml runs on it), then moves the major tag onto the new release. vX.Y.Z releases are
-# immutable; v1 is a plain tag, not a release, so it may move.
+# immutable; the major tag is a plain tag, not a release, so it may move.
 
 permissions: {}
 

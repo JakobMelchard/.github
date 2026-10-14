@@ -4,7 +4,7 @@ name: tofu
 # only) so lint-only callers never grant its permissions. Plan comments on PRs, apply runs on a
 # push to the default branch, then the state is committed. The caller owns the triggers (filter
 # push on the root's paths, exclude the state directory) and grants id-token: write and
-# pull-requests: write. See the README for the secrets and OIDC setup.
+# pull-requests: write.
 #
 #   jobs:
 #     tofu:
