@@ -1,9 +1,11 @@
 name: automerge
 
 # Reusable. Squash-merges a PR labelled "automerge" as the org app once every other check on
-# its head commit has passed and no review thread is unresolved. The run waits for pending
-# checks and open threads, and stops without merging on a failed check, a draft, a missing
-# label or a new head commit. Re-label to retry after a re-run.
+# its head commit has passed and no review thread is unresolved. The app bypasses the branch
+# rules, so the run checks them itself: every required check must have passed and, if the
+# rules require approvals, the PR must be approved. The run waits for pending checks,
+# approvals and open threads, and stops without merging on a failed check, a draft, a
+# missing label or a new head commit. Re-label to retry after a re-run.
 #
 #   on: { pull_request: { types: [labeled, synchronize, ready_for_review] } }
 #   jobs:
@@ -39,15 +41,25 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
+          BASE: ${{ github.event.pull_request.base.ref }}
         run: |
           stop() { echo "::notice::not merging: $1"; echo "not merging: $1" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
           # shellcheck disable=SC2016
           q='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){
             reviewThreads(first:100){totalCount nodes{isResolved}}}}}'
+          rules=$(gh api "repos/$GH_REPO/rules/branches/$BASE?per_page=100") || {
+            # Private repos on the free plan have no rulesets, and the API says so with a 403.
+            grep -q 'Upgrade to GitHub Pro' <<<"$rules" || exit 1
+            rules='[]'
+          }
+          need=$(jq -c '[.[] | select(.type == "required_status_checks") |
+            .parameters.required_status_checks[].context] | unique' <<<"$rules")
+          approvals=$(jq '[.[] | select(.type == "pull_request") |
+            .parameters.required_approving_review_count] | max // 0' <<<"$rules")
           prev=-1
           # shellcheck disable=SC2016
           for i in $(seq 90); do
-            pr=$(gh pr view "$PR_NUM" --json state,isDraft,headRefOid,labels)
+            pr=$(gh pr view "$PR_NUM" --json state,isDraft,headRefOid,labels,reviewDecision)
             [ "$(jq -r '.state' <<<"$pr")" = OPEN ] || stop "PR is not open"
             [ "$(jq -r '.isDraft' <<<"$pr")" = false ] || stop "PR is a draft"
             [ "$(jq -r '.headRefOid' <<<"$pr")" = "$SHA" ] || stop "head commit changed"
@@ -64,19 +76,25 @@ jobs:
             todo=$(jq -r --argjson s "$statuses" '[.[] | select(.status != "completed")] | length +
               ($s | map(select(.state == "pending")) | length)' <<<"$runs")
             seen=$(jq -r --argjson s "$statuses" 'length + ($s | length)' <<<"$runs")
+            missing=$(jq -r --argjson s "$statuses" --argjson need "$need" '$need -
+              ([.[] | select(.status == "completed") | .name] + [$s[] | select(.state == "success") | .context]) |
+              length' <<<"$runs")
+            approved=true
+            [ "$approvals" = 0 ] || [ "$(jq -r '.reviewDecision' <<<"$pr")" = APPROVED ] || approved=false
             threads=$(gh api graphql -F o="${GH_REPO%/*}" -F r="${GH_REPO#*/}" -F n="$PR_NUM" -f query="$q" \
               --jq '.data.repository.pullRequest.reviewThreads | (.totalCount > 100) as $more |
                 [.nodes[] | select(.isResolved | not)] | length + ($more | if . then 1 else 0 end)')
             # Checks register a few seconds after a push, so none yet means not started, and a
             # check that registers late shows up as a changed count: wait for two equal polls.
-            if [ "$todo" = 0 ] && [ "$threads" = 0 ] && [ "$seen" = "$prev" ] && { [ "$seen" -gt 0 ] || [ "$i" -gt 4 ]; }; then
+            if [ "$todo" = 0 ] && [ "$missing" = 0 ] && [ "$approved" = true ] && [ "$threads" = 0 ] &&
+              [ "$seen" = "$prev" ] && { [ "$seen" -gt 0 ] || [ "$i" -gt 4 ]; }; then
               echo "ready=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             prev=$seen
             sleep 30
           done
-          stop "timed out waiting for checks or review threads"
+          stop "timed out waiting for checks, an approval or review threads"
 
       - name: fetch APP_CLIENT_ID
         if: steps.wait.outputs.ready == 'true'

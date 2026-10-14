@@ -58,7 +58,7 @@ scripts/ci [repo...]   # latest CI result per org repo
 | [`release`](.github/workflows/release.yml) | release-please as the org app |
 | [`ai-review`](.github/workflows/ai-review.yml) | PR-Agent review on the `ai:pr-agent` label |
 | [`review-label`](.github/workflows/review-label.yml) | cubic review on the `ai:cubic` label |
-| [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` once its other checks are green and no thread is open |
+| [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` once its other checks are green, the branch rules are met and no thread is open |
 
 ## Layout
 
