@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.2.0](https://github.com/JakobMelchard/.github/compare/v2.1.0...v2.2.0) (2026-10-14)
+
+
+### Features
+
+* **ai-review:** accept the model key as an optional secret ([#205](https://github.com/JakobMelchard/.github/issues/205)) ([d69182e](https://github.com/JakobMelchard/.github/commit/d69182ee878519a9aad85c28d5dddf5734370fdb))
+
+
+### Bug Fixes
+
+* **ci:** keep private-deps git credentials in the job env ([#190](https://github.com/JakobMelchard/.github/issues/190)) ([0e037dd](https://github.com/JakobMelchard/.github/commit/0e037ddd4189a26d155ffc1dad29e27191b2b2b2))
+* **release:** load only the app secrets from Infisical ([#191](https://github.com/JakobMelchard/.github/issues/191)) ([ce72cb4](https://github.com/JakobMelchard/.github/commit/ce72cb4a8b9aa9f0f38b734b3aea6a51ecbfcf7d))
+* **routines:** run only when ROUTINES is on, dispatch included ([#188](https://github.com/JakobMelchard/.github/issues/188)) ([d789117](https://github.com/JakobMelchard/.github/commit/d789117b4adbc7bda69df30d63acc574e17c9c96))
+* **tofu:** keep plans out of the apply concurrency group ([#189](https://github.com/JakobMelchard/.github/issues/189)) ([8153c69](https://github.com/JakobMelchard/.github/commit/8153c6903e9947b761ebbc0c6eb20aefaf075c06))
+* **tofu:** plan on any change when working-directory is the repo root ([#204](https://github.com/JakobMelchard/.github/issues/204)) ([47770bd](https://github.com/JakobMelchard/.github/commit/47770bd41d62bde013c60555f083832aa495bb16))
+
 ## [2.1.0](https://github.com/JakobMelchard/.github/compare/v2.0.1...v2.1.0) (2026-10-13)
 
 
