@@ -42,6 +42,26 @@ jobs:
           persist-credentials: false
       - run: .bats/bin/bats scripts/test
 
+  # Builds a fixture tree with the docs action: pages, nav and rewritten links.
+  smoke-docs:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: ./actions/docs
+        with: { src: scripts/test/docs-smoke, out: site, title: smoke }
+      - name: check output
+        working-directory: site
+        run: |
+          test -f index.html && test -f guide/setup.html && test -f guide/logo.svg
+          grep -qF '<a href="index.html" class="active">Home</a>' index.html
+          grep -qF '<span>Guides</span>' index.html
+          grep -qF '<a href="guide/setup.html#install">' index.html
+          grep -qF '<a href="../guide/setup.html" class="active">Setup</a>' guide/setup.html
+          grep -qF '<a href="../index.html#usage">' guide/setup.html
+          grep -qF '<img src="logo.svg"' guide/setup.html
+          grep -qF '<a href="../index.html">← Home</a>' guide/setup.html
+
   # Calls each reusable workflow with its emptiest inputs. An empty `${{ inputs.x }}` interpolated
   # into a run body can break every caller at runtime while passing actionlint.
   smoke-hooks:
