@@ -21,7 +21,7 @@ jobs:
   major-tag:
     needs: release
     if: needs.release.outputs.release_created == 'true'
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
     permissions:
       contents: write
     env:
