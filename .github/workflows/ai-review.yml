@@ -28,7 +28,7 @@ on:
       daily-cap:
         description: >
           Most ai:pr-agent labels a repo may get in 24 h before the review is skipped with a
-          notice. 0 picks the variable AI_REVIEW_DAILY_CAP, else 5.
+          notice. 0 picks the variable AI_REVIEW_DAILY_CAP, else 5. The variable set to 0 stops all reviews.
         type: number
         default: 0
     secrets:
@@ -90,7 +90,7 @@ jobs:
           for page in 1 2 3 4 5 6 7 8 9 10; do
             ev=$(gh api "repos/$GITHUB_REPOSITORY/issues/events?per_page=100&page=$page")
             n=$((n + $(jq --argjson s "$since" '[.[] | select(.event == "labeled" and .label.name == "ai:pr-agent"
-              and .actor.type != "Bot" and (.created_at | fromdateiso8601) >= $s)] | length' <<<"$ev")))
+              and .issue.pull_request != null and .actor.type != "Bot" and (.created_at | fromdateiso8601) >= $s)] | length' <<<"$ev")))
             [ "$(jq --argjson s "$since" 'length < 100 or (.[-1].created_at | fromdateiso8601) < $s' <<<"$ev")" = true ] && break
           done
           echo "ai:pr-agent labels in 24 h: $n, cap $CAP"
@@ -132,7 +132,7 @@ jobs:
           review "$MODEL"
           # PR-Agent exits 0 after posting "Failed to review PR" as a comment
           if grep -q "Failed to review PR" "$log"; then
-            if grep -qE "litellm.Timeout|RateLimitError|usage limit" "$log"; then
+            if grep -qiE "litellm.Timeout|APITimeoutError|RateLimitError|usage limit|insufficient_quota|insufficient credit" "$log"; then
               echo "::error::PR-Agent: $MODEL timed out or hit the usage limit, fallback not tried"
               exit 1
             fi
