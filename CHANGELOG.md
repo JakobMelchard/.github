@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/JakobMelchard/.github/compare/v2.3.0...v2.3.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **workflows:** call the tested jm-* scripts instead of inline run blocks ([#236](https://github.com/JakobMelchard/.github/issues/236)) ([faf77e6](https://github.com/JakobMelchard/.github/commit/faf77e62aa2ec1b763af1342b2e9871483488b4b))
+
 ## [2.3.0](https://github.com/JakobMelchard/.github/compare/v2.2.3...v2.3.0) (2026-10-15)
 
 
