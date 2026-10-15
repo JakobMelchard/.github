@@ -4,7 +4,7 @@ name: routines
 # the non-archived org repos the app can reach. Nothing runs unless the repo variable ROUTINES is
 # "on"; workflow_dispatch defaults to a dry run. The app token cannot reach lilfeelz/*, which the
 # prompts treat as "repository folder missing".
-# Secrets (APP_*, OPENCODE_API_KEY) come from Infisical project gha, one secret at a time, and the
+# Secrets (APP_*, OPENCODE_API_KEY_ROUTINES) come from Infisical project gha, one secret at a time, and the
 # app key is blanked from the env once the token is minted.
 # A dry run mints a read-only token. The app needs Contents, Issues and Pull requests write plus
 # Checks and Actions read.
@@ -118,7 +118,7 @@ jobs:
       - name: install opencode
         run: npm install -g opencode-ai@1.18.33 --no-audit --no-fund # zizmor: ignore[adhoc-packages] exact version, no lockfile for a global CLI
 
-      - name: fetch OPENCODE_API_KEY
+      - name: fetch OPENCODE_API_KEY_ROUTINES
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
@@ -126,12 +126,13 @@ jobs:
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
-          secret-name: OPENCODE_API_KEY
+          secret-name: OPENCODE_API_KEY_ROUTINES
 
       - name: run the routine
         working-directory: work
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
+          OPENCODE_API_KEY: ${{ env.OPENCODE_API_KEY_ROUTINES }}
           MODEL: ${{ inputs.model || 'opencode-go/mimo-v2.5' }}
           PROMPT: ${{ github.workspace }}/routines/${{ steps.pick.outputs.routine }}.md
           DRY: ${{ inputs.dry_run }}
