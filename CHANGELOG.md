@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/JakobMelchard/.github/compare/v2.2.3...v2.3.0) (2026-10-15)
+
+
+### Features
+
+* **actions:** add the scripts action with tested jm-* workflow scripts ([#232](https://github.com/JakobMelchard/.github/issues/232)) ([9026f68](https://github.com/JakobMelchard/.github/commit/9026f686e54c42894717fdcb441be4cbc0345567))
+
 ## [2.2.3](https://github.com/JakobMelchard/.github/compare/v2.2.2...v2.2.3) (2026-10-15)
 
 
