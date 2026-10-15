@@ -16,7 +16,7 @@ on:
       runs-on:
         description: >
           JSON runner spec, a quoted label or a label array, as in release.yml. Empty picks
-          the org variable RUNNER_LINUX and falls back to Blacksmith (ubuntu-latest outside JakobMelchard).
+          the org variable RUNNER_LINUX and falls back to Blacksmith (ubuntu-latest for public repos and outside JakobMelchard).
         type: string
         default: ""
 
@@ -28,7 +28,7 @@ jobs:
       github.event.label.name == 'ai:cubic' && !github.event.pull_request.draft &&
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
     timeout-minutes: 5
     permissions:
       contents: read
