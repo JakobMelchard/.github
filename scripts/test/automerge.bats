@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# automerge.yml's "wait for checks" step, executed against a fake gh with fixture check runs,
+# jm-automerge-wait, automerge.yml's "wait for checks" step, executed against a fake gh with fixture check runs,
 # commit statuses, branch rules and review threads. sleep is a no-op that counts polls.
 
 load helper
@@ -30,8 +30,6 @@ SH
   echo '{"state":"OPEN","isDraft":false,"headRefOid":"abc","labels":[{"name":"automerge"}],"reviewDecision":""}' > "$T/pr.json"
   threads 0
   echo '[]' > "$T/rules.json"
-  yq '.jobs.automerge.steps[] | select(.name == "wait for checks") | .run' \
-    "$BATS_TEST_DIRNAME/../../.github/workflows/automerge.yml" > "$T/step.sh"
   export T PATH=$T/bin:$PATH GITHUB_OUTPUT=$T/out GITHUB_STEP_SUMMARY=$T/summary GH_REPO=o/r PR_NUM=1 SHA=abc BASE=main
 }
 
@@ -51,7 +49,7 @@ gate() {
   echo "{\"check_runs\":[$1]}" > "$T/runs.json"
   echo "{\"statuses\":[$2]}" > "$T/status.json"
   : > "$GITHUB_OUTPUT"
-  bash --noprofile --norc -eo pipefail "$T/step.sh"
+  "$JM/jm-automerge-wait"
   cat "$GITHUB_OUTPUT"
 }
 

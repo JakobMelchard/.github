@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# jm-tofu-apply: tofu apply in the current root, tee'd to apply.txt, and a step summary for $WD
+# with the result and the serial of state file $STATE before and after.
+set -euo pipefail
+
+serial() { jq -r .serial "$STATE" 2>/dev/null || echo none; }
+
+old=$(serial)
+tofu apply -auto-approve -input=false -no-color 2>&1 | tee apply.txt
+new=$(serial)
+{
+  echo "### tofu apply: \`$WD\`"
+  echo
+  echo '```'
+  grep -E '^(Apply complete!|No changes\.)' apply.txt || tail -5 apply.txt
+  echo '```'
+  echo "state serial: $old -> $new"
+} >> "$GITHUB_STEP_SUMMARY"

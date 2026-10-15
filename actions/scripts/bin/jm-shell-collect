@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# jm-shell-collect: list every file with a bash, sh or zsh shebang under the space-separated roots
+# of $PATHS (.git, node_modules and .venv skipped) in $RUNNER_TEMP/scripts.txt, and their count
+# as count= in $GITHUB_OUTPUT.
+set -euo pipefail
+
+list=$RUNNER_TEMP/scripts.txt
+: > "$list"
+# shellcheck disable=SC2086 # space-separated roots by contract
+for root in $PATHS; do
+  while IFS= read -r f; do
+    if head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)'; then echo "$f" >> "$list"; fi
+  done < <(find "$root" -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.venv/*')
+done
+sort -u "$list" -o "$list"
+n=$(wc -l < "$list" | tr -d " ")
+echo "count=$n" >> "$GITHUB_OUTPUT"
+echo "found $n scripts:"
+cat "$list"

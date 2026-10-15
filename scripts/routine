@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# routine pick|clone|run: the steps of routines.yml.
+#   pick   routine name for $EVENT: the schedule $CRON picks it, else $INPUT; sets routine=.
+#   clone  clone every non-archived source repo of $OWNER into ./work as the app ($GH_TOKEN).
+#   run    run the prompt file $PROMPT with opencode on $MODEL; DRY=true asks for a plan only.
+set -euo pipefail
+
+pick() {
+  local r=$INPUT
+  if [ "$EVENT" = schedule ]; then
+    if [ "$CRON" = "37 2 * * *" ]; then r=nightly-improve; else r=nightly-sweep; fi
+  fi
+  echo "routine=$r" >> "$GITHUB_OUTPUT"
+}
+
+clone() {
+  # gh answers git's credential requests from GH_TOKEN, so no token lands in a remote URL
+  gh auth setup-git
+  mkdir work
+  local repos
+  repos=$(gh repo list "$OWNER" --no-archived --source --limit 200 --json name --jq '.[].name')
+  [ -n "$repos" ] || { echo "no repos listed" >&2; exit 1; }
+  for r in $repos; do
+    git clone -q "https://github.com/$OWNER/$r" "work/$r" || echo "skipped $r"
+  done
+  git config --global user.name "$OWNER routine"
+  git config --global user.email "routine@users.noreply.github.com"
+}
+
+run() {
+  local p
+  p=$(cat "$PROMPT")
+  if [ "$DRY" = true ]; then
+    p="$p"$'\n\n'"routine-fire-payload: DRY RUN. Print the plan and change nothing on GitHub."
+  fi
+  opencode run --model "$MODEL" "$p"
+}
+
+case "${1-}" in
+  pick | clone | run) "$1" ;;
+  *) echo "usage: routine pick|clone|run" >&2; exit 2 ;;
+esac

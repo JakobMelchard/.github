@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# jm-xcode-simulator: make sure the iOS simulator named in $CMD (when set) or $DEST exists.
+# Runner images can ship without iOS simulators: create the device, downloading the newest iOS
+# runtime first if none is installed. No iOS Simulator destination or no name: nothing to do.
+set -euo pipefail
+
+# runtime: the newest available iOS runtime as JSON, empty when there is none
+runtime() {
+  xcrun simctl list runtimes available -j |
+    jq -c '[.runtimes[] | select(.platform == "iOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
+}
+
+spec=$DEST
+[ -z "$CMD" ] || spec=$CMD
+case "$spec" in *"iOS Simulator"*) ;; *) echo "no iOS Simulator destination"; exit 0 ;; esac
+name=$(printf '%s' "$spec" | sed -nE "s/.*name=([^,'\"]+).*/\1/p")
+[ -n "$name" ] || { echo "no simulator name in the destination"; exit 0; }
+if xcrun simctl list devices available | grep -qF "    $name ("; then
+  echo "simulator '$name' present"
+  exit 0
+fi
+rt=$(runtime)
+if [ -z "$rt" ]; then
+  echo "no iOS runtime installed; downloading one"
+  xcodebuild -downloadPlatform iOS
+  rt=$(runtime)
+fi
+[ -n "$rt" ] || { echo "::error::no iOS simulator runtime available"; exit 1; }
+rid=$(jq -r .identifier <<<"$rt")
+# a device type the runtime supports: the named one, else its newest iPad
+type=$(jq -r --arg n "$name" '.supportedDeviceTypes[] | select(.name == $n) | .identifier' <<<"$rt" | head -1)
+if [ -z "$type" ]; then
+  type=$(jq -r '[.supportedDeviceTypes[] | select(.productFamily == "iPad")] | last | .identifier // empty' <<<"$rt")
+  [ -n "$type" ] || { echo "::error::$rid supports no iPad device type"; exit 1; }
+  echo "::warning::$rid has no device type named '$name'; creating it as $type"
+fi
+udid=$(xcrun simctl create "$name" "$type" "$rid")
+echo "created '$name' ($type, $rid): $udid"

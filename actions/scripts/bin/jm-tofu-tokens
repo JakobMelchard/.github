@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# jm-tofu-tokens: export the minted app tokens $TOKEN as $TOKEN_VAR and $TOKEN2 as $TOKEN2_VAR
+# through $GITHUB_ENV; an empty token exports nothing. TOKEN2 without TOKEN2_VAR fails.
+# shellcheck disable=SC2153 # TOKEN_VAR is an env input, not a typo
+set -euo pipefail
+
+[ -z "$TOKEN" ] || echo "$TOKEN_VAR=$TOKEN" >> "$GITHUB_ENV"
+if [ -n "$TOKEN2" ]; then
+  [ -n "$TOKEN2_VAR" ] || { echo "::error::app-token-owner-2 needs app-token-env-2"; exit 1; }
+  echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
+fi

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# jm-ai-review: PR-Agent review of $PR_URL with $MODEL, then once with $FALLBACK_MODEL when the
+# first attempt failed with neither a timeout nor a usage limit (both hit the same budget).
+set -euo pipefail
+
+# OpenCode Go rejects requests without a session id and wants a custom agent
+export OPENAI_CUSTOM_HEADERS="x-opencode-session: pr-review-${GITHUB_REPOSITORY##*/}-${PR_NUM}
+User-Agent: jm-pr-review/1.0"
+log="$RUNNER_TEMP/pr-agent.log"
+
+review() {
+  CONFIG__MODEL="$1" uv run --python 3.12 --with pr-agent==0.47.0 \
+    python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
+}
+
+review "$MODEL"
+# PR-Agent exits 0 after posting "Failed to review PR" as a comment
+grep -q "Failed to review PR" "$log" || exit 0
+if grep -qiE "litellm.Timeout|APITimeoutError|RateLimitError|usage limit|insufficient_quota|insufficient credit" "$log"; then
+  echo "::error::PR-Agent: $MODEL timed out or hit the usage limit, fallback not tried"
+  exit 1
+fi
+review "$FALLBACK_MODEL"
+if grep -q "Failed to review PR" "$log"; then
+  echo "::error::PR-Agent failed to review the PR"
+  exit 1
+fi

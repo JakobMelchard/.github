@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# jm-pr-title: fail unless $TITLE is a conventional commit subject. The title becomes the squash
+# commit that release-please reads; same regex as the .githooks conventional-commit hook.
+set -euo pipefail
+
+types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
+if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
+  echo "ok: $TITLE"
+else
+  echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
+  exit 1
+fi

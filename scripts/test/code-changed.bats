@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# actions/code-changed: its run block executed against a fake gh compare API
+# actions/code-changed: code-changed.sh executed against a fake gh compare API
 
 load helper
 
@@ -14,10 +14,9 @@ jq -r "\$q" "$T/files"
 EOS
   chmod +x "$T/bin/gh"
   printf '%s' "$1" > "$T/files"
-  yq '.runs.steps[0].run' "$BATS_TEST_DIRNAME/../../actions/code-changed/action.yml" > "$T/step.sh"
   export T PATH=$T/bin:$PATH GITHUB_OUTPUT=$T/out REPO=o/r EVENT=${EVENT:-pull_request} BASE=${BASE-abc} HEAD=def
   : > "$GITHUB_OUTPUT"
-  bash --noprofile --norc -eo pipefail "$T/step.sh" >/dev/null
+  "$BATS_TEST_DIRNAME/../../actions/code-changed/code-changed.sh" >/dev/null
   cat "$GITHUB_OUTPUT"
 }
 

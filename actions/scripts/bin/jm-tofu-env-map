@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# jm-tofu-env-map: for each TARGET=SOURCE line of $MAP (blank lines skipped), export TARGET with
+# the value of env var SOURCE, masked, through $GITHUB_ENV. A malformed line or an empty SOURCE
+# fails.
+set -euo pipefail
+
+bad() {
+  echo "::error::bad env-map line '$1' (want TARGET=SOURCE)"
+  exit 1
+}
+
+while IFS= read -r line; do
+  [ -n "${line//[[:space:]]/}" ] || continue
+  [[ "$line" == *=* ]] || bad "$line"
+  t=${line%%=*}
+  src=${line#*=}
+  [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*$ && "$src" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || bad "$line"
+  v=${!src-}
+  [ -n "$v" ] || { echo "::error::env-map: $src is empty or not loaded from Infisical"; exit 1; }
+  echo "::add-mask::$v"
+  d="EOF_$(openssl rand -hex 8)"
+  printf '%s<<%s\n%s\n%s\n' "$t" "$d" "$v" "$d" >> "$GITHUB_ENV"
+done <<<"$MAP"

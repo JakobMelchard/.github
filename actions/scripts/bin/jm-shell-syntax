@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# jm-shell-syntax: bash -n, or zsh -n for a zsh shebang, over every script in
+# $RUNNER_TEMP/scripts.txt. Installs zsh when missing (ubuntu-latest has none).
+set -euo pipefail
+
+command -v zsh >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq zsh; }
+rc=0
+while IFS= read -r f; do
+  case "$(head -1 "$f")" in
+    # zsh anywhere in the shebang: `#!/bin/zsh -f`, `#!/usr/bin/env zsh`
+    *zsh*) zsh -n "$f" || rc=1 ;;
+    *) bash -n "$f" || rc=1 ;;
+  esac
+done < "$RUNNER_TEMP/scripts.txt"
+exit $rc

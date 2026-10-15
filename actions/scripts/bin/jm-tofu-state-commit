@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# jm-tofu-state-commit: commit the encrypted state file $STATE of root $DIR as app $APP and push it
+# to $GITHUB_REF with $TOKEN, only when its serial moved. Every apply re-encrypts the file (new
+# nonce), so the serial is the only sign of a real change. A plaintext state is refused.
+set -euo pipefail
+
+old=$(git show "HEAD:./$STATE" 2>/dev/null | jq -r .serial || echo none)
+new=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
+if [ "$old" = "$new" ]; then
+  echo "state unchanged (serial $new)"
+  exit 0
+fi
+jq -e '.encrypted_data and (.resources == null)' "$STATE" >/dev/null
+uid=$(gh api "users/${APP}[bot]" --jq .id)
+git config user.name "${APP}[bot]"
+git config user.email "${uid}+${APP}[bot]@users.noreply.github.com"
+git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+git add "$STATE"
+git commit -m "chore($DIR): update encrypted state (serial $new) [skip ci]"
+# The concurrency group is per root, so a matrix of roots (or a human merge) pushes to the same
+# branch at once: rebase and retry with jitter.
+for i in 1 2 3 4 5 6 7 8 9 10; do
+  git push origin "HEAD:$GITHUB_REF" && exit 0
+  sleep $((RANDOM % 5 + i))
+  git pull --rebase origin "$GITHUB_REF"
+done
+echo "::error::state push lost the race 10 times"
+exit 1

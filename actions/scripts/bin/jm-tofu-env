@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# jm-tofu-env: export $PASSPHRASE (masked) as $PASSPHRASE_VAR and the KEY=VALUE lines of $EXTRA
+# through $GITHUB_ENV. An empty passphrase fails.
+set -euo pipefail
+
+[ -n "$PASSPHRASE" ] || { echo "::error::TOFU_STATE_PASSPHRASE is empty (Infisical gha/dev)"; exit 1; }
+echo "::add-mask::$PASSPHRASE"
+echo "$PASSPHRASE_VAR=$PASSPHRASE" >> "$GITHUB_ENV"
+[ -z "$EXTRA" ] || printf '%s\n' "$EXTRA" >> "$GITHUB_ENV"
