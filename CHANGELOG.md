@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.2](https://github.com/JakobMelchard/.github/compare/v2.2.1...v2.2.2) (2026-10-15)
+
+
+### Bug Fixes
+
+* **ai-review:** raise the default daily cap to 10 runs per repo ([#225](https://github.com/JakobMelchard/.github/issues/225)) ([f0e3c04](https://github.com/JakobMelchard/.github/commit/f0e3c04034bd634459d3d1e71ad07e63fcf4c4b1))
+
 ## [2.2.1](https://github.com/JakobMelchard/.github/compare/v2.2.0...v2.2.1) (2026-10-15)
 
 
