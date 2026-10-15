@@ -77,27 +77,15 @@ jobs:
       CONFIG__NUM_RETRIES: '0'
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+
       # Counts ai:pr-agent label events, one per run, since the issues API needs no extra permission
       - name: daily cap
         id: cap
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           CAP: ${{ inputs.daily-cap || vars.AI_REVIEW_DAILY_CAP || 10 }}
-        run: |
-          since=$(jq -n 'now - 86400 | floor')
-          n=0
-          for page in 1 2 3 4 5 6 7 8 9 10; do
-            ev=$(gh api "repos/$GITHUB_REPOSITORY/issues/events?per_page=100&page=$page")
-            n=$((n + $(jq --argjson s "$since" '[.[] | select(.event == "labeled" and .label.name == "ai:pr-agent"
-              and .issue.pull_request != null and .actor.type != "Bot" and (.created_at | fromdateiso8601) >= $s)] | length' <<<"$ev")))
-            [ "$(jq --argjson s "$since" 'length < 100 or (.[-1].created_at | fromdateiso8601) < $s' <<<"$ev")" = true ] && break
-          done
-          echo "ai:pr-agent labels in 24 h: $n, cap $CAP"
-          if [ "$n" -gt "$CAP" ]; then
-            echo "::notice::PR-Agent skipped: $n ai:pr-agent labels in 24 h, over the daily cap of $CAP"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          fi
+        run: jm-ai-review-cap
 
       # secret-name: only this secret enters the job env
       - if: steps.cap.outputs.skip != 'true' && env.HAS_KEY != 'true'
@@ -116,29 +104,6 @@ jobs:
       - name: review
         if: steps.cap.outputs.skip != 'true'
         timeout-minutes: 12
-        shell: bash
         env:
           OPENAI__KEY: ${{ secrets.opencode-api-key || env.OPENCODE_API_KEY }}
-        run: |
-          set -o pipefail
-          # OpenCode Go rejects requests without a session id and wants a custom agent
-          export OPENAI_CUSTOM_HEADERS="x-opencode-session: pr-review-${GITHUB_REPOSITORY##*/}-${PR_NUM}
-          User-Agent: jm-pr-review/1.0"
-          log="$RUNNER_TEMP/pr-agent.log"
-          review() {
-            CONFIG__MODEL="$1" uv run --python 3.12 --with pr-agent==0.47.0 \
-              python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
-          }
-          review "$MODEL"
-          # PR-Agent exits 0 after posting "Failed to review PR" as a comment
-          if grep -q "Failed to review PR" "$log"; then
-            if grep -qiE "litellm.Timeout|APITimeoutError|RateLimitError|usage limit|insufficient_quota|insufficient credit" "$log"; then
-              echo "::error::PR-Agent: $MODEL timed out or hit the usage limit, fallback not tried"
-              exit 1
-            fi
-            review "$FALLBACK_MODEL"
-            if grep -q "Failed to review PR" "$log"; then
-              echo "::error::PR-Agent failed to review the PR"
-              exit 1
-            fi
-          fi
+        run: jm-ai-review

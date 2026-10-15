@@ -73,18 +73,11 @@ jobs:
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
     timeout-minutes: 5
     steps:
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
-        shell: bash
-        run: |
-          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
-          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
-            echo "ok: $TITLE"
-          else
-            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
-            exit 1
-          fi
+        run: jm-pr-title
 
   ci:
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
@@ -96,19 +89,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+
       - name: clone sibling repos
         if: inputs.siblings != ''
         working-directory: ${{ github.workspace }}
         env:
           SIBLINGS: ${{ inputs.siblings }}
-        shell: bash
-        run: |
-          for s in $SIBLINGS; do
-            [[ "$s" =~ ^[A-Za-z0-9._-]+(@[A-Za-z0-9._/-]+)?$ ]] || { echo "::error::bad sibling '$s'"; exit 1; }
-            name=${s%%@*}; ref=main; [[ "$s" == *@* ]] && ref=${s#*@}
-            git clone -q --depth 1 --branch "$ref" "https://github.com/JakobMelchard/$name.git" "../$name"
-            echo "sibling $name @ $ref -> $(git -C "../$name" rev-parse --short HEAD)"
-          done
+        run: jm-clone-siblings
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
@@ -151,34 +139,7 @@ jobs:
         env:
           CMD: ${{ inputs.test-cmd }}
           DEST: ${{ inputs.destination }}
-        shell: bash
-        run: |
-          spec="$DEST"; [ -n "$CMD" ] && spec="$CMD"
-          case "$spec" in *"iOS Simulator"*) ;; *) echo "no iOS Simulator destination"; exit 0 ;; esac
-          name=$(printf '%s' "$spec" | sed -nE "s/.*name=([^,'\"]+).*/\1/p")
-          [ -n "$name" ] || { echo "no simulator name in the destination"; exit 0; }
-          if xcrun simctl list devices available | grep -qF "    $name ("; then echo "simulator '$name' present"; exit 0; fi
-          rt() {
-            xcrun simctl list runtimes available -j |
-              jq -c '[.runtimes[] | select(.platform == "iOS")] | sort_by(.version | split(".") | map(tonumber)) | last // empty'
-          }
-          runtime=$(rt)
-          if [ -z "$runtime" ]; then
-            echo "no iOS runtime installed; downloading one"
-            xcodebuild -downloadPlatform iOS
-            runtime=$(rt)
-          fi
-          [ -n "$runtime" ] || { echo "::error::no iOS simulator runtime available"; exit 1; }
-          rid=$(jq -r .identifier <<<"$runtime")
-          # a device type the runtime supports: the named one, else its newest iPad
-          type=$(jq -r --arg n "$name" '.supportedDeviceTypes[] | select(.name == $n) | .identifier' <<<"$runtime" | head -1)
-          if [ -z "$type" ]; then
-            type=$(jq -r '[.supportedDeviceTypes[] | select(.productFamily == "iPad")] | last | .identifier // empty' <<<"$runtime")
-            [ -n "$type" ] || { echo "::error::$rid supports no iPad device type"; exit 1; }
-            echo "::warning::$rid has no device type named '$name'; creating it as $type"
-          fi
-          udid=$(xcrun simctl create "$name" "$type" "$rid")
-          echo "created '$name' ($type, $rid): $udid"
+        run: jm-xcode-simulator
 
       - name: test
         if: inputs.test-cmd != '' || inputs.scheme != ''
@@ -188,18 +149,7 @@ jobs:
           PROJECT: ${{ inputs.project }}
           DEST: ${{ inputs.destination }}
         shell: bash
-        run: |
-          if [ -n "$CMD" ]; then eval "$CMD"; exit; fi
-          p="$PROJECT"
-          if [ -z "$p" ]; then
-            for f in ./*.xcworkspace ./*.xcodeproj; do [ -d "$f" ] && { p=$f; break; }; done
-          fi
-          [ -n "$p" ] || { echo "::error::no .xcodeproj/.xcworkspace found" >&2; exit 1; }
-          case "$p" in *.xcworkspace) flag=-workspace ;; *) flag=-project ;; esac
-          set -o pipefail
-          xcodebuild "$flag" "$p" -scheme "$SCHEME" -destination "$DEST" \
-            -skipMacroValidation -skipPackagePluginValidation \
-            test 2>&1 | tee xcodebuild.log | grep -E 'error:|warning: |Test Suite|Test Case|Executed|\*\*'
+        run: if [ -n "$CMD" ]; then eval "$CMD"; else jm-xcodebuild-test; fi
 
       - name: xcodebuild log
         if: failure() || cancelled()

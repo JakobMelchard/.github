@@ -126,6 +126,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+
       - name: changed files
         id: changed
         if: github.event_name == 'pull_request'
@@ -133,16 +135,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           DIR: ${{ inputs.working-directory }}
-        run: |
-          files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
-          # the API lists repo-relative paths: "./infra/" must match "infra/x", "." matches all
-          d=${DIR#./}; d=${d%/}
-          if [[ -z "$d" || "$d" == . ]] || awk -v d="$d/" 'index($0, d) == 1 { f = 1 } END { exit !f }' <<<"$files"; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::no changes under $DIR in this PR; plan skipped"
-          fi
+        run: jm-tofu-changed
 
       - if: steps.changed.outputs.run != 'false'
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
@@ -206,19 +199,7 @@ jobs:
         if: steps.changed.outputs.run != 'false' && inputs.env-map != ''
         env:
           MAP: ${{ inputs.env-map }}
-        run: |
-          while IFS= read -r line; do
-            [ -n "${line//[[:space:]]/}" ] || continue
-            [[ "$line" == *=* ]] || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
-            t=${line%%=*}; src=${line#*=}
-            [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*$ && "$src" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] \
-              || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
-            v=${!src-}
-            [ -n "$v" ] || { echo "::error::env-map: $src is empty or not loaded from Infisical"; exit 1; }
-            echo "::add-mask::$v"
-            d="EOF_$(openssl rand -hex 8)"
-            printf '%s<<%s\n%s\n%s\n' "$t" "$d" "$v" "$d" >> "$GITHUB_ENV"
-          done <<<"$MAP"
+        run: jm-tofu-env-map
 
       - name: tofu env
         if: steps.changed.outputs.run != 'false'
@@ -226,11 +207,7 @@ jobs:
           PASSPHRASE: ${{ env.TOFU_STATE_PASSPHRASE }}
           PASSPHRASE_VAR: ${{ inputs.passphrase-env }}
           EXTRA: ${{ inputs.env }}
-        run: |
-          [ -n "$PASSPHRASE" ] || { echo "::error::TOFU_STATE_PASSPHRASE is empty (Infisical gha/dev)"; exit 1; }
-          echo "::add-mask::$PASSPHRASE"
-          echo "$PASSPHRASE_VAR=$PASSPHRASE" >> "$GITHUB_ENV"
-          [ -z "$EXTRA" ] || printf '%s\n' "$EXTRA" >> "$GITHUB_ENV"
+        run: jm-tofu-env
 
       # Unscoped on purpose: create-github-app-token has no `permission-*` input for
       # Variables (infra github root), and naming any permission drops the rest. The
@@ -260,12 +237,7 @@ jobs:
           TOKEN_VAR: ${{ inputs.app-token-env }}
           TOKEN2: ${{ steps.app2.outputs.token }}
           TOKEN2_VAR: ${{ inputs.app-token-env-2 }}
-        run: |
-          [ -z "$TOKEN" ] || echo "$TOKEN_VAR=$TOKEN" >> "$GITHUB_ENV"
-          if [ -n "$TOKEN2" ]; then
-            [ -n "$TOKEN2_VAR" ] || { echo "::error::app-token-owner-2 needs app-token-env-2"; exit 1; }
-            echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
-          fi
+        run: jm-tofu-tokens
 
       # Keeps the app key out of the env of the PR's tofu code. It does not stop that code from
       # reading the key through the job's id-token.
@@ -291,34 +263,7 @@ jobs:
           OUTCOME: ${{ steps.plan.outcome }}
           DIR: ${{ inputs.working-directory }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          marker="<!-- tofu-plan:$DIR -->"
-          [ -f plan.txt ] || echo "no plan output (earlier step failed)" > plan.txt
-          {
-            echo "$marker"
-            echo "### tofu plan: \`$DIR\`"
-            echo
-            echo "Outcome: \`$OUTCOME\`"
-            echo
-            summary=$(grep -E '^(Plan:|No changes\.)' plan.txt | tail -1 || true)
-            [ -n "$summary" ] && echo "**${summary}**" && echo
-            echo '<details><summary>plan output</summary>'
-            echo
-            echo '```'
-            head -c 60000 plan.txt
-            echo '```'
-            echo '</details>'
-            echo
-            echo "[run]($RUN_URL)"
-          } > comment.md
-          cat comment.md >> "$GITHUB_STEP_SUMMARY"
-          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
-            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | tail -1)
-          if [ -n "$id" ]; then
-            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@comment.md >/dev/null
-          else
-            gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@comment.md >/dev/null
-          fi
+        run: jm-tofu-comment
 
   apply:
     if: >-
@@ -346,6 +291,8 @@ jobs:
         with:
           ref: ${{ github.ref }}
           persist-credentials: false
+
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
 
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_wrapper: false }
@@ -407,30 +354,14 @@ jobs:
         if: inputs.env-map != ''
         env:
           MAP: ${{ inputs.env-map }}
-        run: |
-          while IFS= read -r line; do
-            [ -n "${line//[[:space:]]/}" ] || continue
-            [[ "$line" == *=* ]] || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
-            t=${line%%=*}; src=${line#*=}
-            [[ "$t" =~ ^[A-Za-z_][A-Za-z0-9_]*$ && "$src" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] \
-              || { echo "::error::bad env-map line '$line' (want TARGET=SOURCE)"; exit 1; }
-            v=${!src-}
-            [ -n "$v" ] || { echo "::error::env-map: $src is empty or not loaded from Infisical"; exit 1; }
-            echo "::add-mask::$v"
-            d="EOF_$(openssl rand -hex 8)"
-            printf '%s<<%s\n%s\n%s\n' "$t" "$d" "$v" "$d" >> "$GITHUB_ENV"
-          done <<<"$MAP"
+        run: jm-tofu-env-map
 
       - name: tofu env
         env:
           PASSPHRASE: ${{ env.TOFU_STATE_PASSPHRASE }}
           PASSPHRASE_VAR: ${{ inputs.passphrase-env }}
           EXTRA: ${{ inputs.env }}
-        run: |
-          [ -n "$PASSPHRASE" ] || { echo "::error::TOFU_STATE_PASSPHRASE is empty (Infisical gha/dev)"; exit 1; }
-          echo "::add-mask::$PASSPHRASE"
-          echo "$PASSPHRASE_VAR=$PASSPHRASE" >> "$GITHUB_ENV"
-          [ -z "$EXTRA" ] || printf '%s\n' "$EXTRA" >> "$GITHUB_ENV"
+        run: jm-tofu-env
 
       # Unscoped on purpose: create-github-app-token has no `permission-*` input for
       # Variables (infra github root), and naming any permission drops the rest. The
@@ -460,12 +391,7 @@ jobs:
           TOKEN_VAR: ${{ inputs.app-token-env }}
           TOKEN2: ${{ steps.app2.outputs.token }}
           TOKEN2_VAR: ${{ inputs.app-token-env-2 }}
-        run: |
-          [ -z "$TOKEN" ] || echo "$TOKEN_VAR=$TOKEN" >> "$GITHUB_ENV"
-          if [ -n "$TOKEN2" ]; then
-            [ -n "$TOKEN2_VAR" ] || { echo "::error::app-token-owner-2 needs app-token-env-2"; exit 1; }
-            echo "$TOKEN2_VAR=$TOKEN2" >> "$GITHUB_ENV"
-          fi
+        run: jm-tofu-tokens
 
       # Keeps the app key out of the env of tofu and its providers, which can still read it
       # through the job's id-token. The state commit fetches it again after the apply.
@@ -477,19 +403,7 @@ jobs:
 
       - name: tofu apply
         id: apply
-        run: |
-          set -o pipefail
-          old=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
-          tofu apply -auto-approve -input=false -no-color 2>&1 | tee apply.txt
-          new=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
-          {
-            echo "### tofu apply: \`$WD\`"
-            echo
-            echo '```'
-            grep -E '^(Apply complete!|No changes\.)' apply.txt || tail -5 apply.txt
-            echo '```'
-            echo "state serial: $old -> $new"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: jm-tofu-apply
         env:
           WD: ${{ inputs.working-directory }}
 
@@ -526,28 +440,4 @@ jobs:
           TOKEN: ${{ steps.state.outputs.token }}
           APP: ${{ steps.state.outputs.app-slug }}
           DIR: ${{ inputs.working-directory }}
-        run: |
-          set -euo pipefail
-          old=$(git show "HEAD:./$STATE" 2>/dev/null | jq -r .serial || echo none)
-          new=$(jq -r .serial "$STATE" 2>/dev/null || echo none)
-          if [ "$old" = "$new" ]; then
-            echo "state unchanged (serial $new)"
-            exit 0
-          fi
-          # never commit a plaintext state
-          jq -e '.encrypted_data and (.resources == null)' "$STATE" >/dev/null
-          uid=$(gh api "users/${APP}[bot]" --jq .id)
-          git config user.name "${APP}[bot]"
-          git config user.email "${uid}+${APP}[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git add "$STATE"
-          git commit -m "chore($DIR): update encrypted state (serial $new) [skip ci]"
-          # The concurrency group is per root, so a matrix of roots (or a human
-          # merge) pushes to the same branch at once: rebase and retry with jitter.
-          for i in 1 2 3 4 5 6 7 8 9 10; do
-            git push origin "HEAD:$GITHUB_REF" && exit 0
-            sleep $((RANDOM % 5 + i))
-            git pull --rebase origin "$GITHUB_REF"
-          done
-          echo "::error::state push lost the race 10 times"
-          exit 1
+        run: jm-tofu-state-commit

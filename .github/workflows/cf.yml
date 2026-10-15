@@ -72,6 +72,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
         env:
@@ -122,13 +124,4 @@ jobs:
           DRY_RUN: ${{ inputs.dry-run }}
           ACCOUNT_ID: ${{ inputs.account-id }}
           WRANGLER_SEND_METRICS: "false"
-        shell: bash
-        run: |
-          [[ "$WRANGLER_ENV" =~ ^[A-Za-z0-9_-]*$ ]] || { echo "::error::bad environment '$WRANGLER_ENV'"; exit 1; }
-          [[ "$WRANGLER_VERSION" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad wrangler-version '$WRANGLER_VERSION'"; exit 1; }
-          [ -z "$ACCOUNT_ID" ] || export CLOUDFLARE_ACCOUNT_ID="$ACCOUNT_ID"
-          if [ -n "$WRANGLER_VERSION" ]; then w=(npx --yes "wrangler@$WRANGLER_VERSION"); else w=(npx --no-install wrangler); fi
-          args=(deploy)
-          [ -z "$WRANGLER_ENV" ] || args+=(--env "$WRANGLER_ENV")
-          [ "$DRY_RUN" != true ] || args+=(--dry-run)
-          "${w[@]}" "${args[@]}"
+        run: jm-wrangler-deploy
