@@ -74,13 +74,6 @@
       "description": "Template updates (copier, JakobMelchard/template) can touch CI, hooks and configs at once: review, never automerge.",
       "matchManagers": ["copier"],
       "automerge": false
-    },
-    {
-      "description": "Our own reusable workflows consumed at @main are on purpose; never digest-pin them. Refs pinned to a release tag or SHA still get bumped.",
-      "matchManagers": ["github-actions"],
-      "matchPackageNames": ["JakobMelchard/.github"],
-      "matchCurrentValue": "/^main$/",
-      "enabled": false
     }
   ]
 }
