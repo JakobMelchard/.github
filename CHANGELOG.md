@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.1](https://github.com/JakobMelchard/.github/compare/v2.2.0...v2.2.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **ai-review:** cap daily runs per repo, shorten timeouts, no fallback on timeout or usage limit ([#223](https://github.com/JakobMelchard/.github/issues/223)) ([8edcff0](https://github.com/JakobMelchard/.github/commit/8edcff011957fd451ef81d2f32f9b52ee403d50d))
+* **ai-review:** chunk large PRs, align token caps, ignore generated files ([#220](https://github.com/JakobMelchard/.github/issues/220)) ([fe173fe](https://github.com/JakobMelchard/.github/commit/fe173fe709272776c9ad151cdeda94efc53cd29e))
+* **automerge:** enforce required checks and approvals the app bypasses ([#214](https://github.com/JakobMelchard/.github/issues/214)) ([5d9964f](https://github.com/JakobMelchard/.github/commit/5d9964fde47b1abaee6f35fbee79483285e38d94))
+* **tofu:** fetch only the needed secrets in apply and drop the app key before tofu ([#216](https://github.com/JakobMelchard/.github/issues/216)) ([c889f67](https://github.com/JakobMelchard/.github/commit/c889f67a34adc1b1fdbf07ea4af8da7d585e6200))
+* **workflow-templates:** pin starters to v2.2.0, add automerge, cf and tofu ([#221](https://github.com/JakobMelchard/.github/issues/221)) ([4e41d96](https://github.com/JakobMelchard/.github/commit/4e41d96540a97444d447e332a27bcca3024522d6))
+
 ## [2.2.0](https://github.com/JakobMelchard/.github/compare/v2.1.0...v2.2.0) (2026-10-14)
 
 
