@@ -1,0 +1,17 @@
+name: deploy
+
+on:
+  push:
+    branches: [$default-branch]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    uses: JakobMelchard/.github/.github/workflows/cf.yml@dc944884b137d7f6b96628189bdf041bffc27d93 # v2.2.0

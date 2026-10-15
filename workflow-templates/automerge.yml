@@ -1,0 +1,17 @@
+name: automerge
+
+on:
+  pull_request:
+    types: [labeled, synchronize, ready_for_review]
+
+permissions: {}
+
+jobs:
+  automerge:
+    permissions:
+      contents: read
+      checks: read
+      statuses: read
+      pull-requests: read
+      id-token: write
+    uses: JakobMelchard/.github/.github/workflows/automerge.yml@dc944884b137d7f6b96628189bdf041bffc27d93 # v2.2.0

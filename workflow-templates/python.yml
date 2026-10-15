@@ -10,4 +10,4 @@ permissions:
 
 jobs:
   ci:
-    uses: JakobMelchard/.github/.github/workflows/python.yml@e1ef2b10e7ee0c5426f78d63a4e9c6a0ce9b3fe9 # v1.6.0
+    uses: JakobMelchard/.github/.github/workflows/python.yml@dc944884b137d7f6b96628189bdf041bffc27d93 # v2.2.0

@@ -1,0 +1,12 @@
+{
+  "name": "Cloudflare Worker deploy",
+  "description": "wrangler deploy of a Worker with a Durable Object on push to main (JakobMelchard/.github cf.yml)",
+  "iconName": "octicon rocket",
+  "categories": [
+    "Deployment"
+  ],
+  "filePatterns": [
+    "wrangler\\.jsonc?$",
+    "wrangler\\.toml$"
+  ]
+}
