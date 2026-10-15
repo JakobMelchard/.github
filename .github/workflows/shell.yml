@@ -37,18 +37,11 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
     steps:
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
-        shell: bash
-        run: |
-          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
-          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
-            echo "ok: $TITLE"
-          else
-            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
-            exit 1
-          fi
+        run: jm-pr-title
 
   changes:
     timeout-minutes: 10
@@ -57,7 +50,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@86ce618fe2528abf23b57f57de9d012f04041b2d # v2.0.1
+        uses: JakobMelchard/.github/actions/code-changed@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
 
   ci:
     timeout-minutes: 30
@@ -67,6 +60,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
+
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
@@ -83,51 +78,14 @@ jobs:
         id: collect
         env:
           PATHS: ${{ inputs.paths }}
-        shell: bash
-        run: |
-          : > "$RUNNER_TEMP/scripts.txt"
-          # shellcheck disable=SC2086 # space-separated roots by contract
-          for root in $PATHS; do
-            while IFS= read -r f; do
-              if head -1 "$f" | grep -qE '^#!.*(bash|sh|zsh)'; then echo "$f" >> "$RUNNER_TEMP/scripts.txt"; fi
-            done < <(find "$root" -type f -not -path '*/.git/*' -not -path '*/node_modules/*' -not -path '*/.venv/*')
-          done
-          sort -u "$RUNNER_TEMP/scripts.txt" -o "$RUNNER_TEMP/scripts.txt"
-          n=$(wc -l < "$RUNNER_TEMP/scripts.txt")
-          echo "count=$n" >> "$GITHUB_OUTPUT"
-          echo "found $n scripts:"
-          cat "$RUNNER_TEMP/scripts.txt"
+        run: jm-shell-collect
 
       - name: syntax check
         if: steps.collect.outputs.count != '0'
-        run: |
-          # ubuntu-latest has no zsh
-          command -v zsh >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq zsh; }
-          rc=0
-          while IFS= read -r f; do
-            case "$(head -1 "$f")" in
-              # zsh anywhere in the shebang: `#!/bin/zsh -f`, `#!/usr/bin/env zsh`
-              *zsh*) zsh -n "$f" || rc=1 ;;
-              *)    bash -n "$f" || rc=1 ;;
-            esac
-          done < "$RUNNER_TEMP/scripts.txt"
-          exit $rc
-        shell: bash
+        run: jm-shell-syntax
 
       - name: shellcheck
         if: steps.collect.outputs.count != '0'
         env:
           SEVERITY: ${{ inputs.severity }}
-        run: |
-          if ! command -v shellcheck >/dev/null; then
-            if [ "$(uname)" = Darwin ]; then brew install shellcheck
-            else sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck; fi
-          fi
-          # zsh is out of shellcheck's scope; skip those.
-          rc=0
-          while IFS= read -r f; do
-            head -1 "$f" | grep -q zsh && continue
-            shellcheck --severity="$SEVERITY" "$f" || rc=1
-          done < "$RUNNER_TEMP/scripts.txt"
-          exit $rc
-        shell: bash
+        run: jm-shellcheck

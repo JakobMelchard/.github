@@ -69,18 +69,11 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
     timeout-minutes: 5
     steps:
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
-        shell: bash
-        run: |
-          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
-          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
-            echo "ok: $TITLE"
-          else
-            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
-            exit 1
-          fi
+        run: jm-pr-title
 
   changes:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
@@ -89,7 +82,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@86ce618fe2528abf23b57f57de9d012f04041b2d # v2.0.1
+        uses: JakobMelchard/.github/actions/code-changed@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
 
   ci:
     needs: changes

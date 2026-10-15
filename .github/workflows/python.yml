@@ -77,18 +77,11 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
     steps:
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
-        shell: bash
-        run: |
-          types='feat|fix|chore|docs|refactor|test|ci|build|perf|style|revert'
-          if printf '%s\n' "$TITLE" | grep -Eq "^($types)(\([A-Za-z0-9._/-]+\))?!?: .+"; then
-            echo "ok: $TITLE"
-          else
-            echo "::error title=PR title::'$TITLE' is not a conventional commit: <type>(<scope>)!: <subject>, type one of $types"
-            exit 1
-          fi
+        run: jm-pr-title
 
   changes:
     timeout-minutes: 10
@@ -97,7 +90,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@86ce618fe2528abf23b57f57de9d012f04041b2d # v2.0.1
+        uses: JakobMelchard/.github/actions/code-changed@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
 
   ci:
     timeout-minutes: 60
@@ -113,6 +106,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
+
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
@@ -151,12 +146,7 @@ jobs:
         if: inputs.private-deps
         env:
           TOKEN: ${{ steps.app.outputs.token || github.token }}
-        run: |
-          {
-            echo "GIT_CONFIG_COUNT=1"
-            echo "GIT_CONFIG_KEY_0=url.https://x-access-token:${TOKEN}@github.com/.insteadOf"
-            echo "GIT_CONFIG_VALUE_0=https://github.com/"
-          } >> "$GITHUB_ENV"
+        run: jm-git-auth
 
       # Commands go through env vars: an empty `${{ }}` interpolated into an if/case body is a
       # bash syntax error.
@@ -164,38 +154,18 @@ jobs:
         env:
           INSTALL_CMD: ${{ inputs.install-cmd }}
           PKG_MGR: ${{ inputs.package-manager }}
-        run: |
-          if [ -n "$INSTALL_CMD" ]; then
-            eval "$INSTALL_CMD"
-          else
-            case "$PKG_MGR" in
-              uv)   uv sync --all-extras ;;
-              pip)  python -m venv .venv && .venv/bin/pip install -e '.[dev]' ;;
-              none) ;;
-              *)    echo "unknown package-manager: $PKG_MGR" >&2; exit 1 ;;
-            esac
-          fi
+        run: jm-py-install
 
       - name: lint
         if: inputs.lint-cmd != ''
         env:
           LINT_CMD: ${{ inputs.lint-cmd }}
           PKG_MGR: ${{ inputs.package-manager }}
-        run: |
-          case "$PKG_MGR" in
-            uv)   eval "uv run $LINT_CMD" ;;
-            pip)  eval ".venv/bin/$LINT_CMD" ;;
-            *)    eval "$LINT_CMD" ;;
-          esac
+        run: jm-py "$LINT_CMD"
 
       - name: test
         if: inputs.test-cmd != ''
         env:
           TEST_CMD: ${{ inputs.test-cmd }}
           PKG_MGR: ${{ inputs.package-manager }}
-        run: |
-          case "$PKG_MGR" in
-            uv)   eval "uv run $TEST_CMD" ;;
-            pip)  eval ".venv/bin/$TEST_CMD" ;;
-            *)    eval "$TEST_CMD" ;;
-          esac
+        run: jm-py "$TEST_CMD"

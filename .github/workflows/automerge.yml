@@ -33,68 +33,17 @@ jobs:
       pull-requests: read
       id-token: write
     steps:
+      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+
       - name: wait for checks
         id: wait
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           PR_NUM: ${{ github.event.pull_request.number }}
           SHA: ${{ github.event.pull_request.head.sha }}
           BASE: ${{ github.event.pull_request.base.ref }}
-        run: |
-          stop() { echo "::notice::not merging: $1"; echo "not merging: $1" >> "$GITHUB_STEP_SUMMARY"; exit 0; }
-          # shellcheck disable=SC2016
-          q='query($o:String!,$r:String!,$n:Int!){repository(owner:$o,name:$r){pullRequest(number:$n){
-            reviewThreads(first:100){totalCount nodes{isResolved}}}}}'
-          rules=$(gh api "repos/$GH_REPO/rules/branches/$BASE?per_page=100") || {
-            # Private repos on the free plan have no rulesets, and the API says so with a 403.
-            grep -q 'Upgrade to GitHub Pro' <<<"$rules" || exit 1
-            rules='[]'
-          }
-          need=$(jq -c '[.[] | select(.type == "required_status_checks") |
-            .parameters.required_status_checks[].context] | unique' <<<"$rules")
-          approvals=$(jq '[.[] | select(.type == "pull_request") |
-            .parameters.required_approving_review_count] | max // 0' <<<"$rules")
-          prev=-1
-          # shellcheck disable=SC2016
-          for i in $(seq 90); do
-            pr=$(gh pr view "$PR_NUM" --json state,isDraft,headRefOid,labels,reviewDecision)
-            [ "$(jq -r '.state' <<<"$pr")" = OPEN ] || stop "PR is not open"
-            [ "$(jq -r '.isDraft' <<<"$pr")" = false ] || stop "PR is a draft"
-            [ "$(jq -r '.headRefOid' <<<"$pr")" = "$SHA" ] || stop "head commit changed"
-            jq -e 'any(.labels[]; .name == "automerge")' <<<"$pr" >/dev/null || stop "label removed"
-
-            runs=$(gh api "repos/$GH_REPO/commits/$SHA/check-runs" --paginate --jq '.check_runs[]' |
-              jq -s '[.[] | select(.name | test("^automerge( / |$)") | not)]')
-            statuses=$(gh api "repos/$GH_REPO/commits/$SHA/status" --jq '.statuses')
-            bad=$(jq -r --argjson s "$statuses" '[.[] | select(.status == "completed" and
-              (.conclusion | IN("success", "neutral", "skipped") | not)) | .name] +
-              [$s[] | select(.state | IN("failure", "error")) | .context] | join(", ")' <<<"$runs")
-            [ -z "$bad" ] || stop "failed: $bad"
-
-            todo=$(jq -r --argjson s "$statuses" '[.[] | select(.status != "completed")] | length +
-              ($s | map(select(.state == "pending")) | length)' <<<"$runs")
-            seen=$(jq -r --argjson s "$statuses" 'length + ($s | length)' <<<"$runs")
-            missing=$(jq -r --argjson s "$statuses" --argjson need "$need" '$need -
-              ([.[] | select(.status == "completed") | .name] + [$s[] | select(.state == "success") | .context]) |
-              length' <<<"$runs")
-            approved=true
-            [ "$approvals" = 0 ] || [ "$(jq -r '.reviewDecision' <<<"$pr")" = APPROVED ] || approved=false
-            threads=$(gh api graphql -F o="${GH_REPO%/*}" -F r="${GH_REPO#*/}" -F n="$PR_NUM" -f query="$q" \
-              --jq '.data.repository.pullRequest.reviewThreads | (.totalCount > 100) as $more |
-                [.nodes[] | select(.isResolved | not)] | length + ($more | if . then 1 else 0 end)')
-            # Checks register a few seconds after a push, so none yet means not started, and a
-            # check that registers late shows up as a changed count: wait for two equal polls.
-            if [ "$todo" = 0 ] && [ "$missing" = 0 ] && [ "$approved" = true ] && [ "$threads" = 0 ] &&
-              [ "$seen" = "$prev" ] && { [ "$seen" -gt 0 ] || [ "$i" -gt 4 ]; }; then
-              echo "ready=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            prev=$seen
-            sleep 30
-          done
-          stop "timed out waiting for checks, an approval or review threads"
+        run: jm-automerge-wait
 
       - name: fetch APP_CLIENT_ID
         if: steps.wait.outputs.ready == 'true'
