@@ -36,7 +36,7 @@ jobs:
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     permissions:
       contents: read
       pull-requests: write
@@ -51,8 +51,14 @@ jobs:
       CONFIG__MODEL: openai/mimo-v2.6-pro
       # A different upstream, in case the primary model is down
       CONFIG__FALLBACK_MODELS: '["openai/glm-5.3"]'
-      # litellm does not know the model; a guess
+      # litellm does not know the model, so 64000 is a guess. PR-Agent takes the smaller of the two,
+      # and max_model_tokens defaults to 32000, so both are set.
       CONFIG__CUSTOM_MODEL_MAX_TOKENS: '64000'
+      CONFIG__MAX_MODEL_TOKENS: '64000'
+      # Reviews a PR that does not fit in chunks, at most 4 model calls
+      PR_REVIEWER__ENABLE_LARGE_PR_CHUNKING: 'true'
+      PR_REVIEWER__MAX_NUMBER_OF_CALLS: '4'
+      IGNORE__GLOB: '["**/*.tfstate","**/*.tfstate.backup","**/*.lock","**/*.lockb","**/*.plist","**/*dashboard*.json","**/package-lock.json","**/pnpm-lock.yaml","**/go.sum","**/.terraform.lock.hcl","**/Package.resolved"]'
       # Per attempt, with no retries, so a stalled model costs one timeout before the fallback.
       CONFIG__AI_TIMEOUT: '300'
       CONFIG__NUM_RETRIES: '0'
