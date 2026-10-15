@@ -54,6 +54,14 @@ setup() {
   diff "$T/plan.sh" "$T/step.sh"
 }
 
+@test "credential guard: plan and apply run the same scripts" {
+  for name in "snapshot gha credentials" "guard gha credentials"; do
+    step plan "$name"; cp "$T/step.sh" "$T/plan.sh"
+    step apply "$name"
+    diff "$T/plan.sh" "$T/step.sh"
+  done
+}
+
 @test "credential guard: passes when the extra project leaves the gha secrets alone" {
   export TOFU_STATE_PASSPHRASE=p APP_CLIENT_ID=c APP_PRIVATE_KEY=k
   step apply "snapshot gha credentials"

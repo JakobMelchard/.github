@@ -43,6 +43,13 @@ jobs:
       - run: .bats/bin/bats scripts/test
 
   # Builds a fixture tree with the docs action: pages, nav and rewritten links.
+  smoke-gitleaks:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: ./actions/gitleaks
+
   smoke-docs:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     steps:
