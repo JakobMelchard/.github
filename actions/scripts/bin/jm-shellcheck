@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# jm-shellcheck: shellcheck at $SEVERITY over every script in $RUNNER_TEMP/scripts.txt but the zsh
+# ones, which are out of its scope. Installs shellcheck when missing.
+set -euo pipefail
+
+if ! command -v shellcheck >/dev/null; then
+  if [ "$(uname)" = Darwin ]; then
+    brew install shellcheck
+  else
+    sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+  fi
+fi
+rc=0
+while IFS= read -r f; do
+  head -1 "$f" | grep -q zsh && continue
+  shellcheck --severity="$SEVERITY" "$f" || rc=1
+done < "$RUNNER_TEMP/scripts.txt"
+exit $rc

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# jm-ai-review-cap: count the ai:pr-agent labels a person put on PRs of $GITHUB_REPOSITORY in the
+# last 24 hours (one per review run; the issues events API needs no extra permission) and set
+# skip=true in $GITHUB_OUTPUT when there are more than $CAP.
+set -euo pipefail
+
+since=$(jq -n 'now - 86400 | floor')
+n=0
+for page in 1 2 3 4 5 6 7 8 9 10; do
+  ev=$(gh api "repos/$GITHUB_REPOSITORY/issues/events?per_page=100&page=$page")
+  n=$((n + $(jq --argjson s "$since" '[.[] | select(.event == "labeled" and .label.name == "ai:pr-agent"
+    and .issue.pull_request != null and .actor.type != "Bot" and (.created_at | fromdateiso8601) >= $s)] | length' <<<"$ev")))
+  [ "$(jq --argjson s "$since" 'length < 100 or (.[-1].created_at | fromdateiso8601) < $s' <<<"$ev")" = true ] && break
+done
+echo "ai:pr-agent labels in 24 h: $n, cap $CAP"
+if [ "$n" -gt "$CAP" ]; then
+  echo "::notice::PR-Agent skipped: $n ai:pr-agent labels in 24 h, over the daily cap of $CAP"
+  echo "skip=true" >> "$GITHUB_OUTPUT"
+fi

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# jm-git-auth [url...]: rewrite each GitHub URL prefix (default https://github.com/) to HTTPS with
+# $TOKEN, through GIT_CONFIG_* in $GITHUB_ENV. Not ~/.gitconfig: a persistent runner would keep
+# the token for later jobs.
+set -euo pipefail
+
+[ $# -gt 0 ] || set -- "https://github.com/"
+auth="https://x-access-token:${TOKEN}@github.com/"
+i=0
+for from in "$@"; do
+  printf 'GIT_CONFIG_KEY_%s=url.%s.insteadOf\nGIT_CONFIG_VALUE_%s=%s\n' "$i" "$auth" "$i" "$from" >> "$GITHUB_ENV"
+  i=$((i + 1))
+done
+echo "GIT_CONFIG_COUNT=$i" >> "$GITHUB_ENV"

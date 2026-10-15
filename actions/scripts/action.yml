@@ -1,0 +1,11 @@
+name: scripts
+description: >
+  Put the org workflow scripts (bin/jm-*) on PATH for the rest of the job. The reusable
+  workflows call them instead of inline run blocks; each script documents its env inputs
+  and is tested in scripts/test.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: echo "$GITHUB_ACTION_PATH/bin" >> "$GITHUB_PATH" # zizmor: ignore[github-env] the action's own directory, no input

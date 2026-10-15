@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# jm-tofu-changed: set run=true in $GITHUB_OUTPUT when PR $PR changes a file under $DIR, else
+# run=false with a notice. A root directory ("." or "") runs on any change.
+set -euo pipefail
+
+files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename')
+# the API lists repo-relative paths: "./infra/" must match "infra/x", "." matches all
+d=${DIR#./}
+d=${d%/}
+if [[ -z "$d" || "$d" == . ]] || awk -v d="$d/" 'index($0, d) == 1 { f = 1 } END { exit !f }' <<<"$files"; then
+  echo "run=true" >> "$GITHUB_OUTPUT"
+else
+  echo "run=false" >> "$GITHUB_OUTPUT"
+  echo "::notice::no changes under $DIR in this PR; plan skipped"
+fi

@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# jm-tofu-comment: post plan.txt as the tofu plan comment for $DIR on PR $PR, editing the earlier
+# one if there is one, and add it to the step summary. $OUTCOME is the plan step's outcome,
+# $RUN_URL links the run.
+set -euo pipefail
+
+marker="<!-- tofu-plan:$DIR -->"
+[ -f plan.txt ] || echo "no plan output (earlier step failed)" > plan.txt
+{
+  echo "$marker"
+  echo "### tofu plan: \`$DIR\`"
+  echo
+  echo "Outcome: \`$OUTCOME\`"
+  echo
+  summary=$(grep -E '^(Plan:|No changes\.)' plan.txt | tail -1 || true)
+  [ -z "$summary" ] || printf '**%s**\n\n' "$summary"
+  echo '<details><summary>plan output</summary>'
+  echo
+  echo '```'
+  head -c 60000 plan.txt
+  echo '```'
+  echo '</details>'
+  echo
+  echo "[run]($RUN_URL)"
+} > comment.md
+cat comment.md >> "$GITHUB_STEP_SUMMARY"
+id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+  --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | tail -1)
+if [ -n "$id" ]; then
+  gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@comment.md >/dev/null
+else
+  gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@comment.md >/dev/null
+fi

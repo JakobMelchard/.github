@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# jm-xcodebuild-test: xcodebuild test of $SCHEME on $DEST in $PROJECT, else the first
+# .xcworkspace or .xcodeproj here. The full log goes to xcodebuild.log, the console gets errors,
+# warnings and test lines.
+set -euo pipefail
+
+p=$PROJECT
+if [ -z "$p" ]; then
+  for f in ./*.xcworkspace ./*.xcodeproj; do [ -d "$f" ] && { p=$f; break; }; done
+fi
+[ -n "$p" ] || { echo "::error::no .xcodeproj/.xcworkspace found" >&2; exit 1; }
+case "$p" in *.xcworkspace) flag=-workspace ;; *) flag=-project ;; esac
+xcodebuild "$flag" "$p" -scheme "$SCHEME" -destination "$DEST" \
+  -skipMacroValidation -skipPackagePluginValidation \
+  test 2>&1 | tee xcodebuild.log | grep -E 'error:|warning: |Test Suite|Test Case|Executed|\*\*'

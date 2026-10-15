@@ -56,12 +56,7 @@ jobs:
           EVENT: ${{ github.event_name }}
           INPUT: ${{ inputs.routine }}
           CRON: ${{ github.event.schedule }}
-        run: |
-          r=$INPUT
-          if [ "$EVENT" = schedule ]; then
-            if [ "$CRON" = "37 2 * * *" ]; then r=nightly-improve; else r=nightly-sweep; fi
-          fi
-          echo "routine=$r" >> "$GITHUB_OUTPUT"
+        run: scripts/routine pick
 
       - name: fetch APP_CLIENT_ID
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
@@ -103,17 +98,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           OWNER: ${{ github.repository_owner }}
-        run: |
-          # gh answers git's credential requests from GH_TOKEN, so no token lands in a remote URL
-          gh auth setup-git
-          mkdir work && cd work
-          repos=$(gh repo list "$OWNER" --no-archived --source --limit 200 --json name --jq '.[].name')
-          [ -n "$repos" ] || { echo "no repos listed" >&2; exit 1; }
-          for r in $repos; do
-            git clone -q "https://github.com/$OWNER/$r" "$r" || echo "skipped $r"
-          done
-          git config --global user.name "$OWNER routine"
-          git config --global user.email "routine@users.noreply.github.com"
+        run: scripts/routine clone
 
       - name: install opencode
         run: npm install -g opencode-ai@1.18.33 --no-audit --no-fund # zizmor: ignore[adhoc-packages] exact version, no lockfile for a global CLI
@@ -136,9 +121,4 @@ jobs:
           MODEL: ${{ inputs.model || 'opencode-go/mimo-v2.5' }}
           PROMPT: ${{ github.workspace }}/routines/${{ steps.pick.outputs.routine }}.md
           DRY: ${{ inputs.dry_run }}
-        run: |
-          p=$(cat "$PROMPT")
-          if [ "$DRY" = true ]; then
-            p="$p"$'\n\n'"routine-fire-payload: DRY RUN. Print the plan and change nothing on GitHub."
-          fi
-          opencode run --model "$MODEL" "$p"
+        run: ../scripts/routine run

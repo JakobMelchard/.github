@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# jm-wrangler-deploy: wrangler deploy to environment $WRANGLER_ENV (empty: the top level) with
+# wrangler $WRANGLER_VERSION from npm, else the project's own wrangler. $ACCOUNT_ID, when set,
+# becomes CLOUDFLARE_ACCOUNT_ID; DRY_RUN=true adds --dry-run.
+set -euo pipefail
+
+[[ "$WRANGLER_ENV" =~ ^[A-Za-z0-9_-]*$ ]] || { echo "::error::bad environment '$WRANGLER_ENV'"; exit 1; }
+[[ "$WRANGLER_VERSION" =~ ^[A-Za-z0-9._-]*$ ]] || { echo "::error::bad wrangler-version '$WRANGLER_VERSION'"; exit 1; }
+[ -z "$ACCOUNT_ID" ] || export CLOUDFLARE_ACCOUNT_ID="$ACCOUNT_ID"
+if [ -n "$WRANGLER_VERSION" ]; then w=(npx --yes "wrangler@$WRANGLER_VERSION"); else w=(npx --no-install wrangler); fi
+args=(deploy)
+[ -z "$WRANGLER_ENV" ] || args+=(--env "$WRANGLER_ENV")
+[ "$DRY_RUN" != true ] || args+=(--dry-run)
+"${w[@]}" "${args[@]}"

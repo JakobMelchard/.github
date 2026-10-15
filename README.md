@@ -37,7 +37,8 @@ jobs:
 ```sh
 prek install           # once per clone
 prek run --all-files   # same as the CI hooks job
-bats scripts/test      # needs bats-core
+npm ci --prefix actions/docs && bats scripts/test   # needs bats-core, yq, node
+npm run check --prefix actions/docs                  # tsc --checkJs strict and prettier
 scripts/ci [repo...]   # latest CI result per org repo
 ```
 
@@ -66,9 +67,9 @@ scripts/ci [repo...]   # latest CI result per org repo
 |------|------|
 | `.github/workflows/` | reusable workflows, plus `lint.yml`, `self-release.yml`, `routines.yml` for this repo |
 | `.github/ISSUE_TEMPLATE/`, `SECURITY.md`, `SUPPORT.md`, `CONTRIBUTING.md` | org defaults for repos without their own |
-| `actions/` | composite actions: `code-changed`, `docs`, `gitleaks` |
+| `actions/` | composite actions: `code-changed`, `docs`, `gitleaks`, and `scripts`, which puts the workflows' `jm-*` scripts on PATH |
 | `workflow-templates/` | starter callers for "New workflow" |
 | `renovate/default.json` | org Renovate preset |
 | `routines/` | prompts for the nightly sweep and improve routines |
-| `scripts/` | `ci` and `lib/common.sh`, bats tests in `test/` |
+| `scripts/` | `ci` and `lib/common.sh`, this repo's own workflow scripts, bats tests in `test/` |
 | `profile/` | org profile |

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# jm-clone-siblings: shallow-clone each JakobMelchard repo of $SIBLINGS ("name" or "name@ref",
+# space separated, ref defaults to main) next to the current directory.
+set -euo pipefail
+
+for s in $SIBLINGS; do
+  [[ "$s" =~ ^[A-Za-z0-9._-]+(@[A-Za-z0-9._/-]+)?$ ]] || { echo "::error::bad sibling '$s'"; exit 1; }
+  name=${s%%@*}
+  ref=main
+  [[ "$s" != *@* ]] || ref=${s#*@}
+  git clone -q --depth 1 --branch "$ref" "https://github.com/JakobMelchard/$name.git" "../$name"
+  echo "sibling $name @ $ref -> $(git -C "../$name" rev-parse --short HEAD)"
+done

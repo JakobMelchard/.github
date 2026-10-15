@@ -7,5 +7,7 @@ common_setup() {
   PATH="$BATS_TEST_DIRNAME/bin:$PATH"
   # shellcheck disable=SC2034 # used by the .bats files
   BIN=$(cd "$BATS_TEST_DIRNAME/.." && pwd)
+  # shellcheck disable=SC2034 # used by the .bats files
+  JM=$(cd "$BATS_TEST_DIRNAME/../../actions/scripts/bin" && pwd)
   mkdir -p "$GH_FIXTURES"
 }

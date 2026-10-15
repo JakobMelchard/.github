@@ -1,7 +1,8 @@
 name: docs
 description: >
   Build a repo's markdown docs into static pages in the docs.melchard.org shell: the docs
-  root's tokens.css + style.css, one centred mono column, the nav from SUMMARY.md. No HonKit.
+  root's tokens.css + style.css, doc.css from this action, one centred mono column, the nav
+  from SUMMARY.md. No HonKit.
 
 inputs:
   src:
@@ -36,6 +37,6 @@ runs:
         TITLE: ${{ inputs.title }}
         ASSETS: ${{ inputs.assets }}
         REPO: ${{ inputs.repo }}
-      run: | # zizmor: ignore[adhoc-packages] exact version, single dependency
-        (cd "$ACTION" && npm install --no-save --no-audit --no-fund marked@18.0.14 >/dev/null)
+      run: |
+        npm ci --prefix "$ACTION" --omit=dev --no-audit --no-fund >/dev/null
         node "$ACTION/build.mjs" --src "$SRC" --out "$OUT" --title "$TITLE" --assets "$ASSETS" --repo "$REPO"

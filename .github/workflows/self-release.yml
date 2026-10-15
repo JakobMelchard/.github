@@ -28,18 +28,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       TAG: ${{ needs.release.outputs.tag_name }}
     steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
       - name: move major tag
-        shell: bash
-        run: |
-          major=${TAG%%.*}                                  # v1.4.2 -> v1
-          ref=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG")
-          sha=$(jq -r .object.sha <<<"$ref")
-          if [ "$(jq -r .object.type <<<"$ref")" = tag ]; then   # annotated: dereference
-            sha=$(gh api "repos/$GITHUB_REPOSITORY/git/tags/$sha" -q .object.sha)
-          fi
-          if gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$major" >/dev/null 2>&1; then
-            gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$major" -f sha="$sha" -F force=true >/dev/null
-          else
-            gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$major" -f sha="$sha" >/dev/null
-          fi
-          echo "$major -> $TAG ($sha)" | tee -a "$GITHUB_STEP_SUMMARY"
+        run: scripts/move-major-tag
