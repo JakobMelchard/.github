@@ -4,6 +4,7 @@ name: ai-review
 # The model key comes from Infisical over OIDC, or from the opencode-api-key secret where that
 # identity does not reach (repos outside JakobMelchard). The caller runs it on
 # `pull_request: labeled` and grants pull-requests: write, issues: write and id-token: write.
+# Every run bills the owner's OpenCode Go budget, so a repo gets at most daily-cap runs a day.
 #
 #   on: { pull_request: { types: [labeled] } }
 #   jobs:
@@ -24,6 +25,12 @@ on:
           to Blacksmith (ubuntu-latest outside JakobMelchard).
         type: string
         default: ""
+      daily-cap:
+        description: >
+          Most ai:pr-agent labels a repo may get in 24 h before the review is skipped with a
+          notice. 0 picks the variable AI_REVIEW_DAILY_CAP, else 5.
+        type: number
+        default: 0
     secrets:
       opencode-api-key:
         description: OpenCode Go API key. Its presence skips the Infisical fetch.
@@ -36,7 +43,11 @@ jobs:
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
-    timeout-minutes: 30
+    timeout-minutes: 15
+    # One review per PR at a time; a newer label replaces a queued run, never a running one
+    concurrency:
+      group: pr-agent-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
     permissions:
       contents: read
       pull-requests: write
@@ -48,9 +59,11 @@ jobs:
       HAS_KEY: ${{ secrets.opencode-api-key != '' }}
       GITHUB__USER_TOKEN: ${{ github.token }}
       OPENAI__API_BASE: https://opencode.ai/zen/go/v1
-      CONFIG__MODEL: openai/mimo-v2.6-pro
-      # A different upstream, in case the primary model is down
-      CONFIG__FALLBACK_MODELS: '["openai/glm-5.3"]'
+      MODEL: openai/mimo-v2.6-pro
+      # A different upstream, tried only when the primary fails with neither a timeout nor a
+      # usage limit: both bill or hit the same OpenCode Go budget on every model
+      FALLBACK_MODEL: openai/glm-5.3
+      CONFIG__FALLBACK_MODELS: '[]'
       # litellm does not know the model, so 64000 is a guess. PR-Agent takes the smaller of the two,
       # and max_model_tokens defaults to 32000, so both are set.
       CONFIG__CUSTOM_MODEL_MAX_TOKENS: '64000'
@@ -59,13 +72,35 @@ jobs:
       PR_REVIEWER__ENABLE_LARGE_PR_CHUNKING: 'true'
       PR_REVIEWER__MAX_NUMBER_OF_CALLS: '4'
       IGNORE__GLOB: '["**/*.tfstate","**/*.tfstate.backup","**/*.lock","**/*.lockb","**/*.plist","**/*dashboard*.json","**/package-lock.json","**/pnpm-lock.yaml","**/go.sum","**/.terraform.lock.hcl","**/Package.resolved"]'
-      # Per attempt, with no retries, so a stalled model costs one timeout before the fallback.
+      # Per attempt, with no retries, so a stalled model costs one timeout and the job fails.
       CONFIG__AI_TIMEOUT: '300'
       CONFIG__NUM_RETRIES: '0'
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
+      # Counts ai:pr-agent label events, one per run, since the issues API needs no extra permission
+      - name: daily cap
+        id: cap
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CAP: ${{ inputs.daily-cap || vars.AI_REVIEW_DAILY_CAP || 5 }}
+        run: |
+          since=$(jq -n 'now - 86400 | floor')
+          n=0
+          for page in 1 2 3 4 5 6 7 8 9 10; do
+            ev=$(gh api "repos/$GITHUB_REPOSITORY/issues/events?per_page=100&page=$page")
+            n=$((n + $(jq --argjson s "$since" '[.[] | select(.event == "labeled" and .label.name == "ai:pr-agent"
+              and .actor.type != "Bot" and (.created_at | fromdateiso8601) >= $s)] | length' <<<"$ev")))
+            [ "$(jq --argjson s "$since" 'length < 100 or (.[-1].created_at | fromdateiso8601) < $s' <<<"$ev")" = true ] && break
+          done
+          echo "ai:pr-agent labels in 24 h: $n, cap $CAP"
+          if [ "$n" -gt "$CAP" ]; then
+            echo "::notice::PR-Agent skipped: $n ai:pr-agent labels in 24 h, over the daily cap of $CAP"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # secret-name: only this secret enters the job env
-      - if: env.HAS_KEY != 'true'
+      - if: steps.cap.outputs.skip != 'true' && env.HAS_KEY != 'true'
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
@@ -75,9 +110,12 @@ jobs:
           env-slug: dev
           secret-name: OPENCODE_API_KEY
 
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - if: steps.cap.outputs.skip != 'true'
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - name: review
+        if: steps.cap.outputs.skip != 'true'
+        timeout-minutes: 12
         shell: bash
         env:
           OPENAI__KEY: ${{ secrets.opencode-api-key || env.OPENCODE_API_KEY }}
@@ -87,9 +125,20 @@ jobs:
           export OPENAI_CUSTOM_HEADERS="x-opencode-session: pr-review-${GITHUB_REPOSITORY##*/}-${PR_NUM}
           User-Agent: jm-pr-review/1.0"
           log="$RUNNER_TEMP/pr-agent.log"
-          uv run --python 3.12 --with pr-agent==0.47.0 python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
+          review() {
+            CONFIG__MODEL="$1" uv run --python 3.12 --with pr-agent==0.47.0 \
+              python -m pr_agent.cli --pr_url "$PR_URL" review 2>&1 | tee "$log"
+          }
+          review "$MODEL"
           # PR-Agent exits 0 after posting "Failed to review PR" as a comment
           if grep -q "Failed to review PR" "$log"; then
-            echo "::error::PR-Agent failed to review the PR"
-            exit 1
+            if grep -qE "litellm.Timeout|RateLimitError|usage limit" "$log"; then
+              echo "::error::PR-Agent: $MODEL timed out or hit the usage limit, fallback not tried"
+              exit 1
+            fi
+            review "$FALLBACK_MODEL"
+            if grep -q "Failed to review PR" "$log"; then
+              echo "::error::PR-Agent failed to review the PR"
+              exit 1
+            fi
           fi
