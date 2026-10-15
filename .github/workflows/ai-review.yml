@@ -28,7 +28,7 @@ on:
       daily-cap:
         description: >
           Most ai:pr-agent labels a repo may get in 24 h before the review is skipped with a
-          notice. 0 picks the variable AI_REVIEW_DAILY_CAP, else 5. The variable set to 0 stops all reviews.
+          notice. 0 picks the variable AI_REVIEW_DAILY_CAP, else 10. The variable set to 0 stops all reviews.
         type: number
         default: 0
     secrets:
@@ -83,7 +83,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          CAP: ${{ inputs.daily-cap || vars.AI_REVIEW_DAILY_CAP || 5 }}
+          CAP: ${{ inputs.daily-cap || vars.AI_REVIEW_DAILY_CAP || 10 }}
         run: |
           since=$(jq -n 'now - 86400 | floor')
           n=0
