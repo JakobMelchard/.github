@@ -31,7 +31,7 @@ on:
       model:
         description: opencode model as provider/model.
         type: string
-        default: opencode-go/mimo-v2.5
+        default: opencode/deepseek-v4.1-flash-free
   schedule:
     - cron: "7 1 * * *" # nightly-sweep, 03:07 Vienna in summer time
     - cron: "37 2 * * *" # nightly-improve, 04:37 Vienna in summer time
@@ -118,7 +118,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
           OPENCODE_API_KEY: ${{ env.OPENCODE_API_KEY_ROUTINES }}
-          MODEL: ${{ inputs.model || 'opencode-go/mimo-v2.5' }}
+          MODEL: ${{ inputs.model || 'opencode/deepseek-v4.1-flash-free' }}
           PROMPT: ${{ github.workspace }}/routines/${{ steps.pick.outputs.routine }}.md
           DRY: ${{ inputs.dry_run }}
         run: ../scripts/routine run
