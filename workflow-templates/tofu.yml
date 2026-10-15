@@ -1,0 +1,21 @@
+name: tofu
+
+# No pull_request trigger: tofu code from a PR would run with the OIDC secrets. Plan with workflow_dispatch.
+on:
+  push:
+    branches: [$default-branch]
+    paths:
+      - terraform/**
+      - "!terraform/state/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tofu:
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    uses: JakobMelchard/.github/.github/workflows/tofu.yml@dc944884b137d7f6b96628189bdf041bffc27d93 # v2.2.0

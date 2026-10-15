@@ -1,0 +1,12 @@
+{
+  "name": "OpenTofu apply",
+  "description": "OpenTofu plan, apply and encrypted state commit for terraform/ (JakobMelchard/.github tofu.yml)",
+  "iconName": "octicon server",
+  "categories": [
+    "Deployment"
+  ],
+  "filePatterns": [
+    "\\.tofu$",
+    "\\.tf$"
+  ]
+}

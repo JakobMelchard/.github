@@ -1,0 +1,8 @@
+{
+  "name": "Automerge (label)",
+  "description": "Squash-merges a PR labelled automerge once its checks pass and no thread is open (JakobMelchard/.github automerge.yml)",
+  "iconName": "octicon git-merge",
+  "categories": [
+    "Automation"
+  ]
+}
