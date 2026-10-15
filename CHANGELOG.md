@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.3](https://github.com/JakobMelchard/.github/compare/v2.2.2...v2.2.3) (2026-10-15)
+
+
+### Bug Fixes
+
+* run public repos on ubuntu-latest when RUNNER_LINUX is unset ([#229](https://github.com/JakobMelchard/.github/issues/229)) ([6db110d](https://github.com/JakobMelchard/.github/commit/6db110d75598f876cb3ea2ab2a38c436735e318b))
+
 ## [2.2.2](https://github.com/JakobMelchard/.github/compare/v2.2.1...v2.2.2) (2026-10-15)
 
 
