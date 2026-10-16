@@ -51,6 +51,21 @@ setup() {
   [ "$status" -ne 0 ]
 }
 
+@test "plan identity: empty fails closed, set passes" {
+  step plan "require plan-identity-id"
+  ID='' run runner
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"plan-identity-id"* ]] || false
+  ID=abc run runner
+  [ "$status" -eq 0 ]
+}
+
+@test "plan job never references gha-org or the app key" {
+  run yq '.jobs.plan' "$BATS_TEST_DIRNAME/../../.github/workflows/tofu.yml"
+  [[ "$output" != *b1ede60d* ]] || false
+  [[ "$output" != *"fetch APP_PRIVATE_KEY"* ]] || false
+}
+
 @test "credential guard: plan and apply run the same scripts" {
   for name in "snapshot gha credentials" "guard gha credentials"; do
     step plan "$name"; cp "$T/step.sh" "$T/plan.sh"

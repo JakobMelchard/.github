@@ -9,7 +9,7 @@ name: tofu
 #   jobs:
 #     tofu:
 #       uses: JakobMelchard/.github/.github/workflows/tofu.yml@vX.Y.Z
-#       with: { working-directory: terraform/tailscale }
+#       with: { working-directory: terraform/tailscale, plan-identity-id: <Infisical identity id> }
 
 permissions:
   contents: read
@@ -32,11 +32,20 @@ on:
           On pull requests and manual runs, `tofu init` and `tofu plan` against the committed
           state, posted as one PR comment per working directory. Skipped, reporting success,
           when a PR does not touch working-directory, so a required check never hangs. The PR's
-          tofu code runs with the state passphrase and the minted app tokens in its environment,
-          and through the job's id-token it can log in to Infisical as gha-org and read every gha
-          secret, the app key included. Only trusted authors may push branches.
+          tofu code runs with the state passphrase in its environment, and through the job's
+          id-token it can log in as plan-identity-id and extra-infisical-identity, nothing else.
+          The plan job never holds gha-org and mints no app tokens: provider read tokens come
+          from extra-infisical-project. Only trusted authors may push branches.
         type: boolean
         default: true
+      plan-identity-id:
+        description: >
+          Infisical identity id for the plan job (PR and manual runs). It must read only
+          TOFU_STATE_PASSPHRASE in gha-lfq-y, never APP_* or the org-wide gha-org grants, and
+          trust the caller's pull_request OIDC subject (plus the branch subject for manual runs).
+          Empty fails the plan, never falls back to gha-org.
+        type: string
+        default: ""
       apply:
         description: Run `tofu apply -auto-approve` on a push to the default branch.
         type: boolean
@@ -79,12 +88,12 @@ on:
           TARGET=SOURCE per line, blank lines allowed. After both projects are loaded, TARGET is
           set to the value of env var SOURCE (masked); an empty SOURCE fails the job. The second
           project also exports every secret it holds under its own name. PR plans run the PR's
-          tofu code with these secrets in the environment: use it only where PR authors are
-          trusted (fork PRs get no id-token, so no login).
+          tofu code with these secrets in the environment: the project must hold read-only
+          tokens (fork PRs get no id-token, so no login).
         type: string
         default: ""
       app-token-owner:
-        description: Account to mint an org-app installation token for, exported as app-token-env. Empty mints none.
+        description: Account to mint an org-app installation token for, exported as app-token-env, in the apply job only. Empty mints none.
         type: string
         default: ""
       app-token-env:
@@ -141,38 +150,23 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_wrapper: false }
 
+      - name: require plan-identity-id
+        if: steps.changed.outputs.run != 'false'
+        env:
+          ID: ${{ inputs.plan-identity-id }}
+        run: |
+          [ -n "$ID" ] || { echo "::error::tofu plan needs the plan-identity-id input: an Infisical identity that reads only TOFU_STATE_PASSPHRASE. The org-wide gha-org identity is not used for plans."; exit 1; }
+
       - name: fetch TOFU_STATE_PASSPHRASE
         if: steps.changed.outputs.run != 'false'
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
-          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          identity-id: ${{ inputs.plan-identity-id }}
           domain: https://eu.infisical.com
           project-slug: gha-lfq-y
           env-slug: dev
           secret-name: TOFU_STATE_PASSPHRASE
-
-      - name: fetch APP_CLIENT_ID
-        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
-        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
-        with:
-          method: oidc
-          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
-          domain: https://eu.infisical.com
-          project-slug: gha-lfq-y
-          env-slug: dev
-          secret-name: APP_CLIENT_ID
-
-      - name: fetch APP_PRIVATE_KEY
-        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
-        uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
-        with:
-          method: oidc
-          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
-          domain: https://eu.infisical.com
-          project-slug: gha-lfq-y
-          env-slug: dev
-          secret-name: APP_PRIVATE_KEY
 
       - name: snapshot gha credentials
         if: steps.changed.outputs.run != 'false' && inputs.extra-infisical-project != ''
@@ -208,42 +202,6 @@ jobs:
           PASSPHRASE_VAR: ${{ inputs.passphrase-env }}
           EXTRA: ${{ inputs.env }}
         run: jm-tofu-env
-
-      # Unscoped on purpose: create-github-app-token has no `permission-*` input for
-      # Variables (infra github root), and naming any permission drops the rest. The
-      # installation itself is scoped to what the root needs.
-      - name: mint app token
-        id: app
-        if: steps.changed.outputs.run != 'false' && inputs.app-token-owner != ''
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
-        with:
-          client-id: ${{ env.APP_CLIENT_ID }}
-          private-key: ${{ env.APP_PRIVATE_KEY }}
-          owner: ${{ inputs.app-token-owner }}
-
-      - name: mint app token (2)
-        id: app2
-        if: steps.changed.outputs.run != 'false' && inputs.app-token-owner-2 != ''
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0 # zizmor: ignore[github-app]
-        with:
-          client-id: ${{ env.APP_CLIENT_ID }}
-          private-key: ${{ env.APP_PRIVATE_KEY }}
-          owner: ${{ inputs.app-token-owner-2 }}
-
-      - name: export app tokens
-        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
-        env:
-          TOKEN: ${{ steps.app.outputs.token }}
-          TOKEN_VAR: ${{ inputs.app-token-env }}
-          TOKEN2: ${{ steps.app2.outputs.token }}
-          TOKEN2_VAR: ${{ inputs.app-token-env-2 }}
-        run: jm-tofu-tokens
-
-      # Keeps the app key out of the env of the PR's tofu code. It does not stop that code from
-      # reading the key through the job's id-token.
-      - name: drop the app key from the job env
-        if: steps.changed.outputs.run != 'false' && (inputs.app-token-owner != '' || inputs.app-token-owner-2 != '')
-        run: echo "APP_PRIVATE_KEY=" >> "$GITHUB_ENV"
 
       - if: steps.changed.outputs.run != 'false'
         run: tofu init -input=false
