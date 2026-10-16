@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.1](https://github.com/JakobMelchard/.github/compare/v2.4.0...v2.4.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **workflows:** fall back to ubuntu-latest, never Blacksmith ([#240](https://github.com/JakobMelchard/.github/issues/240)) ([2dadb40](https://github.com/JakobMelchard/.github/commit/2dadb406ae8d2281dfaf60ddc7faba3aed648a0f))
+
 ## [2.4.0](https://github.com/JakobMelchard/.github/compare/v2.3.1...v2.4.0) (2026-10-16)
 
 
