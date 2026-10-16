@@ -13,8 +13,8 @@ never contradict them.
   depend on a personal repo.
 - Work-account configuration lives under the work account and is pulled in on the work machine
   only. Nothing work-related is committed to either of these accounts.
-- Private by default. Public only for the showcases (one per technology: `flatplan` for JS,
-  `services` for Go and htmx, `observe` for Python, `workline`, `tu`, `keyboard`) and for what
+- Private by default. Public only for the showcases (one per technology: `web` for JS,
+  `services` for Go and htmx, `observe` for Python, `workline`, `notes`, `keyboard`) and for what
   must be fetched without a token (`.github`, `.githooks`, `.config`, the Pages sites). A repo
   goes public as a new repo with clean history, never by flipping visibility.
 
@@ -29,8 +29,8 @@ never contradict them.
 ## Branches, commits, merges
 
 - Org repos are trunk-based: short branches, squash merge, the PR title becomes the commit.
-- Personal repos run `dev` plus `main`: work lands on `dev`, `main` is promoted by PR. Rulesets
-  protect both and block deletion.
+- `lilfeelz/.config` runs `dev` plus `main`: work lands on `dev`, `main` is promoted by PR. Rulesets
+  protect both and block deletion. Other personal repos work like org repos.
 - Commits and PR titles are Conventional Commits: `feat:` `fix:` `chore:` `docs:` `refactor:`
   `test:` `ci:` `build:` `perf:` `style:` `revert:`, optional `(scope)`, `!` for breaking. The
   `commit-msg` hook and the `pr-title` CI job enforce it.
@@ -41,8 +41,8 @@ never contradict them.
 
 ## Versioning and pins
 
-- release-please only where a tag is consumed: this repo, `.githooks`, `.config`, `template`,
-  `workline`, `observe`. Apps deploy from `main` and carry no version.
+- release-please in every repo the template renders. Tags are consumed from this repo, `.githooks`,
+  `.config`, `template`, `web`, `workline`, `observe`. Apps deploy from `main`, not from a tag.
 - Pin everything: reusable workflows by release tag, third-party actions by commit SHA with the
   version in a comment, `.githooks` by tag in `.pre-commit-config.yaml`, the template by tag in
   `.copier-answers.yml`. Never `@main`.
@@ -89,8 +89,8 @@ credential files in any repo, including gitignored ones under a dotfiles tree.
 
 - The repo that owns the code owns its launchd plist and its `app.toml` entry. `infra` holds
   host-level state only: Caddy, pf, certificates, backups, runners, Forgejo, monitoring.
-- The reconciler on mimi deploys `origin/main` of each app after CI is green; nothing is
-  deployed by hand. Every scheduled job is wrapped by healthchecks.
+- The reconciler on mimi deploys `origin/main` of each app after CI is green, or after a trusted
+  `local-checks` commit status where no hosted CI runs; nothing is deployed by hand. Every scheduled job is wrapped by healthchecks.
 - Anything that does not need the GUI session runs as a LaunchDaemon.
 
 ## Stack
