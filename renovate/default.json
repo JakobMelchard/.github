@@ -31,10 +31,6 @@
       "groupName": "minor"
     },
     {
-      "matchPackageNames": ["JakobMelchard/hx", "@jakobmelchard/hx"],
-      "groupName": "hx"
-    },
-    {
       "matchManagers": ["github-actions"],
       "groupName": "github actions"
     },

@@ -28,7 +28,7 @@ If the run carries a `routine-fire-payload` block whose text starts with `DRY RU
 
 ## Unit A: triage new issues
 
-Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:cloud`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
+Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:cloud`, `agent:auto`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
 
 For each issue: read it, look at the code it touches, then:
 
