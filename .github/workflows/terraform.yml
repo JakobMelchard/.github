@@ -24,7 +24,7 @@ on:
       runs-on:
         description: >
           Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
-          private repos only) and falls back to Blacksmith (ubuntu-latest for public repos and outside JakobMelchard).
+          private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
 
@@ -32,7 +32,7 @@ jobs:
   # The title becomes the squash commit that release-please reads; same regex as the .githooks conventional-commit hook.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
       - name: conventional title
@@ -41,7 +41,7 @@ jobs:
         run: jm-pr-title
 
   changes:
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
     steps:
@@ -51,7 +51,7 @@ jobs:
   ci:
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
