@@ -30,7 +30,7 @@ on:
           JSON runner spec, a quoted label or a label array, e.g. '["self-hosted","macOS"]' or a
           caller's vars.RUNNER_MACOS. Unlike the plain-label runs-on of the build workflows, so a
           macOS-only private repo can reach the mimi runner. Empty picks the org variable
-          RUNNER_LINUX and falls back to Blacksmith (ubuntu-latest for public repos and outside JakobMelchard).
+          RUNNER_LINUX and falls back to ubuntu-latest.
         type: string
         default: ""
     outputs:
@@ -48,7 +48,7 @@ permissions: {}
 
 jobs:
   release-please:
-    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 10
     # Writes go through the app token; id-token is for Infisical.
     permissions:

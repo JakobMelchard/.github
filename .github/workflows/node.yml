@@ -52,7 +52,7 @@ on:
         description: >
           Runner label for the ci job only (pr-title and changes always use RUNNER_LINUX).
           Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
-          private repos only) and falls back to Blacksmith (ubuntu-latest for public repos and outside JakobMelchard).
+          private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
       private-deps:
@@ -81,7 +81,7 @@ jobs:
   pr-title:
     timeout-minutes: 5
     if: github.event_name == 'pull_request'
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
       - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
       - name: conventional title
@@ -91,7 +91,7 @@ jobs:
 
   changes:
     timeout-minutes: 10
-    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     outputs:
       code: ${{ steps.files.outputs.code }}
     steps:
@@ -102,7 +102,7 @@ jobs:
     timeout-minutes: 60
     needs: changes
     if: needs.changes.outputs.code == 'true'
-    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     env:
       # `secrets` is unavailable in a step-level `if`; expose only the boolean, never the key.
       HAS_APP: ${{ secrets.app-private-key != '' }}

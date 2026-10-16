@@ -22,7 +22,7 @@ on:
         description: >
           JSON runner spec, a quoted label or a label array, e.g. '["self-hosted","Linux"]' or a
           caller's vars.RUNNER_LINUX. Empty picks the org variable RUNNER_LINUX and falls back
-          to Blacksmith (ubuntu-latest for public repos and outside JakobMelchard).
+          to ubuntu-latest.
         type: string
         default: ""
       daily-cap:
@@ -42,7 +42,7 @@ jobs:
       github.event.label.name == 'ai:pr-agent' && !github.event.pull_request.draft &&
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || (github.repository_owner == 'JakobMelchard' && toJSON(github.event.repository.private) != 'false' && '"blacksmith-2vcpu-ubuntu-2404"' || '"ubuntu-latest"')) }}
+    runs-on: ${{ fromJSON(inputs.runs-on || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 15
     # One review per PR at a time; a newer label replaces a queued run, never a running one
     concurrency:
