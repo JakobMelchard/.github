@@ -4,7 +4,7 @@ Rules for agents working in this repo. Overview and commands: README.md.
 
 ## Boundary
 
-- Workflows, actions, hooks and scaffolding templates belong here. `hx` is code that ships inside an app and must never grow a second reusable workflow or hook set.
+- Workflows, actions, hooks and scaffolding templates belong here.
 - Repo settings, labels and tofu live in `JakobMelchard/infra`, not here. Never `gh label create` by hand.
 - `scripts/ci` and `scripts/lib/common.sh` are sourced by other repos via `JM_LIB`. Keep them bash 3.2 compatible.
 
