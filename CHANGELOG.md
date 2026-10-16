@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/JakobMelchard/.github/compare/v2.3.1...v2.4.0) (2026-10-16)
+
+
+### Features
+
+* **routines:** default to a free zero-retention opencode model ([#234](https://github.com/JakobMelchard/.github/issues/234)) ([2558d33](https://github.com/JakobMelchard/.github/commit/2558d33894575e9f9f432987b9783c94b8e7d56f))
+
 ## [2.3.1](https://github.com/JakobMelchard/.github/compare/v2.3.0...v2.3.1) (2026-10-15)
 
 
