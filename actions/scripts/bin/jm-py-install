@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # jm-py-install: install the project with package manager $PKG_MGR (uv, pip or none), or run
-# $INSTALL_CMD instead when set. The command is shell code (eval), so no set -u: it runs under the
-# same options as an inline step.
+# $INSTALL_CMD instead when set. The command is shell code (eval), so no set -u; pipefail is
+# stricter than an inline step's default `bash -e`.
 set -eo pipefail
 
 if [ -n "$INSTALL_CMD" ]; then

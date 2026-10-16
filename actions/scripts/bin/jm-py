@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # jm-py <command>: run a caller's command inside the environment of package manager $PKG_MGR:
 # `uv run` for uv, .venv/bin for pip, as is otherwise. The command is shell code (eval), so no
-# set -u: it runs under the same options as an inline step.
+# set -u; pipefail is stricter than an inline step's default `bash -e`.
 set -eo pipefail
 
 case "$PKG_MGR" in
