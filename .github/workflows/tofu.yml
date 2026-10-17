@@ -29,14 +29,15 @@ on:
         default: ""
       plan:
         description: >
-          On pull requests and manual runs, `tofu init` and `tofu plan` against the committed
-          state, posted as one PR comment per working directory. Skipped, reporting success,
-          when a PR does not touch working-directory, so a required check never hangs. The PR's
-          tofu code runs with the state passphrase and the minted app tokens in its environment,
-          and through the job's id-token it can log in to Infisical as gha-org and read every gha
-          secret, the app key included. Only trusted authors may push branches.
+          Off by default: the plan job runs the PR's tofu code with the gha-org Infisical
+          identity, which can read every gha secret, the app key included, and with the state
+          passphrase and the minted app tokens in its environment. Turn it on only where a
+          runner exists and PR authors are trusted; plan locally otherwise. When on, `tofu init`
+          and `tofu plan` run against the committed state on pull requests and manual runs,
+          posted as one PR comment per working directory. Skipped, reporting success, when a PR
+          does not touch working-directory, so a required check never hangs.
         type: boolean
-        default: true
+        default: false
       apply:
         description: Run `tofu apply -auto-approve` on a push to the default branch.
         type: boolean
