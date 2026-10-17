@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.2](https://github.com/JakobMelchard/.github/compare/v2.4.1...v2.4.2) (2026-10-17)
+
+
+### Bug Fixes
+
+* **tofu:** turn PR plans off by default ([#245](https://github.com/JakobMelchard/.github/issues/245)) ([50567c5](https://github.com/JakobMelchard/.github/commit/50567c5c9179d0383ff219fed644c662f4726010))
+
 ## [2.4.1](https://github.com/JakobMelchard/.github/compare/v2.4.0...v2.4.1) (2026-10-16)
 
 
