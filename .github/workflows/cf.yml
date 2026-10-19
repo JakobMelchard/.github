@@ -72,7 +72,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
-      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+      - uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
