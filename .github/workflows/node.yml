@@ -83,7 +83,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+      - uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -96,7 +96,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+        uses: JakobMelchard/.github/actions/code-changed@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
 
   ci:
     timeout-minutes: 60
@@ -113,7 +113,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
-      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+      - uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
@@ -133,7 +133,7 @@ jobs:
       - name: mint app token
         id: app
         if: inputs.private-deps && env.HAS_APP == 'true'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.app-client-id }}
           private-key: ${{ secrets.app-private-key }}

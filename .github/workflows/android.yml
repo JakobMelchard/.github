@@ -69,7 +69,7 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 5
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+      - uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -82,7 +82,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@bb2bfba924426cf38e2eb1dabc4214f8ebf66c49 # v2.3.0
+        uses: JakobMelchard/.github/actions/code-changed@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
 
   ci:
     needs: changes
@@ -104,7 +104,7 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: ${{ inputs.java-distribution }}
           java-version: ${{ inputs.java-version }}
