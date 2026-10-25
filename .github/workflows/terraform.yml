@@ -23,7 +23,7 @@ on:
         default: true
       runs-on:
         description: >
-          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
+          Empty picks the org variable RUNNER_LINUX (self-hosted, visible to
           private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
