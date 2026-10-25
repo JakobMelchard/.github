@@ -1,8 +1,8 @@
 name: ai-review
 
 # Reusable PR-Agent review. Labelling a ready PR "ai:pr-agent" gets one review through OpenCode Go.
-# The model key comes from Infisical over OIDC, or from the opencode-api-key secret where that
-# identity does not reach (repos outside JakobMelchard). The caller runs it on
+# The model key comes from Infisical over OIDC: gha-org for JakobMelchard repos, or the identity and
+# project a caller passes (lilfeelz repos), else from the opencode-api-key secret. The caller runs it on
 # `pull_request: labeled` and grants pull-requests: write, issues: write and id-token: write.
 # Every run bills the owner's OpenCode Go budget, so a repo gets at most daily-cap runs a day.
 #
@@ -31,6 +31,14 @@ on:
           notice. 0 picks the variable AI_REVIEW_DAILY_CAP, else 10. The variable set to 0 stops all reviews.
         type: number
         default: 0
+      infisical-identity-id:
+        description: Infisical OIDC identity that reads OPENCODE_API_KEY. Default gha-org, JakobMelchard repos only.
+        type: string
+        default: b1ede60d-f7a7-4699-86ec-eea6ac51be30
+      infisical-project-slug:
+        description: Infisical project holding OPENCODE_API_KEY in env dev.
+        type: string
+        default: gha-lfq-y
     secrets:
       opencode-api-key:
         description: OpenCode Go API key. Its presence skips the Infisical fetch.
@@ -92,9 +100,9 @@ jobs:
         uses: Infisical/secrets-action@d2e351f16c6ca20d17c85e6c992e04bdeb64e87d # v1.0.18
         with:
           method: oidc
-          identity-id: b1ede60d-f7a7-4699-86ec-eea6ac51be30 # gha-org
+          identity-id: ${{ inputs.infisical-identity-id }}
           domain: https://eu.infisical.com
-          project-slug: gha-lfq-y
+          project-slug: ${{ inputs.infisical-project-slug }}
           env-slug: dev
           secret-name: OPENCODE_API_KEY
 
