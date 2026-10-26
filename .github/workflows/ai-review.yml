@@ -2,7 +2,8 @@ name: ai-review
 
 # Reusable PR-Agent review. Labelling a ready PR "ai:pr-agent" gets one review through OpenCode Go.
 # The model key comes from Infisical over OIDC: gha-org for JakobMelchard repos, or the identity and
-# project a caller passes (lilfeelz repos), else from the opencode-api-key secret. The caller runs it on
+# project a caller passes (lilfeelz repos). A passed opencode-api-key secret takes precedence.
+# The caller runs it on
 # `pull_request: labeled` and grants pull-requests: write, issues: write and id-token: write.
 # Every run bills the owner's OpenCode Go budget, so a repo gets at most daily-cap runs a day.
 #
