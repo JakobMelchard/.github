@@ -175,3 +175,28 @@ jobs:
     uses: ./.github/workflows/android.yml
     with:
       gradle-tasks: ""
+
+  config-consumer:
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "24", package-manager-cache: false }
+      - run: config/scripts/check-json.sh
+      - run: config/scripts/consumer-test.sh
+
+  hook-consumer:
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "24", package-manager-cache: false }
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh
+      - run: npm install -g prettier@3.9.10 eslint@10.12.0 # zizmor: ignore[adhoc-packages] exact versions, no lockfile for global CLIs
+      - run: hooks/test/portable
+      - run: REQUIRE="zsh tofu prettier eslint go gofmt" hooks/test/run
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+      - run: uvx prek==0.5.5 validate-manifest .pre-commit-hooks.yaml
