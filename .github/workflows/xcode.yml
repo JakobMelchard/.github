@@ -60,7 +60,7 @@ on:
         default: "."
       runs-on:
         description: >
-          Empty picks the org variable RUNNER_MACOS (self-hosted on mimi, visible to
+          Empty picks the org variable RUNNER_MACOS (self-hosted, visible to
           private repos only) and falls back to macos-latest.
         type: string
         default: ""

@@ -1,3 +1,0 @@
-self-hosted-runner:
-  # mimi, the macOS host (ai-review.yml)
-  labels: [mimi]

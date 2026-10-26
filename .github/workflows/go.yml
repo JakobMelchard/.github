@@ -36,7 +36,7 @@ on:
       runs-on:
         description: >
           Runner label for the ci job only (pr-title and changes always use RUNNER_LINUX).
-          Empty picks the org variable RUNNER_LINUX (self-hosted on mimi, visible to
+          Empty picks the org variable RUNNER_LINUX (self-hosted, visible to
           private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""

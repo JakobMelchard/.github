@@ -89,7 +89,7 @@ credential files in any repo, including gitignored ones under a dotfiles tree.
 
 - The repo that owns the code owns its launchd plist and its `app.toml` entry. `infra` holds
   host-level state only: Caddy, pf, certificates, backups, runners, Forgejo, monitoring.
-- The reconciler on mimi deploys `origin/main` of each app after CI is green, or after a trusted
+- The reconciler on the self-hosted deploy host deploys `origin/main` of each app after CI is green, or after a trusted
   `local-checks` commit status where no hosted CI runs; nothing is deployed by hand. Every scheduled job is wrapped by healthchecks.
 - Anything that does not need the GUI session runs as a LaunchDaemon.
 
@@ -97,7 +97,7 @@ credential files in any repo, including gitignored ones under a dotfiles tree.
 
 Fixed for the estate; a repo picks from it, it does not add to it.
 
-- Services on mimi: Go, standard library `net/http`, htmx, files or Google Sheets as the store,
+- Self-hosted services: Go, standard library `net/http`, htmx, files or Google Sheets as the store,
   assets embedded in one binary. One public `services` repo holds them.
 - Browser code and Cloudflare Workers: vanilla JavaScript with JSDoc types, `@ts-check`, `tsc`
   in CI, no build step beyond what wrangler needs. PWAs embed the shared `web` package (tokens,

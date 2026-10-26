@@ -25,7 +25,7 @@ on:
       runs-on:
         description: >
           Runner label (plain, unlike shell.yml). Empty picks the org variable RUNNER_LINUX
-          (self-hosted on mimi, visible to private repos only) and falls back to ubuntu-latest.
+          (self-hosted, visible to private repos only) and falls back to ubuntu-latest.
         type: string
         default: ""
 
