@@ -28,3 +28,10 @@ setup() {
     [ ! -s "$GITHUB_OUTPUT" ]
   done
 }
+
+@test "release outputs: workflow pin already contains helper" {
+  root=$(cd "$BATS_TEST_DIRNAME/../.." && pwd)
+  sha=$(sed -n 's/.*uses: JakobMelchard\/.github\/actions\/scripts@\([a-f0-9]*\) # component output helper/\1/p' "$root/.github/workflows/release.yml")
+  [ "${#sha}" -eq 40 ]
+  git -C "$root" cat-file -e "$sha:actions/scripts/bin/jm-release-outputs"
+}
