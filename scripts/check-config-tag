@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# A component tag must match the package version before staging any publication.
+set -euo pipefail
+root=$(cd "$(dirname "$0")/.." && pwd)
+test "config-v$(jq -r .version "$root/config/package.json")" = "$GITHUB_REF_NAME"
