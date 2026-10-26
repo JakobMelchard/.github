@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/JakobMelchard/.github/compare/v2.4.2...v2.5.0) (2026-10-26)
+
+
+### Features
+
+* **ai-review:** take the Infisical identity and project as inputs ([#250](https://github.com/JakobMelchard/.github/issues/250)) ([e38b7a6](https://github.com/JakobMelchard/.github/commit/e38b7a609f8840c54aa98d2bed314189efd8837a))
+
 ## [2.4.2](https://github.com/JakobMelchard/.github/compare/v2.4.1...v2.4.2) (2026-10-26)
 
 
