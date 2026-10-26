@@ -1,4 +1,4 @@
-# .githooks
+# hooks
 
 Shared hooks for the `JakobMelchard` org and the `lilfeelz` repos, as a
 [prek](https://github.com/j178/prek) / pre-commit hook repository. Public, so it fetches without a token.
@@ -14,8 +14,8 @@ repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
     hooks: [{ id: gitleaks }]
-  - repo: https://github.com/JakobMelchard/.githooks
-    rev: v2.0.1
+  - repo: https://github.com/JakobMelchard/.github
+    rev: hooks-vX.Y.Z # use a published component tag after migration
     hooks:
       - id: conventional-commit
       - id: swift-format
@@ -53,7 +53,8 @@ SKIP=<id> git commit     # skip one hook once
 
 ```sh
 prek install     # this repo runs its hooks from the working tree (repo: local)
-test/run         # hook scripts against good and bad inputs
+hooks/test/run   # hook scripts against good and bad inputs
 ```
 
-Release: merge the release-please PR, which tags `vX.Y.Z`.
+Release: review the hooks component release PR, which tags `hooks-vX.Y.Z`.
+Existing `.githooks` tags and consumer pins remain valid until explicitly migrated.

@@ -1,4 +1,4 @@
-# .config
+# config
 
 Org lint, format and tsconfig bases. Public.
 
@@ -15,6 +15,6 @@ npm i -D @jakobmelchard/config eslint @eslint/js eslint-plugin-jsdoc
 | Path | What |
 |------|------|
 | `eslint/`, `prettier/`, `tsconfig/` | the exported bases |
-| `.github/workflows/` | CI, release-please, npm publish |
+| `../.github/workflows/` | unified CI, component release-please, opt-in npm stage publish |
 
 Ruff, gitleaks, editorconfig and Renovate files come from `JakobMelchard/template`. Design tokens live in `@jakobmelchard/web`.

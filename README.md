@@ -1,6 +1,6 @@
 # .github
 
-Reusable workflows, composite actions and the org Renovate preset for `JakobMelchard` and the `lilfeelz` personal repos. Public so that personal repos can call the workflows.
+Reusable workflows, composite actions, development policy, portable hooks and the org Renovate preset for `JakobMelchard` and the `lilfeelz` personal repos. Public so that personal repos can call the workflows.
 
 Rules: [CONTRIBUTING.md](CONTRIBUTING.md) for every repo, [AGENTS.md](AGENTS.md) for work here.
 
@@ -73,6 +73,8 @@ scripts/ci [repo...]   # latest CI result per org repo
 | `routines/` | prompts for the nightly sweep and improve routines |
 | `scripts/` | `ci` and `lib/common.sh`, this repo's own workflow scripts, bats tests in `test/` |
 | `profile/` | org profile |
+| `config/` | `@jakobmelchard/config` npm package, consumer fixtures and tests |
+| `hooks/`, `.pre-commit-hooks.yaml` | portable hook implementations and consumer manifest |
 
 ### component release outputs
 
