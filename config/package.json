@@ -1,0 +1,30 @@
+{
+  "name": "@jakobmelchard/config",
+  "version": "3.0.0",
+  "description": "Org lint, format and tsconfig bases.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JakobMelchard/.github.git",
+    "directory": "config"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    "./eslint": "./eslint/base.js",
+    "./prettier": "./prettier/prettierrc.json",
+    "./tsconfig": "./tsconfig/base.json"
+  },
+  "files": [
+    "eslint",
+    "prettier",
+    "tsconfig"
+  ],
+  "peerDependencies": {
+    "@eslint/js": ">=9",
+    "eslint": ">=9",
+    "eslint-plugin-jsdoc": ">=50"
+  }
+}

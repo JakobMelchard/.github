@@ -1,0 +1,1 @@
+{ "extends": "@jakobmelchard/config/tsconfig", "include": ["ok.js"] }
