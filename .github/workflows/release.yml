@@ -121,7 +121,7 @@ jobs:
           config-file: ${{ inputs.config-file }}
           manifest-file: ${{ inputs.manifest-file }}
 
-      - uses: JakobMelchard/.github/actions/scripts@b931b4a7dba031e45cdd5b19532f8b8bf3743969 # component output helper
+      - uses: JakobMelchard/.github/actions/scripts@98496ea77cfca9e811173edcac681a7e538be254 # component output helper
       - name: component release outputs
         id: components
         env:
