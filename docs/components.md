@@ -16,7 +16,10 @@ migration. No original repository or tag is removed, rewritten or redirected.
 
 ## source history
 
-The import commits include these original heads as second merge parents:
+`config/` and `hooks/` were imported from these source heads. The branch repository rules allow
+squash and rebase only, so the import lands as one commit and the original histories stay in the
+source repositories, which are not archived or changed. Use them for `git log` and `git blame` on
+older commits.
 
 | source | imported head | destination |
 | --- | --- | --- |
@@ -26,12 +29,8 @@ The import commits include these original heads as second merge parents:
 Source implementations, fixtures, changelogs and licenses were copied; redundant
 nested CI, release manifests, hook configuration and ignore files were omitted.
 Hook test paths and source-location documentation were adapted. The package's
-repository metadata points to `config/` in this repository. The import preserves
-original histories and commit identities, rather than rewriting paths.
-
-Merge the migration PR with a merge commit. Squash or rebase would discard import
-parents. Merge commits are enabled in this repository; no settings change is
-needed. The source tags remain in the source repositories and are not pushed here.
+repository metadata points to `config/` in this repository. The source tags remain in the
+source repositories and are not pushed here.
 
 ## independent release streams
 
