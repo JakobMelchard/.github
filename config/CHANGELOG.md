@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.1.0](https://github.com/JakobMelchard/.github/compare/config-v3.0.0...config-v3.1.0) (2026-10-27)
+
+
+### Features
+
+* **platform:** import config and hooks as components ([#254](https://github.com/JakobMelchard/.github/issues/254)) ([98496ea](https://github.com/JakobMelchard/.github/commit/98496ea77cfca9e811173edcac681a7e538be254))
+
 ## [3.0.0](https://github.com/JakobMelchard/.config/compare/v2.0.0...v3.0.0) (2026-10-11)
 
 

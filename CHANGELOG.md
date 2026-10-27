@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6.0](https://github.com/JakobMelchard/.github/compare/v2.5.0...v2.6.0) (2026-10-27)
+
+
+### Features
+
+* **platform:** import config and hooks as components ([#254](https://github.com/JakobMelchard/.github/issues/254)) ([98496ea](https://github.com/JakobMelchard/.github/commit/98496ea77cfca9e811173edcac681a7e538be254))
+
+
+### Bug Fixes
+
+* **release:** pin the output helper to a commit on main ([#255](https://github.com/JakobMelchard/.github/issues/255)) ([ac11a36](https://github.com/JakobMelchard/.github/commit/ac11a3682f3966e41fb8a76f565d28d5c12e7459))
+
 ## [2.5.0](https://github.com/JakobMelchard/.github/compare/v2.4.2...v2.5.0) (2026-10-26)
 
 

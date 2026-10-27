@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/JakobMelchard/.github/compare/hooks-v2.0.1...hooks-v2.1.0) (2026-10-27)
+
+
+### Features
+
+* **platform:** import config and hooks as components ([#254](https://github.com/JakobMelchard/.github/issues/254)) ([98496ea](https://github.com/JakobMelchard/.github/commit/98496ea77cfca9e811173edcac681a7e538be254))
+
 ## [2.0.1](https://github.com/JakobMelchard/.githooks/compare/v2.0.0...v2.0.1) (2026-10-15)
 
 
