@@ -5,7 +5,22 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "include-component-in-tag": false
+      "include-component-in-tag": false,
+      "exclude-paths": [
+        "config",
+        "hooks"
+      ]
+    },
+    "config": {
+      "release-type": "node",
+      "component": "config",
+      "include-component-in-tag": true
+    },
+    "hooks": {
+      "release-type": "simple",
+      "component": "hooks",
+      "package-name": "hooks",
+      "include-component-in-tag": true
     }
   }
 }

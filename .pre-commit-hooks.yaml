@@ -1,0 +1,68 @@
+- id: conventional-commit
+  name: conventional commit subject
+  description: "Reject a subject that is not <type>(<scope>)!: <subject>. Same regex as the PR-title check."
+  entry: hooks/conventional-commit.sh
+  language: script
+  stages: [commit-msg]
+
+- id: shell-syntax
+  name: shell syntax (bash -n, sh -n, zsh -n)
+  entry: hooks/shell-syntax.sh
+  language: script
+  types: [shell]
+  stages: [pre-commit]
+
+- id: gofmt
+  name: gofmt
+  entry: hooks/gofmt.sh
+  language: script
+  types: [go]
+  stages: [pre-commit]
+
+- id: go-build
+  name: go vet and go build
+  entry: hooks/go-build.sh
+  language: script
+  pass_filenames: false
+  types: [go]
+  stages: [pre-push]
+
+- id: swift-format
+  name: swift-format
+  description: Format in place, then lint --strict. Uses a swift-format on PATH, else the one Xcode ships.
+  entry: hooks/swift-format.sh
+  language: script
+  types: [swift]
+  stages: [pre-commit]
+
+- id: xcodegen
+  name: xcodegen generate
+  description: Every tracked project.yml still generates.
+  entry: hooks/xcodegen.sh
+  language: script
+  pass_filenames: false
+  files: (^|/)(project\.yml|.*\.swift)$
+  stages: [pre-push]
+
+- id: prettier
+  name: prettier (repo-installed)
+  description: Runs the prettier from the repo's node_modules, so the version and config come from package.json.
+  entry: hooks/prettier.sh
+  language: script
+  types_or: [javascript, css, html, json, markdown, yaml]
+  stages: [pre-commit]
+
+- id: eslint
+  name: eslint (repo-installed)
+  entry: hooks/eslint.sh
+  language: script
+  types: [javascript]
+  stages: [pre-commit]
+
+- id: tofu-fmt
+  name: tofu fmt
+  description: Uses tofu, else terraform.
+  entry: hooks/tofu-fmt.sh
+  language: script
+  types: [terraform]
+  stages: [pre-commit]

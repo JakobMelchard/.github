@@ -1,0 +1,27 @@
+name: config-publish
+# Explicit opt-in until npm trusted publishing is migrated from .config to this repo.
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Stage this config component tag on npm after the trusted publisher migration.
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  npm:
+    if: inputs.stage && startsWith(github.ref, 'refs/tags/config-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "24", registry-url: "https://registry.npmjs.org", package-manager-cache: false }
+      - run: scripts/check-config-tag
+      - run: npm install -g npm@11.19.1 # zizmor: ignore[adhoc-packages] exact version
+      - run: npm stage publish --provenance --access public
+        working-directory: config

@@ -43,6 +43,15 @@ on:
       version:
         description: Version of that release, e.g. 1.4.2.
         value: ${{ jobs.release-please.outputs.version }}
+      releases_created:
+        description: '"true" when any component was released, including the root.'
+        value: ${{ jobs.release-please.outputs.releases_created }}
+      paths_released:
+        description: JSON array of released canonical package paths, or [].
+        value: ${{ jobs.release-please.outputs.paths_released }}
+      releases:
+        description: JSON object keyed by released package path, with tag_name and version per component.
+        value: ${{ jobs.release-please.outputs.releases }}
 
 permissions: {}
 
@@ -58,6 +67,9 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
+      releases_created: ${{ steps.components.outputs.releases_created }}
+      paths_released: ${{ steps.components.outputs.paths_released }}
+      releases: ${{ steps.components.outputs.releases }}
     steps:
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
@@ -108,3 +120,10 @@ jobs:
           release-type: ${{ inputs.release-type }}
           config-file: ${{ inputs.config-file }}
           manifest-file: ${{ inputs.manifest-file }}
+
+      - uses: JakobMelchard/.github/actions/scripts@b931b4a7dba031e45cdd5b19532f8b8bf3743969 # component output helper
+      - name: component release outputs
+        id: components
+        env:
+          RELEASE_OUTPUTS: ${{ toJSON(steps.release.outputs) }}
+        run: jm-release-outputs

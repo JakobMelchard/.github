@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# RELEASE_OUTPUTS: JSON from toJSON(steps.release.outputs), never interpolated into shell.
+# Retain canonical package paths; only released components enter the map.
+set -euo pipefail
+result=$(jq -cer '
+  if type != "object" then error("release outputs must be an object") else . end |
+  . as $out | ((.paths_released // "[]") | fromjson) as $paths |
+  if ($paths | type) != "array" or any($paths[]; type != "string") then
+    error("paths_released must be a string array")
+  else $paths end |
+  reduce .[] as $path ({};
+    (if $path == "." then "" else $path + "--" end) as $prefix |
+    $out[$prefix + "tag_name"] as $tag | $out[$prefix + "version"] as $version |
+    if ($tag | type) != "string" or ($version | type) != "string" or
+       $tag == "" or $version == "" then error("incomplete release: " + $path)
+    else .[$path] = {tag_name: $tag, version: $version} end) |
+  "releases=\(tojson)\npaths_released=\($paths | tojson)\nreleases_created=\($paths | length > 0)"
+' <<<"$RELEASE_OUTPUTS")
+printf '%s\n' "$result" >> "$GITHUB_OUTPUT"

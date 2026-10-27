@@ -1,6 +1,6 @@
 # .github
 
-Reusable workflows, composite actions and the org Renovate preset for `JakobMelchard` and the `lilfeelz` personal repos. Public so that personal repos can call the workflows.
+Reusable workflows, composite actions, development policy, portable hooks and the org Renovate preset for `JakobMelchard` and the `lilfeelz` personal repos. Public so that personal repos can call the workflows.
 
 Rules: [CONTRIBUTING.md](CONTRIBUTING.md) for every repo, [AGENTS.md](AGENTS.md) for work here.
 
@@ -73,3 +73,26 @@ scripts/ci [repo...]   # latest CI result per org repo
 | `routines/` | prompts for the nightly sweep and improve routines |
 | `scripts/` | `ci` and `lib/common.sh`, this repo's own workflow scripts, bats tests in `test/` |
 | `profile/` | org profile |
+| `config/` | `@jakobmelchard/config` npm package, consumer fixtures and tests |
+| `hooks/`, `.pre-commit-hooks.yaml` | portable hook implementations and consumer manifest |
+
+### component release outputs
+
+`release.yml` retains `release_created`, `tag_name` and `version` for the root
+package only. Component-only releases do not change these legacy outputs.
+`releases_created` is `"true"` when any package releases. `paths_released` is a JSON
+array of canonical manifest paths, and `releases` maps each released path to its
+`tag_name` and `version`. No release returns `[]`, `{}` and `"false"` respectively.
+
+For example, two independent releases produce:
+
+```json
+{"apps/fz":{"tag_name":"fz-v1.2.0","version":"1.2.0"},"apps/pull":{"tag_name":"pull-v3.0.1","version":"3.0.1"}}
+```
+
+A release matrix can use `fromJSON(needs.release.outputs.paths_released)` and
+`fromJSON(needs.release.outputs.releases)[matrix.path].tag_name`. Guard the job
+with `needs.release.outputs.releases_created == 'true'` before evaluating an empty
+matrix. Root releases use the `"."` key. This adapts the upstream
+[release-please path outputs](https://github.com/googleapis/release-please-action#outputs)
+without guessing one tag from a multi-package release.
