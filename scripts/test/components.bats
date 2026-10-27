@@ -5,7 +5,9 @@ setup() {
   ROOT=$(cd "$BATS_TEST_DIRNAME/../.." && pwd)
 }
 @test "components: independent versions preserve platform and package identity" {
-  jq -e '."." == "2.5.0" and .config == "3.0.0" and .hooks == "2.0.1"' "$ROOT/.release-please-manifest.json"
+  jq -e 'keys == [".","config","hooks"]' "$ROOT/.release-please-manifest.json"
+  [ "$(jq -r .config "$ROOT/.release-please-manifest.json")" = "$(jq -r .version "$ROOT/config/package.json")" ]
+  [ "$(jq -r .hooks "$ROOT/.release-please-manifest.json")" = "$(cat "$ROOT/hooks/version.txt")" ]
   jq -e '.packages["."]."include-component-in-tag" == false and .packages.config.component == "config" and .packages.hooks.component == "hooks"' "$ROOT/release-please-config.json"
   jq -e '.name == "@jakobmelchard/config" and (.exports | keys == ["./eslint","./prettier","./tsconfig"])' "$ROOT/config/package.json"
 }
@@ -14,9 +16,10 @@ setup() {
   [ "$status" -ne 0 ]
   run env GITHUB_REF_NAME=hooks-v3.0.0 "$BIN/check-config-tag"
   [ "$status" -ne 0 ]
-  run env GITHUB_REF_NAME=config-v3.0.0 "$BIN/check-config-tag"
+  v=$(jq -r .version "$ROOT/config/package.json")
+  run env GITHUB_REF_NAME="config-v$v" "$BIN/check-config-tag"
   [ "$status" -eq 0 ]
-  run env GITHUB_REF_NAME=config-v3.0.1 "$BIN/check-config-tag"
+  run env GITHUB_REF_NAME="config-v$v.1" "$BIN/check-config-tag"
   [ "$status" -ne 0 ]
 }
 
