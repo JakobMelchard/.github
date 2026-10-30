@@ -15,7 +15,7 @@ repos:
     rev: v8.30.1
     hooks: [{ id: gitleaks }]
   - repo: https://github.com/JakobMelchard/.github
-    rev: hooks-vX.Y.Z # use a published component tag after migration
+    rev: hooks-vX.Y.Z
     hooks:
       - id: conventional-commit
       - id: swift-format
@@ -57,4 +57,4 @@ hooks/test/run   # hook scripts against good and bad inputs
 ```
 
 Release: review the hooks component release PR, which tags `hooks-vX.Y.Z`.
-Existing `.githooks` tags and consumer pins remain valid until explicitly migrated.
+Consumers moved from `JakobMelchard/.githooks` to this repo at `hooks-v2.1.0`; that repo is retired.

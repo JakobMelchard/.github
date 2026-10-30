@@ -67,8 +67,8 @@ again. No npm settings are changed here.
 
 Consumer migration comes after reviewed component releases: use npm semver for
 the config package, and published `hooks-vX.Y.Z` tags from `.github` for hooks.
-Do not migrate all consumer pins as part of this import. Keep originals until
-consumer tests and compatibility checks have completed.
+Hooks consumers moved to `hooks-v2.1.0` after the release; every hook ID they use
+is in the root manifest. `JakobMelchard/.githooks` is retired; its tags stay valid.
 
 Verification: `config/scripts/consumer-test.sh`, `hooks/test/run`,
 `hooks/test/portable`, `prek validate-manifest .pre-commit-hooks.yaml`, and
