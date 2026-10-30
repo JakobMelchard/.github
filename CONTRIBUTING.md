@@ -15,7 +15,7 @@ never contradict them.
   only. Nothing work-related is committed to either of these accounts.
 - Private by default. Public only for the showcases (one per technology: `web` for JS,
   `services` for Go and htmx, `observe` for Python, `workline`, `notes`, `keyboard`) and for what
-  must be fetched without a token (`.github`, `.githooks`, `.config`, the Pages sites). A repo
+  must be fetched without a token (`.github`, `.config`, the Pages sites). A repo
   goes public as a new repo with clean history, never by flipping visibility.
 
 ## Naming
@@ -41,10 +41,10 @@ never contradict them.
 
 ## Versioning and pins
 
-- release-please in every repo the template renders. Tags are consumed from this repo, `.githooks`,
+- release-please in every repo the template renders. Tags are consumed from this repo,
   `.config`, `template`, `web`, `workline`, `observe`. Apps deploy from `main`, not from a tag.
 - Pin everything: reusable workflows by release tag, third-party actions by commit SHA with the
-  version in a comment, `.githooks` by tag in `.pre-commit-config.yaml`, the template by tag in
+  version in a comment, hooks by `hooks-vX.Y.Z` tag of this repo in `.pre-commit-config.yaml`, the template by tag in
   `.copier-answers.yml`. Never `@main`.
 - Renovate bumps all of it from the org preset (see the README); nothing else touches rendered
   files across repos.

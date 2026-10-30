@@ -11,10 +11,22 @@ repos:
       - id: shellcheck
         args: [--severity=warning]
         exclude_types: [zsh]
-  - repo: https://github.com/JakobMelchard/.githooks
-    rev: v1.0.2
+  # hooks/ lives here, so run it from the working tree; consumers pin a hooks-vX.Y.Z tag
+  - repo: local
     hooks:
       - id: conventional-commit
+        name: conventional commit subject
+        entry: hooks/conventional-commit.sh
+        language: script
+        stages: [commit-msg]
       - id: shell-syntax
+        name: shell syntax
+        entry: hooks/shell-syntax.sh
+        language: script
+        types: [shell]
         exclude: \.bats$ # @test blocks are not bash; bats checks them when it runs
       - id: tofu-fmt
+        name: tofu fmt
+        entry: hooks/tofu-fmt.sh
+        language: script
+        types: [terraform]
