@@ -73,5 +73,5 @@
   entry: hooks/web-tokens.sh
   language: script
   pass_filenames: false
-  files: (^\.config/tokens\.path|\.css)$
+  always_run: true
   stages: [pre-commit]
