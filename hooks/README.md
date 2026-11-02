@@ -42,6 +42,7 @@ prek run --all-files       # what CI runs
 | `prettier` | pre-commit | the repo's own prettier (`npx --no-install`), so version and config come from `package.json` |
 | `eslint` | pre-commit | the repo's own eslint |
 | `tofu-fmt` | pre-commit | `tofu fmt`, else `terraform fmt` |
+| `web-tokens` | pre-commit | each path in `.config/tokens.path` equals `JakobMelchard/web` `dist/tokens.css` at the tag its line 1 names: `/* VENDORED from JakobMelchard/web dist/tokens.css @vX.Y.Z. Do not edit; the web-tokens hook checks it. */`. Needs `curl` and network; no `.config/tokens.path` is a no-op. |
 
 Upstream for the rest: `gitleaks/gitleaks`, `astral-sh/ruff-pre-commit` (`ruff-check`), `shellcheck-py/shellcheck-py`.
 
