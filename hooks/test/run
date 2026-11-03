@@ -158,6 +158,26 @@ EOF
   rm -f eslint.config.js e.js
 else skip eslint; fi
 
+# web-tokens: copies of web dist/tokens.css, served here from a file:// tree instead of GitHub
+mkdir -p web/v0.1.2/dist .config
+printf ':root { --bg: #000; }\n' >web/v0.1.2/dist/tokens.css
+export WEB_TOKENS_URL="file://$PWD/web"
+ok "$h/web-tokens.sh"
+hdr='/* VENDORED from JakobMelchard/web dist/tokens.css @v0.1.2. Do not edit; the web-tokens hook checks it. */'
+{ echo "$hdr"; cat web/v0.1.2/dist/tokens.css; } >t.css
+printf '# copies\n\nt.css\n' >.config/tokens.path
+ok "$h/web-tokens.sh"
+printf 't.css' >.config/tokens.path; ok "$h/web-tokens.sh"
+echo 'a { }' >>t.css; no "$h/web-tokens.sh"
+{ echo "$hdr"; cat web/v0.1.2/dist/tokens.css; } >t.css
+sed -i.bak 1d t.css; no "$h/web-tokens.sh"
+{ echo "${hdr/v0.1.2/v9.9.9}"; cat web/v0.1.2/dist/tokens.css; } >t.css; no "$h/web-tokens.sh"
+{ echo "$hdr a { }"; cat web/v0.1.2/dist/tokens.css; } >t.css; no "$h/web-tokens.sh"
+{ echo "$hdr"; cat web/v0.1.2/dist/tokens.css; } >u.css; ln -sf u.css t.css; no "$h/web-tokens.sh"
+printf 'gone.css\n' >.config/tokens.path; no "$h/web-tokens.sh"
+unset WEB_TOKENS_URL
+rm -rf web .config t.css t.css.bak u.css
+
 for t in ${REQUIRE:-}; do
   case " $skipped " in *" $t "*) bad=$((bad + 1)); echo "FAIL: $t is required but not installed" ;; esac
 done

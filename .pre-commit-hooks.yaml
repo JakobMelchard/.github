@@ -66,3 +66,12 @@
   language: script
   types: [terraform]
   stages: [pre-commit]
+
+- id: web-tokens
+  name: web tokens copy
+  description: Each path in .config/tokens.path equals JakobMelchard/web dist/tokens.css at the tag its line 1 names.
+  entry: hooks/web-tokens.sh
+  language: script
+  pass_filenames: false
+  always_run: true
+  stages: [pre-commit]
