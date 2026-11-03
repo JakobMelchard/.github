@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/JakobMelchard/.github/compare/hooks-v2.1.0...hooks-v2.2.0) (2026-11-03)
+
+
+### Features
+
+* **hooks:** add web-tokens, checking vendored copies of web tokens.css ([#261](https://github.com/JakobMelchard/.github/issues/261)) ([8864785](https://github.com/JakobMelchard/.github/commit/88647856fe1f3babbbcfb596594f04de191399b1))
+
 ## [2.1.0](https://github.com/JakobMelchard/.github/compare/hooks-v2.0.1...hooks-v2.1.0) (2026-10-27)
 
 
