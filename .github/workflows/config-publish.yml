@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with: { node-version: "24", registry-url: "https://registry.npmjs.org", package-manager-cache: false }
+        with: { node-version: "24", check-latest: true, registry-url: "https://registry.npmjs.org", package-manager-cache: false }
       - run: scripts/check-config-tag
       - run: npm install -g npm@11.19.1 # zizmor: ignore[adhoc-packages] exact version
       - run: npm stage publish --provenance --access public
