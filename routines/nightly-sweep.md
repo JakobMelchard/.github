@@ -28,13 +28,13 @@ If the run carries a `routine-fire-payload` block whose text starts with `DRY RU
 
 ## Unit A: triage new issues
 
-Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:ready`, `agent:jules`, `agent:pi`, `agent:claude`, `agent:cloud`, `agent:auto`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
+Across the repositories in scope, list open issues that are not pull requests, are not authored by a bot, and carry none of these labels: `bug`, `enhancement`, `question`, `documentation`, `duplicate`, `invalid`, `wontfix`, `agent:ready`, `agent:pi`, `agent:claude`, `agent:cloud`, `agent:auto`, `fleet:blocked`. Skip any issue that already has a comment starting with `routine triage:`. Skip "Dependency Dashboard" issues. Take at most 5 issues, oldest first. Triage counts as one unit in total.
 
 For each issue: read it, look at the code it touches, then:
 
 1. Add exactly one kind label: `bug`, `enhancement`, `question` or `documentation`.
 2. Decide whether it is scoped: one concrete change with an obvious definition of done that an unattended agent can finish without asking anything. Vague wishes, design questions, anything needing a human decision, a real device, secrets or a deploy is not scoped.
-3. If scoped, add the label `agent:ready`. Switchboard hands it to Jules.
+3. If scoped, add the label `agent:ready`. Switchboard routes it to an agent.
 4. If the issue carries the label `feedback`, rewrite its title to an imperative, specific title of at most 70 characters that does not copy user text verbatim.
 5. Comment, starting with `routine triage:`, in 2 to 5 sentences: what the issue is about, where in the code it lives, your hypothesis, and whether you queued it (`agent:ready`) or why not.
 
