@@ -3,10 +3,13 @@
 # /usr/local/bin, checksum-verified.
 set -euo pipefail
 
-VERSION=8.28.0
+VERSION=8.30.1
+# Renovate bumps VERSION only: take both sums from the release's checksums.txt and update the
+# next line with them. scripts/test/gitleaks.bats fails until the two versions match.
+# checksums for 8.30.1
 case "$(uname -m)" in
-  aarch64 | arm64) ARCH=arm64 SHA256=eff65261156100e5d94a6b3dec313d532fddfe19ae1590bf7a2b4f2699128356 ;;
-  *) ARCH=x64 SHA256=a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb ;;
+  aarch64 | arm64) ARCH=arm64 SHA256=e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080 ;;
+  *) ARCH=x64 SHA256=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb ;;
 esac
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
