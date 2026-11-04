@@ -1,4 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>JakobMelchard/.github//renovate/default"]
+  "extends": ["github>JakobMelchard/.github//renovate/default"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The gitleaks action's pinned release. Renovate cannot refresh its checksums; scripts/test/gitleaks.bats goes red until they are.",
+      "managerFilePatterns": ["/^actions/gitleaks/install\\.sh$/"],
+      "matchStrings": ["\\nVERSION=(?<currentValue>\\S+)\\n"],
+      "depNameTemplate": "gitleaks/gitleaks",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "The action and the prek hook move together: gitleaks.bats requires the same version in both.",
+      "matchPackageNames": ["gitleaks/gitleaks"],
+      "groupName": "gitleaks"
+    }
+  ]
 }
