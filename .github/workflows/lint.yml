@@ -117,6 +117,24 @@ jobs:
       test-cmd: ""
       build-cmd: ""
 
+  # fold runs the title check inside ci and skips pr-title and changes
+  smoke-node-fold:
+    uses: ./.github/workflows/node.yml
+    with:
+      fold: true
+      install-cmd: ""
+      lint-cmd: ""
+      check-cmd: ""
+      test-cmd: ""
+
+  smoke-go-fold:
+    uses: ./.github/workflows/go.yml
+    with:
+      fold: true
+      vet-cmd: ""
+      test-cmd: ""
+      build-cmd: ""
+
   smoke-shell:
     uses: ./.github/workflows/shell.yml
     with:
@@ -139,6 +157,12 @@ jobs:
   smoke-terraform:
     uses: ./.github/workflows/terraform.yml
     with:
+      working-directory: scripts/test/tf-smoke
+
+  smoke-terraform-fold:
+    uses: ./.github/workflows/terraform.yml
+    with:
+      fold: true
       working-directory: scripts/test/tf-smoke
 
   # Dry run bundles the fixture Worker (a Durable Object and its migration) and publishes nothing.

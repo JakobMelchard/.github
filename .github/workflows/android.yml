@@ -61,11 +61,17 @@ on:
           aapt2) and falls back to ubuntu-latest.
         type: string
         default: ""
+      fold:
+        description: >
+          Run the title check as the first step of ci and skip the pr-title and changes jobs: one VM
+          boot instead of three. ci then also runs for Markdown-only changes.
+        type: boolean
+        default: false
 
 jobs:
   # The title becomes the squash commit that release-please reads; same regex as the .githooks conventional-commit hook.
   pr-title:
-    if: github.event_name == 'pull_request'
+    if: ${{ github.event_name == 'pull_request' && !inputs.fold }}
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 5
     steps:
@@ -76,6 +82,7 @@ jobs:
         run: jm-pr-title
 
   changes:
+    if: ${{ !inputs.fold }}
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 10
     outputs:
@@ -86,10 +93,19 @@ jobs:
 
   ci:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: ${{ !cancelled() && (inputs.fold || needs.changes.outputs.code == 'true') }}
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 60
     steps:
+      - if: ${{ inputs.fold && github.event_name == 'pull_request' }}
+        uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
+      - name: conventional title
+        if: ${{ inputs.fold && github.event_name == 'pull_request' }}
+        working-directory: ${{ github.workspace }}
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: jm-pr-title
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
