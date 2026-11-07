@@ -71,7 +71,8 @@ on:
       fold:
         description: >
           Run the title check as the first step of ci and skip the pr-title and changes jobs: one VM
-          boot instead of three. ci then also runs for Markdown-only changes.
+          boot instead of three. ci then also runs for Markdown-only changes. Require the ci check, not
+          only pr-title, in branch protection: a failing title fails ci, and the skipped pr-title passes.
         type: boolean
         default: false
     secrets:
@@ -122,6 +123,7 @@ jobs:
       - name: conventional title
         if: ${{ inputs.fold && github.event_name == 'pull_request' }}
         working-directory: ${{ github.workspace }}
+        shell: bash
         env:
           TITLE: ${{ github.event.pull_request.title }}
         run: jm-pr-title
