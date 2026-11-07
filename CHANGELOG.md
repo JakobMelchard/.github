@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.8.0](https://github.com/JakobMelchard/.github/compare/v2.7.0...v2.8.0) (2026-11-07)
+
+
+### Features
+
+* **workflows:** fold the title and changes jobs into ci behind an input ([#269](https://github.com/JakobMelchard/.github/issues/269)) ([26699d8](https://github.com/JakobMelchard/.github/commit/26699d85c3e3f7e31aa3efdaf57ad246d7e6d45c))
+
+
+### Bug Fixes
+
+* **ci:** check-latest for setup-node ([#262](https://github.com/JakobMelchard/.github/issues/262)) ([ca5de41](https://github.com/JakobMelchard/.github/commit/ca5de418b5f4fa58a564cae55d09709677926daa))
+
 ## [2.7.0](https://github.com/JakobMelchard/.github/compare/v2.6.0...v2.7.0) (2026-11-03)
 
 
