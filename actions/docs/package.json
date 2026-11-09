@@ -6,7 +6,7 @@
     "check": "tsc -p . && prettier --check ."
   },
   "dependencies": {
-    "marked": "18.1.1"
+    "marked": "18.1.2"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
