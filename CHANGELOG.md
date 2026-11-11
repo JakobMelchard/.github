@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.1](https://github.com/JakobMelchard/.github/compare/v2.8.0...v2.8.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency marked to v18.1.2 ([#270](https://github.com/JakobMelchard/.github/issues/270)) ([b47ea69](https://github.com/JakobMelchard/.github/commit/b47ea691b4a5ebd513ad3c4090d8fb6c23b80cbb))
+
 ## [2.8.0](https://github.com/JakobMelchard/.github/compare/v2.7.0...v2.8.0) (2026-11-07)
 
 
