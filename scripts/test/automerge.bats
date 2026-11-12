@@ -30,11 +30,15 @@ SH
   echo '{"state":"OPEN","isDraft":false,"headRefOid":"abc","labels":[{"name":"automerge"}],"reviewDecision":""}' > "$T/pr.json"
   threads 0
   echo '[]' > "$T/rules.json"
-  export T PATH=$T/bin:$PATH GITHUB_OUTPUT=$T/out GITHUB_STEP_SUMMARY=$T/summary GH_REPO=o/r PR_NUM=1 SHA=abc BASE=main
+  export T PATH=$T/bin:$PATH GITHUB_OUTPUT=$T/out GITHUB_STEP_SUMMARY=$T/summary GH_REPO=o/r PR_NUM=1 SHA=abc BASE=main GITHUB_RUN_ID=42
 }
 
 ok() { printf '{"name":"%s","status":"completed","conclusion":"%s"}' "$1" "${2:-success}"; }
 wip() { printf '{"name":"%s","status":"in_progress","conclusion":null}' "$1"; }
+# self <name> [run id]: this run's own in-progress check run, as GitHub links it
+self() {
+  printf '{"name":"%s","status":"in_progress","conclusion":null,"details_url":"https://github.com/o/r/actions/runs/%s/job/7"}' "$1" "${2:-42}"
+}
 st() { printf '{"context":"%s","state":"%s"}' "$1" "$2"; }
 
 # threads <unresolved> [total]
@@ -91,6 +95,28 @@ gate() {
 @test "the automerge check itself is ignored" {
   run gate "$(ok lint),$(wip automerge),$(wip 'automerge / automerge')" ""
   [[ "$output" == *"ready=true"* ]] || false
+}
+
+@test "this run's own check is ignored whatever the caller's job id" {
+  run gate "$(ok lint),$(self 'merge / automerge')" ""
+  [[ "$output" == *"ready=true"* ]] || false
+}
+
+@test "a sibling job of this run is not ignored" {
+  run gate "$(self 'ci / lint'),$(self 'merge / automerge')" ""
+  [[ "$output" == *"timed out"* ]] || false
+  [[ "$output" != *"ready=true"* ]] || false
+}
+
+@test "a failed sibling job of this run stops without merging" {
+  run gate "$(self 'merge / automerge'),{\"name\":\"ci / test\",\"status\":\"completed\",\"conclusion\":\"failure\",\"details_url\":\"https://github.com/o/r/actions/runs/42/job/8\"}" ""
+  [[ "$output" == *"failed: ci / test"* ]] || false
+}
+
+@test "a check from another run is not ignored" {
+  run gate "$(ok lint),$(self 'merge / automerge' 4242)" ""
+  [[ "$output" == *"timed out"* ]] || false
+  [[ "$output" != *"ready=true"* ]] || false
 }
 
 @test "a check named like automerge is not ignored" {
