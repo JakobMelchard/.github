@@ -1,4 +1,4 @@
-# .githooks
+# hooks
 
 A prek / pre-commit hook repository. `.pre-commit-hooks.yaml` declares the hooks; `hooks/*.sh`
 implement them. No build.
