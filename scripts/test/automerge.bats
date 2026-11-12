@@ -102,6 +102,17 @@ gate() {
   [[ "$output" == *"ready=true"* ]] || false
 }
 
+@test "a sibling job of this run is not ignored" {
+  run gate "$(self 'ci / lint'),$(self 'merge / automerge')" ""
+  [[ "$output" == *"timed out"* ]] || false
+  [[ "$output" != *"ready=true"* ]] || false
+}
+
+@test "a failed sibling job of this run stops without merging" {
+  run gate "$(self 'merge / automerge'),{\"name\":\"ci / test\",\"status\":\"completed\",\"conclusion\":\"failure\",\"details_url\":\"https://github.com/o/r/actions/runs/42/job/8\"}" ""
+  [[ "$output" == *"failed: ci / test"* ]] || false
+}
+
 @test "a check from another run is not ignored" {
   run gate "$(ok lint),$(self 'merge / automerge' 4242)" ""
   [[ "$output" == *"timed out"* ]] || false

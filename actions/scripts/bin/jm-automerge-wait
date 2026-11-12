@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # jm-automerge-wait: poll PR $PR_NUM in $GH_REPO until every other check on head $SHA passed, the
 # rules of branch $BASE are met and no review thread is open; then set ready=true in
-# $GITHUB_OUTPUT. This run's own check is found by $GITHUB_RUN_ID, whatever the caller's job id. A failed check, a draft, a closed PR, a removed label or a new head commit
-# stops without it.
+# $GITHUB_OUTPUT. This run's own check is the one in run $GITHUB_RUN_ID whose job is automerge, whatever
+# the caller's job id; sibling jobs of the same run still count. A failed check, a draft, a closed
+# PR, a removed label or a new head commit stops without it.
 # shellcheck disable=SC2016 # $names in single quotes are GraphQL and jq variables
 set -euo pipefail
 
@@ -33,7 +34,8 @@ for i in $(seq 90); do
 
   runs=$(gh api "repos/$GH_REPO/commits/$SHA/check-runs" --paginate --jq '.check_runs[]' |
     jq -s --arg own "/actions/runs/$GITHUB_RUN_ID/" '[.[] |
-      select((.details_url // "" | contains($own)) or (.name | test("^automerge( / |$)")) | not)]')
+      select(((.details_url // "" | contains($own)) and (.name | test("(^| / )automerge$"))) or
+        (.name | test("^automerge( / |$)")) | not)]')
   statuses=$(gh api "repos/$GH_REPO/commits/$SHA/status" --jq '.statuses')
   bad=$(jq -r --argjson s "$statuses" '[.[] | select(.status == "completed" and
     (.conclusion | IN("success", "neutral", "skipped") | not)) | .name] +
