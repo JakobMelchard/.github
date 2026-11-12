@@ -76,7 +76,7 @@ jobs:
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     timeout-minutes: 5
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
+      - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -90,7 +90,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
+        uses: JakobMelchard/.github/actions/code-changed@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
 
   ci:
     needs: changes
@@ -99,7 +99,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - if: ${{ inputs.fold && github.event_name == 'pull_request' }}
-        uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
+        uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
       - name: conventional title
         if: ${{ inputs.fold && github.event_name == 'pull_request' }}
         working-directory: ${{ github.workspace }}
@@ -122,7 +122,7 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: ${{ inputs.java-distribution }}
           java-version: ${{ inputs.java-version }}
@@ -134,7 +134,7 @@ jobs:
 
       # v6 defaults to a proprietary cache component; `basic` keeps actions/cache. It keys on the
       # Gradle files and fails without any, hence the hashFiles guard.
-      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
         if: hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') != ''
         with:
           cache-provider: basic

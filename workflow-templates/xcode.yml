@@ -10,6 +10,6 @@ permissions:
 
 jobs:
   ci:
-    uses: JakobMelchard/.github/.github/workflows/xcode.yml@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
+    uses: JakobMelchard/.github/.github/workflows/xcode.yml@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
     with:
       scheme: App

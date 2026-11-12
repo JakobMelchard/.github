@@ -86,7 +86,7 @@ jobs:
       CONFIG__NUM_RETRIES: '0'
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@88bfcf0fb6db99ff67f1e0e8f082f9b7e391028d # v2.4.1
+      - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
 
       # Counts ai:pr-agent label events, one per run, since the issues API needs no extra permission
       - name: daily cap
@@ -108,7 +108,7 @@ jobs:
           secret-name: OPENCODE_API_KEY
 
       - if: steps.cap.outputs.skip != 'true'
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
       - name: review
         if: steps.cap.outputs.skip != 'true'
