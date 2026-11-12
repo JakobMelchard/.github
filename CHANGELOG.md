@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.8.2](https://github.com/JakobMelchard/.github/compare/v2.8.1...v2.8.2) (2026-11-12)
+
+
+### Bug Fixes
+
+* **automerge:** skip the run's own check by run id, not caller job name ([#267](https://github.com/JakobMelchard/.github/issues/267)) ([b4598ae](https://github.com/JakobMelchard/.github/commit/b4598ae2ea2921f70ee9462513c8b98a2f38e52d))
+* **gitleaks:** bump the action to 8.30.1 and let Renovate track it ([#268](https://github.com/JakobMelchard/.github/issues/268)) ([1d2449e](https://github.com/JakobMelchard/.github/commit/1d2449ecb4c9407bb9ad3fe6d427f394f65fe67a))
+
 ## [2.8.1](https://github.com/JakobMelchard/.github/compare/v2.8.0...v2.8.1) (2026-11-09)
 
 
