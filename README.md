@@ -63,6 +63,8 @@ scripts/ci [repo...]   # latest CI result per org repo
 
 On `pull_request` runs, `go`, `node`, `python`, `shell`, `hooks`, `terraform`, `xcode`, `android`, `automerge` and the `tofu` plan cancel a superseded run of the same job. Other events never cancel. The group key holds the workflow, job, `working-directory` (`paths` for `shell`, `scheme`, `project` and `test-cmd` for `xcode`), `fold` and the PR ref, so a caller that uses one workflow twice must differ in one of those.
 
+The light jobs (`pr-title`, `changes`, `automerge`, `review-label`) run on `vars.RUNNER_LINUX_SMALL`, then `vars.RUNNER_LINUX`, then `ubuntu-latest`. Heavy jobs keep `vars.RUNNER_LINUX`. To run the light jobs on GitHub-hosted runners (for example while mimi is down), set `RUNNER_LINUX_SMALL` to `"ubuntu-latest"` (quotes included) for the repo.
+
 ## Layout
 
 | Path | What |
