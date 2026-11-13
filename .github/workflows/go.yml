@@ -73,6 +73,9 @@ jobs:
     timeout-minutes: 5
     if: ${{ github.event_name == 'pull_request' && !inputs.fold }}
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    concurrency:
+      group: go-pr-title-${{ inputs.working-directory }}-${{ inputs.fold }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     steps:
       - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
       - name: conventional title
@@ -84,6 +87,9 @@ jobs:
     if: ${{ !inputs.fold }}
     timeout-minutes: 10
     runs-on: ${{ fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    concurrency:
+      group: go-changes-${{ inputs.working-directory }}-${{ inputs.fold }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     outputs:
       code: ${{ steps.files.outputs.code }}
     steps:
@@ -95,6 +101,9 @@ jobs:
     needs: changes
     if: ${{ !cancelled() && (inputs.fold || needs.changes.outputs.code == 'true') }}
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    concurrency:
+      group: go-ci-${{ inputs.working-directory }}-${{ inputs.fold }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     env:
       # `secrets` is unavailable in a step-level `if`; expose only the boolean, never the key.
       HAS_APP: ${{ secrets.app-private-key != '' }}
