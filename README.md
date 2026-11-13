@@ -61,7 +61,7 @@ scripts/ci [repo...]   # latest CI result per org repo
 | [`review-label`](.github/workflows/review-label.yml) | cubic review on the `ai:cubic` label |
 | [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` once its other checks are green, the branch rules are met and no thread is open |
 
-On `pull_request` runs, `go`, `node`, `python`, `shell`, `hooks`, `terraform`, `xcode`, `android`, `automerge` and the `tofu` plan cancel a superseded run of the same job. Other events never cancel. The group key holds the workflow, job, `working-directory` (`paths` for `shell`, `scheme` for `xcode`), `fold` and the PR ref, so a caller that uses one workflow twice must differ in one of those.
+On `pull_request` runs, `go`, `node`, `python`, `shell`, `hooks`, `terraform`, `xcode`, `android`, `automerge` and the `tofu` plan cancel a superseded run of the same job. Other events never cancel. The group key holds the workflow, job, `working-directory` (`paths` for `shell`, `scheme`, `project` and `test-cmd` for `xcode`), `fold` and the PR ref, so a caller that uses one workflow twice must differ in one of those.
 
 ## Layout
 

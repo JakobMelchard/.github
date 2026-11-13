@@ -72,7 +72,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
     concurrency:
-      group: xcode-pr-title-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+      group: xcode-pr-title-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ inputs.project }}-${{ inputs.test-cmd }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 5
     steps:
@@ -85,7 +85,7 @@ jobs:
   ci:
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
     concurrency:
-      group: xcode-ci-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+      group: xcode-ci-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ inputs.project }}-${{ inputs.test-cmd }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 60
     defaults:
