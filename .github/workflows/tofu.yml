@@ -112,10 +112,10 @@ jobs:
       pull-requests: write
       id-token: write
     # Not the apply group: a group keeps one pending job, so a queued plan would cancel a queued
-    # apply. Plans only read the committed state.
+    # apply. Plans only read the committed state, so a superseded PR plan is cancelled.
     concurrency:
       group: tofu-plan-${{ inputs.working-directory }}-${{ github.event.pull_request.number || github.ref }}
-      cancel-in-progress: false
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     env:
       TF_IN_AUTOMATION: "1"
       TF_INPUT: "0"
