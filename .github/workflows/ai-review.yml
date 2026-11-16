@@ -86,7 +86,7 @@ jobs:
       CONFIG__NUM_RETRIES: '0'
       CONFIG__RETRY_SAME_MODEL_ON_TIMEOUT: 'false'
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
 
       # Counts ai:pr-agent label events, one per run, since the issues API needs no extra permission
       - name: daily cap
