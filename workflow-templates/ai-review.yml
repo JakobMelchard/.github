@@ -13,4 +13,4 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-    uses: JakobMelchard/.github/.github/workflows/ai-review.yml@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+    uses: JakobMelchard/.github/.github/workflows/ai-review.yml@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2

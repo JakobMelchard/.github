@@ -87,7 +87,7 @@ jobs:
       group: python-pr-title-${{ inputs.working-directory }}-${{ inputs.fold }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -104,7 +104,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+        uses: JakobMelchard/.github/actions/code-changed@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
 
   ci:
     timeout-minutes: 60
@@ -122,7 +122,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - if: ${{ inputs.fold && github.event_name == 'pull_request' }}
-        uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+        uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
       - name: conventional title
         if: ${{ inputs.fold && github.event_name == 'pull_request' }}
         working-directory: ${{ github.workspace }}
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
-      - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.

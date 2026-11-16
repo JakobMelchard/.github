@@ -79,7 +79,7 @@ jobs:
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 5
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -96,7 +96,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+        uses: JakobMelchard/.github/actions/code-changed@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
 
   ci:
     needs: changes
@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - if: ${{ inputs.fold && github.event_name == 'pull_request' }}
-        uses: JakobMelchard/.github/actions/scripts@131a9a7cd081fa4bc30044fa2c661ad11c988e60 # v2.8.0
+        uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
       - name: conventional title
         if: ${{ inputs.fold && github.event_name == 'pull_request' }}
         working-directory: ${{ github.workspace }}
