@@ -66,11 +66,12 @@ on:
         default: ""
 
 jobs:
-  # Same regex as the .githooks conventional-commit hook. Runs on the build's Mac runner: a hosted Linux runner
-  # would be the only metered job here.
+  # Same regex as the .githooks conventional-commit hook. Like node, python, go and shell, the title
+  # check runs on Linux: on the macOS pool a job can sit pending for a runner, and timeout-minutes
+  # does not cover queue time.
   pr-title:
     if: github.event_name == 'pull_request'
-    runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX_SMALL || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
     concurrency:
       group: xcode-pr-title-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ inputs.project }}-${{ inputs.test-cmd }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -82,7 +83,22 @@ jobs:
           TITLE: ${{ github.event.pull_request.title }}
         run: jm-pr-title
 
+  # Markdown-only PRs skip ci: a macOS minute costs 10x and there is no Xcode build to run.
+  changes:
+    timeout-minutes: 10
+    runs-on: ${{ fromJSON(vars.RUNNER_LINUX_SMALL || vars.RUNNER_LINUX || '"ubuntu-latest"') }}
+    concurrency:
+      group: xcode-changes-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ inputs.project }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+      cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+    outputs:
+      code: ${{ steps.files.outputs.code }}
+    steps:
+      - id: files
+        uses: JakobMelchard/.github/actions/code-changed@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+
   ci:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.code == 'true' }}
     runs-on: ${{ inputs.runs-on || fromJSON(vars.RUNNER_MACOS || '"macos-latest"') }}
     concurrency:
       group: xcode-ci-${{ inputs.working-directory }}-${{ inputs.scheme }}-${{ inputs.project }}-${{ inputs.test-cmd }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
