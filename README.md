@@ -1,6 +1,6 @@
 # .github
 
-Reusable workflows, composite actions, development policy, portable hooks and the org Renovate preset for `JakobMelchard` and the `lilfeelz` personal repos. Public so that personal repos can call the workflows.
+Reusable workflows, composite actions, development policy, portable hooks and the org Renovate preset for `JakobMelchard` and the `lilfeelz` personal repos. Public so personal repos can call the workflows.
 
 Rules: [CONTRIBUTING.md](CONTRIBUTING.md) for every repo, [AGENTS.md](AGENTS.md) for work here.
 
@@ -57,46 +57,31 @@ scripts/ci [repo...]   # latest CI result per org repo
 | [`xcode`](.github/workflows/xcode.yml) | swift-format, xcodebuild test |
 | [`android`](.github/workflows/android.yml) | Gradle build and unit tests |
 | [`release`](.github/workflows/release.yml) | release-please as the org app |
-| [`ai-review`](.github/workflows/ai-review.yml) | PR-Agent review on the `ai:pr-agent` label, skips drafts and runs over `daily-cap` (10 a day per repo) |
-| [`review-label`](.github/workflows/review-label.yml) | cubic review on the `ai:cubic` label |
-| [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` once its other checks are green, the branch rules are met and no thread is open |
+| [`ai-review`](.github/workflows/ai-review.yml) | PR-Agent review on `ai:pr-agent` label, skips drafts and runs over `daily-cap` (10/day per repo) |
+| [`review-label`](.github/workflows/review-label.yml) | cubic review on `ai:cubic` label |
+| [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` once other checks are green, branch rules are met and threads are resolved |
 
-On `pull_request` runs, `go`, `node`, `python`, `shell`, `hooks`, `terraform`, `xcode`, `android`, `automerge` and the `tofu` plan cancel a superseded run of the same job. Other events never cancel. The group key holds the workflow, job, `working-directory` (`paths` for `shell`, `scheme`, `project` and `test-cmd` for `xcode`), `fold` and the PR ref, so a caller that uses one workflow twice must differ in one of those.
+On `pull_request` runs, `go`, `node`, `python`, `shell`, `hooks`, `terraform`, `xcode`, `android`, `automerge` and the `tofu` plan cancel superseded runs of the same job. The group key holds workflow, job, `working-directory` (`paths` for `shell`; `scheme`, `project` and `test-cmd` for `xcode`), `fold` and the PR ref.
 
-The light jobs (`pr-title`, `changes`, `automerge`, `review-label`) run on `vars.RUNNER_LINUX_SMALL`, then `vars.RUNNER_LINUX`, then `ubuntu-latest`. Heavy jobs keep `vars.RUNNER_LINUX`. To run the light jobs on GitHub-hosted runners (for example while mimi is down), set `RUNNER_LINUX_SMALL` to `"ubuntu-latest"` (quotes included) for the repo.
+Light jobs (`pr-title`, `changes`, `automerge`, `review-label`) run on `vars.RUNNER_LINUX_SMALL`, then `vars.RUNNER_LINUX`, then `ubuntu-latest`; heavy jobs keep `vars.RUNNER_LINUX`. Set `RUNNER_LINUX_SMALL` to `"ubuntu-latest"` to fall back to GitHub-hosted runners.
 
 ## Layout
 
 | Path | What |
 |------|------|
-| `.github/workflows/` | reusable workflows, plus `lint.yml`, `self-release.yml`, `routines.yml` for this repo |
+| `.github/workflows/` | reusable workflows, plus `lint.yml`, `self-release.yml`, `config-publish.yml`, `routines.yml` for this repo |
 | `.github/ISSUE_TEMPLATE/`, `SECURITY.md`, `SUPPORT.md`, `CONTRIBUTING.md` | org defaults for repos without their own |
-| `actions/` | composite actions: `code-changed`, `docs`, `gitleaks`, and `scripts`, which puts the workflows' `jm-*` scripts on PATH |
+| `actions/` | composite actions: `code-changed`, `docs`, `gitleaks`, and `scripts` (`jm-*` on PATH) |
 | `workflow-templates/` | starter callers for "New workflow" |
 | `renovate/default.json` | org Renovate preset |
 | `routines/` | prompts for the nightly sweep and improve routines |
-| `scripts/` | `ci` and `lib/common.sh`, this repo's own workflow scripts, bats tests in `test/` |
+| `scripts/` | executable `ci` and `lib/common.sh`, repo workflow scripts, bats tests in `scripts/test/` |
 | `profile/` | org profile |
 | `config/` | `@jakobmelchard/config` npm package, consumer fixtures and tests |
 | `hooks/`, `.pre-commit-hooks.yaml` | portable hook implementations and consumer manifest |
 
 ### component release outputs
 
-`release.yml` retains `release_created`, `tag_name` and `version` for the root
-package only. Component-only releases do not change these legacy outputs.
-`releases_created` is `"true"` when any package releases. `paths_released` is a JSON
-array of canonical manifest paths, and `releases` maps each released path to its
-`tag_name` and `version`. No release returns `[]`, `{}` and `"false"` respectively.
+`release.yml` retains `release_created`, `tag_name` and `version` for the root package only; component releases do not update them. For multi-package releases, `releases_created` (`"true"`/`"false"`), `paths_released` (JSON array of manifest paths, `"."` for root) and `releases` (`{path: {tag_name, version}}`) reflect every released package (otherwise `"false"`, `[]`, `{}`).
 
-For example, two independent releases produce:
-
-```json
-{"apps/fz":{"tag_name":"fz-v1.2.0","version":"1.2.0"},"apps/pull":{"tag_name":"pull-v3.0.1","version":"3.0.1"}}
-```
-
-A release matrix can use `fromJSON(needs.release.outputs.paths_released)` and
-`fromJSON(needs.release.outputs.releases)[matrix.path].tag_name`. Guard the job
-with `needs.release.outputs.releases_created == 'true'` before evaluating an empty
-matrix. Root releases use the `"."` key. This adapts the upstream
-[release-please path outputs](https://github.com/googleapis/release-please-action#outputs)
-without guessing one tag from a multi-package release.
+Guard matrix jobs with `needs.release.outputs.releases_created == 'true'` before iterating `fromJSON(needs.release.outputs.paths_released)` and reading `fromJSON(needs.release.outputs.releases)[matrix.path].tag_name`. Use `config-publish.yml` (`workflow_dispatch`, `stage: true`) to manually stage a published `config-vX.Y.Z` tag on npm.
