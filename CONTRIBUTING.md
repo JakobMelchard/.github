@@ -1,114 +1,64 @@
 # Contributing
 
-Applies to every `JakobMelchard` repository and to the `lilfeelz` personal repos that call the
-workflows in this repo. A repo's own `AGENTS.md` adds the specifics; it may narrow these rules,
-never contradict them.
+Applies to every `JakobMelchard` repository and to `lilfeelz` repos calling workflows here. A repo's own `AGENTS.md` adds specifics without contradicting these rules.
 
 ## Accounts and placement
 
-- `JakobMelchard` owns the platform (CI, hooks, configs, templates, infrastructure as code) and
-  the products: services, libraries, the public showcases.
-- `lilfeelz` owns the person's environment: dotfiles, agent rules and skills, the terminal stack,
-  device layouts, the study layer. Personal repos consume the org platform; org repos never
-  depend on a personal repo.
-- Work-account configuration lives under the work account and is pulled in on the work machine
-  only. Nothing work-related is committed to either of these accounts.
-- Private by default. Public only for the showcases (one per technology: `web` for JS,
-  `services` for Go and htmx, `observe` for Python, `workline`, `notes`, `keyboard`) and for what
-  must be fetched without a token (`.github`, `.config`, the Pages sites). A repo
-  goes public as a new repo with clean history, never by flipping visibility.
+- `JakobMelchard` owns the platform (CI, hooks, configs, templates, IaC) and shipped products (services, libraries, showcases).
+- `lilfeelz` owns the personal environment (`lilfeelz/.files` for dotfiles, agent rules/skills, extensions, workspace server; `totem` for firmware). Personal repos consume the org platform; org repos never depend on a personal repo.
+- Work-account configuration lives under the work account only. Never commit work data here.
+- Private by default (`services` is private). Public only for showcases (`web` for JS, `observe` for Python, `pull` for Android `pull` trainer, `notes` for study wiki, `totem`, `based`, `fmsh`) and what must fetch without auth (`.github`, Pages sites). New public repos start with clean history, never by flipping visibility.
 
 ## Naming
 
-- Repo name = service name = DNS label = local directory. No `-go`, `-hx`, `-wiki` suffixes.
-- launchd labels follow the owner of the code: `at.melchard.<name>` for org services,
-  `com.lilfeelz.<name>` for personal and host jobs.
-- Tailnet services are `<name>.lilfeelz.org`; public docs are `docs.melchard.org/<repo>` for
-  public org repos and `docs.lilfeelz.org/<repo>` for public personal repos.
+- Repo name = service name = DNS label = local directory (no `-go`, `-hx`, `-wiki` suffixes).
+- launchd labels: `at.melchard.<name>` (org services), `com.lilfeelz.<name>` (personal and host jobs).
+- Tailnet services: `<name>.lilfeelz.org` or `<name>.feelz.dev`; public docs: `docs.melchard.org/<repo>` and `docs.lilfeelz.org/<repo>`.
 
 ## Branches, commits, merges
 
-- Org repos are trunk-based: short branches, squash merge, the PR title becomes the commit.
-- `lilfeelz/.config` runs `dev` plus `main`: work lands on `dev`, `main` is promoted by PR. Rulesets
-  protect both and block deletion. Other personal repos work like org repos.
-- Commits and PR titles are Conventional Commits: `feat:` `fix:` `chore:` `docs:` `refactor:`
-  `test:` `ci:` `build:` `perf:` `style:` `revert:`, optional `(scope)`, `!` for breaking. The
-  `commit-msg` hook and the `pr-title` CI job enforce it.
+- Trunk-based on `main`: short branches, squash merge, PR title becomes the commit.
+- Conventional Commits (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `build`, `perf`, `style`, `revert`, optional `(scope)`, `!` for breaking), enforced by `commit-msg` hook and `pr-title` CI job.
 - No attribution trailers in commits or PR bodies.
-- Before a PR is called done: every review, inline thread and bot comment is read, fixed or
-  answered, and resolved. Review bots skip drafts: mark ready and wait. Merge only on green CI,
-  all threads answered, and the owner's go. Production deploys need the owner's go each time.
+- Before calling a PR done: read, fix or answer, and resolve every review thread and bot comment (bots skip drafts). Merge only on green CI, resolved threads, and owner's go; production deploys need owner's go each time.
 
 ## Versioning and pins
 
-- release-please in every repo the template renders. Tags are consumed from this repo,
-  `.config`, `template`, `web`, `workline`, `observe`. Apps deploy from `main`, not from a tag.
-- Pin everything: reusable workflows by release tag, third-party actions by commit SHA with the
-  version in a comment, hooks by `hooks-vX.Y.Z` tag of this repo in `.pre-commit-config.yaml`, the template by tag in
-  `.copier-answers.yml`. Never `@main`.
-- Renovate bumps all of it from the org preset (see the README); nothing else touches rendered
-  files across repos.
+- release-please in template-rendered repos. Consumed tags come from `.github` (`vX.Y.Z`, `config-vX.Y.Z`, `hooks-vX.Y.Z`), `template`, `web`, `observe`. Apps deploy from `main`.
+- Pin everything: reusable workflows by release tag, third-party actions by commit SHA + version comment, hooks by `hooks-vX.Y.Z`, template by tag in `.copier-answers.yml`. Never `@main`. Renovate bumps pins from the org preset.
 
 ## Files every repo has at birth
 
-Rendered by `JakobMelchard/template`, refreshed by `copier update` through Renovate:
+Rendered by `JakobMelchard/template` (`copier update` via Renovate):
 
-- `README.md` with a one-line purpose, usage, and a screenshot for apps.
-- `AGENTS.md` for the repo-specific rules; `.claude/skills/` or `.agents/` for repo-specific
-  skills. Generic org skills live in `JakobMelchard/.agents`, personal ones in `lilfeelz/.agents`.
-- `LICENSE` (MIT) on every public repo.
-- `renovate.json` extending the org preset.
-- `.pre-commit-config.yaml` pinning the org hooks; `prek install` once per clone.
-- One CI caller workflow using the reusable workflows here; add an input, never a second
-  pipeline.
-- `.github/CODEOWNERS` naming the owner; `.editorconfig`; `.gitleaks.toml`;
-  `.copier-answers.yml`.
-- Community health files (issue and PR templates, SECURITY, SUPPORT) are inherited from this
-  repo unless the repo needs its own.
+- `README.md` (one-line purpose, usage, screenshot for apps) and `AGENTS.md` (repo rules).
+- Repo-local skills in `.agents/skills/` or `.claude/skills/`. Shared skills live in `lilfeelz/.files` (`agents/` personal, `agents/org/` org).
+- `LICENSE` (MIT on public repos), `renovate.json`, `.pre-commit-config.yaml` (`prek install`), one CI caller workflow, `.github/CODEOWNERS`, `.editorconfig`, `.gitleaks.toml`, `.copier-answers.yml`. Community health files inherit from `.github`.
 
 ## Settings as code
 
-- Every repo in both accounts is declared once in `JakobMelchard/infra` and applied by OpenTofu:
-  visibility, description, rulesets, labels, runner variables, Dependabot alerts, secret scanning
-  and push protection on public repos, `delete_branch_on_merge`. A repo that is not declared does
-  not exist. Pages and homepage URLs are set by hand because the provider ignores them.
-- The GitHub app installations are declared in the same repo and diffed against the live set on
-  a schedule. Third-party apps are installed and scoped in the GitHub UI; only the org's own app
-  is managed by API.
-- Cloudflare: zone settings, DNS, Access and Email Routing in OpenTofu, split per account and per
-  zone. Workers are described by their `wrangler` config, deployed by Workers Builds where the
-  Worker has no Durable Object and by the reusable workflow where it has one.
+- Repos, visibility, rulesets, labels and runner variables are declared in `JakobMelchard/infra` (`terraform/github/settings.json`) and applied by OpenTofu. Secrets, Pages and app installations are managed manually in GitHub UI.
+- Cloudflare zone settings, DNS, Access and Email Routing live in OpenTofu; Workers use `wrangler` config (Workers Builds or `cf.yml` for Durable Objects).
 
 ## Secrets
 
-Infisical only: shells and launchd jobs read through `with-secret`, CI through OIDC, Workers
-through secret syncs. No personal access tokens, no hand-set Actions secrets, no secrets or
-credential files in any repo, including gitignored ones under a dotfiles tree.
+Infisical only: shells and launchd jobs read via `with-secret`, CI via OIDC, Workers via secret syncs. No PATs, manual Actions secrets, or secrets in git.
 
 ## Deploy
 
-- The repo that owns the code owns its launchd plist and its `app.toml` entry. `infra` holds
-  host-level state only: Caddy, pf, certificates, backups, runners, Forgejo, monitoring.
-- The reconciler on the self-hosted deploy host deploys `origin/main` of each app after CI is green, or after a trusted
-  `local-checks` commit status where no hosted CI runs; nothing is deployed by hand. Every scheduled job is wrapped by healthchecks.
-- Anything that does not need the GUI session runs as a LaunchDaemon.
+- App repos own their launchd plist and `deploy/mimi/app.toml`. `infra` holds host config only: Caddy, pf, certificates, backups, runners, Forgejo, monitoring.
+- Mimi's reconciler deploys `origin/main` after green CI (or a trusted `local-checks` status); scheduled jobs wrap with healthchecks. Run non-GUI jobs as LaunchDaemons.
 
 ## Stack
 
-Fixed for the estate; a repo picks from it, it does not add to it.
+Fixed across the estate; pick from it rather than adding tools:
 
-- Self-hosted services: Go, standard library `net/http`, htmx, files or Google Sheets as the store,
-  assets embedded in one binary. One public `services` repo holds them.
-- Browser code and Cloudflare Workers: vanilla JavaScript with JSDoc types, `@ts-check`, `tsc`
-  in CI, no build step beyond what wrangler needs. PWAs embed the shared `web` package (tokens,
-  base CSS, manifest, service worker with queued writes and the iOS fallback).
-- Compute-heavy work: Python with `uv`, `ruff`, `pytest`; FastAPI where it serves.
-- Native code only where the OS forces it: Swift for the terminal client and the keyboard
-  extension, Kotlin for the launcher, Capacitor shells where a web app needs a native API.
-- Infrastructure: OpenTofu for every account; Brewfile, chezmoi profiles and launchd plists in
-  git for every host.
+- Self-hosted services: Go `net/http`, htmx, embedded assets (`services`, private; `lilfeelz/.files` `server/` for web-workspace).
+- Browser and Workers: vanilla JS with strict JSDoc + `tsc`, no bundler beyond `wrangler`. PWAs embed `@jakobmelchard/web`.
+- Compute: Python (`uv`, `ruff`, `pytest`, FastAPI).
+- Native: Swift (`apple` macOS/iOS clients), Kotlin (`pull` trainer in `pull`, offline viewer/launcher).
+- Infra: OpenTofu, Brewfile, chezmoi (`lilfeelz/.files`), launchd plists.
 
 ## Public showcase checklist
 
-CI badge, docs under the owner's Pages umbrella, tests that run in CI, a CHANGELOG where
-versioned, no personal data anywhere in history, README that a stranger can follow.
+CI badge, Pages docs, CI tests, CHANGELOG if versioned, clean history without personal data, clear README.
