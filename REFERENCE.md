@@ -37,7 +37,7 @@ jobs:
 ```sh
 prek install           # once per clone
 prek run --all-files   # same as the CI hooks job
-npm ci --prefix actions/docs && bats scripts/test   # needs bats-core, yq, node
+npm ci --prefix actions/docs && bats scripts/test   # needs bats-core, jq, yq, node
 npm run check --prefix actions/docs                  # tsc --checkJs strict and prettier
 scripts/ci [repo...]   # latest CI result per org repo
 ```
@@ -61,7 +61,15 @@ scripts/ci [repo...]   # latest CI result per org repo
 | [`review-label`](.github/workflows/review-label.yml) | cubic review on the `ai:cubic` label |
 | [`automerge`](.github/workflows/automerge.yml) | squash-merges a PR labelled `automerge` once its other checks are green, the branch rules are met and no thread is open |
 
-On `pull_request` runs, `go`, `node`, `python`, `shell`, `hooks`, `terraform`, `xcode`, `android`, `automerge` and the `tofu` plan cancel a superseded run of the same job. Other events never cancel. The group key holds the workflow, job, `working-directory` (`paths` for `shell`, `scheme`, `project` and `test-cmd` for `xcode`), `fold` and the PR ref, so a caller that uses one workflow twice must differ in one of those.
+Concurrency is job-specific; inspect each workflow's `concurrency.group` before calling it twice:
+
+- `go`, `node`, `python`, `terraform`, `android`: workflow/job prefix, `working-directory`, `fold`, PR ref (run ID outside PRs).
+- `shell`: workflow/job prefix, `paths`, `fold`, PR ref (run ID outside PRs).
+- `hooks`: `hooks-prek`, `working-directory`, PR ref (run ID outside PRs).
+- `xcode`: workflow/job prefix, `working-directory`, `scheme`, `project`, PR ref (run ID outside PRs); only `pr-title` and `ci` also include `test-cmd`.
+- Those groups cancel in-progress jobs only on `pull_request` events.
+- `tofu` plan: `tofu-plan`, `working-directory`, PR number or ref; cancels only on PRs. Apply: `tofu-state`, `working-directory`; never cancels in-progress apply.
+- `automerge`: PR number, always cancels the prior job. `review-label` has no concurrency group.
 
 The light jobs (`pr-title`, `changes`, `automerge`, `review-label`) run on `vars.RUNNER_LINUX_SMALL`, then `vars.RUNNER_LINUX`, then `ubuntu-latest`. Heavy jobs keep `vars.RUNNER_LINUX`. To run the light jobs on GitHub-hosted runners (for example while a self-hosted runner is unavailable), set `RUNNER_LINUX_SMALL` to `"ubuntu-latest"` (quotes included) for the repo.
 

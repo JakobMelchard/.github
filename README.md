@@ -45,14 +45,14 @@ scripts/ci
 - Owner: JakobMelchard org platform maintainers.
 - Deploy: `self-release.yml` runs release-please and updates the major workflow tag. `config-publish.yml` stages npm publication only on manual opt-in from a `config-v*` tag, pending trusted-publisher migration. Do not move tags manually.
 - Rollback: consumers restore the previous pinned workflow, hook or package version. No automated consumer-wide rollback is defined.
-- CI: `lint.yml` runs actionlint, zizmor, Bats, docs checks and workflow smoke calls; `hooks.yml` checks repository hooks.
+- CI: `lint.yml` runs actionlint, zizmor, Bats, docs checks, workflow smoke calls and portable-hook tests (`hook-consumer`); reusable `hooks.yml` runs a caller's prek config.
 - Keep shared shell code Bash 3.2 compatible. Third-party actions are SHA-pinned.
 
 ## Dependencies
 
-- Bash, GitHub Actions, Node/npm, Python/uv, prek, Bats Core, yq and shellcheck for local checks.
+- Bash, GitHub Actions, Node/npm, Python/uv, prek, Bats Core, jq, yq and shellcheck for local checks.
 - Additional toolchains are workflow-specific; see workflow inputs and action manifests.
-- `scripts/ci` uses authenticated GitHub CLI; shared library location can be overridden by `JM_LIB`.
+- `scripts/ci` uses authenticated GitHub CLI and the shared library at `scripts/lib/common.sh`.
 
 ## Status
 
