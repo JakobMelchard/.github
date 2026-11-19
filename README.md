@@ -15,7 +15,6 @@ hooks/               Portable hook implementations
 .pre-commit-hooks.yaml Consumer hook manifest
 workflow-templates/  Starter workflow callers
 renovate/            Shared dependency-update preset
-routines/            Sweep and improvement prompts
 scripts/             CI utilities, shared shell library and Bats tests
 profile/             Public org profile
 REFERENCE.md         Workflow contracts, examples and release outputs

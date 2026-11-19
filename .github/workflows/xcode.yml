@@ -50,7 +50,7 @@ on:
       siblings:
         description: >
           Space-separated public JakobMelchard repos to clone next to the checkout, as name or
-          name@ref (default ref main), mirroring the local ~/Workspaces/JakobMelchard layout.
+          name@ref (default ref main), as sibling directories.
           For projects that include or depend on a sibling checkout by path.
         type: string
         default: ""

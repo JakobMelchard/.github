@@ -296,32 +296,3 @@ review() {
   [ "$status" -eq 0 ]
   grep -qxF 'api -X POST repos/o/r/git/refs -f ref=refs/tags/v3 -f sha=c3' "$T/gh.log"
 }
-
-@test "routine pick: the schedule picks the routine, else the input" {
-  EVENT=schedule CRON="37 2 * * *" INPUT="" "$BIN/routine" pick
-  EVENT=schedule CRON="7 3 * * *" INPUT="" "$BIN/routine" pick
-  EVENT=workflow_dispatch CRON="" INPUT=nightly-improve "$BIN/routine" pick
-  [ "$(cat "$GITHUB_OUTPUT")" = $'routine=nightly-improve\nroutine=nightly-sweep\nroutine=nightly-improve' ]
-}
-
-@test "routine run: the prompt goes to opencode, a dry run asks for a plan only" {
-  fake opencode
-  printf 'do it' > "$T/p.md"
-  PROMPT=$T/p.md MODEL=m DRY=false "$BIN/routine" run
-  PROMPT=$T/p.md MODEL=m DRY=true "$BIN/routine" run
-  [ "$(sed -n 1p "$T/opencode.log")" = "run --model m do it" ]
-  grep -qF 'routine-fire-payload: DRY RUN.' "$T/opencode.log"
-  run "$BIN/routine" nope
-  [ "$status" -eq 2 ]
-}
-
-@test "routine clone: every listed repo into work/, a failed clone is skipped" {
-  fake gh 'case "$1" in repo) echo a; echo b ;; esac'
-  fake git '[[ "$*" != *"/o/b "* ]]'
-  mkdir "$T/ws" && cd "$T/ws"
-  OWNER=o run "$BIN/routine" clone
-  [ "$status" -eq 0 ]
-  [[ "$output" == *"skipped b"* ]] || false
-  grep -qxF 'clone -q https://github.com/o/a work/a' "$T/git.log"
-  grep -qxF 'auth setup-git' "$T/gh.log"
-}
