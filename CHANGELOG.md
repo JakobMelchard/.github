@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.4](https://github.com/JakobMelchard/.github/compare/v2.8.3...v2.8.4) (2026-11-19)
+
+
+### Bug Fixes
+
+* **xcode:** run pr-title on Linux, gate ci on code changes ([#281](https://github.com/JakobMelchard/.github/issues/281)) ([e9ef57d](https://github.com/JakobMelchard/.github/commit/e9ef57d77ebbcdf8dd346062b8c2f569a627eac5))
+
 ## [2.8.3](https://github.com/JakobMelchard/.github/compare/v2.8.2...v2.8.3) (2026-11-16)
 
 
