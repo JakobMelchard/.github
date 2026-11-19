@@ -5,4 +5,4 @@ Read it there; it applies in full to all repositories under `JakobMelchard`.
 
 To report unacceptable behavior, use GitHub's **Report a vulnerability** button as described in
 [SECURITY.md](SECURITY.md) and mark the report as a conduct issue, or open an issue asking for a
-private channel without including details. Reports are handled by the maintainer, Jakob Melchard.
+private channel without including details. Reports are handled by the maintainer.
