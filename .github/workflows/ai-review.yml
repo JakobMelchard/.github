@@ -68,7 +68,7 @@ jobs:
       HAS_KEY: ${{ secrets.opencode-api-key != '' }}
       GITHUB__USER_TOKEN: ${{ github.token }}
       OPENAI__API_BASE: https://opencode.ai/zen/go/v1
-      MODEL: openai/mimo-v2.6-pro
+      MODEL: openai/deepseek-v4.1-flash
       # A different upstream, tried only when the primary fails with neither a timeout nor a
       # usage limit: both bill or hit the same OpenCode Go budget on every model
       FALLBACK_MODEL: openai/glm-5.3
