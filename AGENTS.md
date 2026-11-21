@@ -5,7 +5,7 @@ Rules for agents and contributors working in this repo. Overview and commands: R
 ## Rules
 
 - Workflows, actions, hooks and scaffolding templates belong here.
-- `scripts/ci` and `scripts/lib/common.sh` are sourced by other repos via `JM_LIB`. Keep them bash 3.2 compatible.
+- `scripts/lib/common.sh` is sourced by other repos via `JM_LIB`; `scripts/ci` uses it too. Keep both bash 3.2 compatible.
 - Every `*-cmd` input skips its step when `""`. To make a step optional, add an input, not an `if`.
 - Describe every input with `description:` under `inputs:`. Keep the workflow header short.
 - A long `run:` block becomes a script: `jm-*` in `actions/scripts/bin` for the reusable workflows, `scripts/` for this repo. Each gets a bats test in `scripts/test` and passes shellcheck at warning.
