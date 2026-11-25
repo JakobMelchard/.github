@@ -127,7 +127,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
-      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+      - uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
 
       - name: changed files
         id: changed
@@ -216,7 +216,7 @@ jobs:
       - name: mint app token
         id: app
         if: steps.changed.outputs.run != 'false' && inputs.app-token-owner != ''
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0 # zizmor: ignore[github-app]
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0 # zizmor: ignore[github-app]
         with:
           client-id: ${{ env.APP_CLIENT_ID }}
           private-key: ${{ env.APP_PRIVATE_KEY }}
@@ -225,7 +225,7 @@ jobs:
       - name: mint app token (2)
         id: app2
         if: steps.changed.outputs.run != 'false' && inputs.app-token-owner-2 != ''
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0 # zizmor: ignore[github-app]
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0 # zizmor: ignore[github-app]
         with:
           client-id: ${{ env.APP_CLIENT_ID }}
           private-key: ${{ env.APP_PRIVATE_KEY }}
@@ -293,7 +293,7 @@ jobs:
           ref: ${{ github.ref }}
           persist-credentials: false
 
-      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+      - uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
 
       - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with: { tofu_wrapper: false }
@@ -370,7 +370,7 @@ jobs:
       - name: mint app token
         id: app
         if: inputs.app-token-owner != ''
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0 # zizmor: ignore[github-app]
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0 # zizmor: ignore[github-app]
         with:
           client-id: ${{ env.APP_CLIENT_ID }}
           private-key: ${{ env.APP_PRIVATE_KEY }}
@@ -379,7 +379,7 @@ jobs:
       - name: mint app token (2)
         id: app2
         if: inputs.app-token-owner-2 != ''
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0 # zizmor: ignore[github-app]
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0 # zizmor: ignore[github-app]
         with:
           client-id: ${{ env.APP_CLIENT_ID }}
           private-key: ${{ env.APP_PRIVATE_KEY }}
@@ -423,7 +423,7 @@ jobs:
       - name: mint state token
         id: state
         if: always() && inputs.state-commit && steps.apply.outcome != 'skipped'
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           client-id: ${{ env.APP_CLIENT_ID }}
           private-key: ${{ env.APP_PRIVATE_KEY }}

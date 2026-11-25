@@ -14,4 +14,4 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: JakobMelchard/.github/.github/workflows/cf.yml@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+    uses: JakobMelchard/.github/.github/workflows/cf.yml@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4

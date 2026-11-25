@@ -87,7 +87,7 @@ jobs:
       group: python-pr-title-${{ inputs.working-directory }}-${{ inputs.fold }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+      - uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -104,7 +104,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+        uses: JakobMelchard/.github/actions/code-changed@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
 
   ci:
     timeout-minutes: 60
@@ -122,7 +122,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - if: ${{ inputs.fold && github.event_name == 'pull_request' }}
-        uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+        uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
       - name: conventional title
         if: ${{ inputs.fold && github.event_name == 'pull_request' }}
         working-directory: ${{ github.workspace }}
@@ -134,7 +134,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
 
-      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+      - uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
 
       - name: provenance
         # job.workflow_ref and job.workflow_sha are read through toJSON: actionlint's job context lacks them.
@@ -151,7 +151,7 @@ jobs:
         with:
           python-version: ${{ inputs.python-version }}
 
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         if: inputs.package-manager == 'uv'
         with:
           enable-cache: true
@@ -159,7 +159,7 @@ jobs:
       - name: mint app token
         id: app
         if: inputs.private-deps && env.HAS_APP == 'true'
-        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         with:
           client-id: ${{ secrets.app-client-id }}
           private-key: ${{ secrets.app-private-key }}
