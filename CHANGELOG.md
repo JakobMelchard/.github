@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.8.5](https://github.com/JakobMelchard/.github/compare/v2.8.4...v2.8.5) (2026-11-27)
+
+
+### Bug Fixes
+
+* **deps:** update minor ([#288](https://github.com/JakobMelchard/.github/issues/288)) ([cc9d2ae](https://github.com/JakobMelchard/.github/commit/cc9d2ae84dc828a314fc7bb6688756aec0a61c7f))
+
 ## [2.8.4](https://github.com/JakobMelchard/.github/compare/v2.8.3...v2.8.4) (2026-11-21)
 
 
