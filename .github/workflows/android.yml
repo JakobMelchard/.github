@@ -79,7 +79,7 @@ jobs:
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 5
     steps:
-      - uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+      - uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
       - name: conventional title
         env:
           TITLE: ${{ github.event.pull_request.title }}
@@ -96,7 +96,7 @@ jobs:
       code: ${{ steps.files.outputs.code }}
     steps:
       - id: files
-        uses: JakobMelchard/.github/actions/code-changed@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+        uses: JakobMelchard/.github/actions/code-changed@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
 
   ci:
     needs: changes
@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - if: ${{ inputs.fold && github.event_name == 'pull_request' }}
-        uses: JakobMelchard/.github/actions/scripts@baeda3e262210ce1619b843985fe9ceb84f92199 # v2.8.2
+        uses: JakobMelchard/.github/actions/scripts@300db7253529e4f39ed4af1fc21c7eb39d32bdd0 # v2.8.4
       - name: conventional title
         if: ${{ inputs.fold && github.event_name == 'pull_request' }}
         working-directory: ${{ github.workspace }}
@@ -131,7 +131,7 @@ jobs:
           echo "reusable workflow: $ref @ $sha"
           echo "Reusable workflow: \`$ref\` @ \`$sha\`" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
         with:
           distribution: ${{ inputs.java-distribution }}
           java-version: ${{ inputs.java-version }}
